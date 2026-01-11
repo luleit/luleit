@@ -1782,20 +1782,33 @@ function getEngagementData() {
 
 // Initialize Stripe - key injected from server
 let stripePublishableKey = null;
+let stripeReady = false;
 
 async function initStripe() {
+    if (stripeReady && stripe) return true;
+    
     try {
         // Get publishable key from server
         if (!stripePublishableKey) {
             const r = await fetch('/api/stripe-config');
             const config = await r.json();
             stripePublishableKey = config.publishable_key;
+            
+            if (!config.enabled || !stripePublishableKey) {
+                console.error('Stripe not configured');
+                return false;
+            }
         }
-        if (stripePublishableKey) {
+        
+        if (stripePublishableKey && !stripe) {
             stripe = Stripe(stripePublishableKey);
+            stripeReady = true;
         }
+        
+        return stripeReady;
     } catch(e) {
         console.error('Stripe init error:', e);
+        return false;
     }
 }
 
@@ -1817,6 +1830,12 @@ async function handleDownload() {
     showLoading(true, 'Preparing checkout...');
     
     try {
+        // Initialize Stripe first
+        const stripeOk = await initStripe();
+        if (!stripeOk) {
+            throw new Error('Payment system not available. Please try again.');
+        }
+        
         // Get preview pricing first
         const pricing = await getPricing();
         $('payment-price').textContent = pricing.display_price;
@@ -1844,9 +1863,17 @@ async function handleDownload() {
         fd.append('can_google_pay', engagement.can_google_pay);
         
         const r = await fetch('/api/create-payment', { method: 'POST', body: fd });
+        
+        if (!r.ok) {
+            const errData = await r.json().catch(() => ({}));
+            throw new Error(errData.detail || 'Failed to create payment');
+        }
+        
         const data = await r.json();
         
-        if (data.error) throw new Error(data.error);
+        if (!data.clientSecret) {
+            throw new Error('Invalid payment response - missing client secret');
+        }
         
         // Update price display with final calculated price
         $('payment-price').textContent = data.display_price;
@@ -1859,9 +1886,10 @@ async function handleDownload() {
         const device = getDeviceInfo();
         const availableMethods = getAvailablePaymentMethods(data.payment_methods || ['card']);
         
-        // Initialize Stripe Elements
-        if (!stripe) await initStripe();
+        // Clear previous payment element
+        $('payment-element').innerHTML = '';
         
+        // Create new Elements instance with the client secret
         elements = stripe.elements({
             clientSecret: clientSecret,
             appearance: {
@@ -1877,9 +1905,6 @@ async function handleDownload() {
             }
         });
         
-        // Clear previous payment element
-        $('payment-element').innerHTML = '';
-        
         // Configure wallets based on device
         const walletConfig = {
             applePay: device.canApplePay ? 'auto' : 'never',
@@ -1890,11 +1915,10 @@ async function handleDownload() {
             layout: 'tabs',
             wallets: walletConfig,
             defaultValues: {
-                billingDetails: {
-                    // Can pre-fill if we have data
-                }
+                billingDetails: {}
             }
         });
+        
         paymentElement.mount('#payment-element');
         
         showLoading(false);
@@ -1902,6 +1926,7 @@ async function handleDownload() {
         
     } catch(e) {
         showLoading(false);
+        console.error('Payment error:', e);
         showToast('Error: ' + e.message, 'error');
     }
 }
