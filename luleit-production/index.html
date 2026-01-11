@@ -191,222 +191,298 @@
         .preview-item img{width:100%;display:block}
         .preview-item-label{padding:4px;text-align:center;font-size:10px;background:var(--bg2)}
         
-        /* ===== MOBILE RESPONSIVE ===== */
+        /* ===== MOBILE RESPONSIVE - LEFT TOOLBAR LAYOUT ===== */
         @media (max-width: 768px) {
-            /* Header */
-            .header{flex-wrap:wrap;padding:8px 12px;gap:8px}
+            /* Hide desktop elements on mobile */
+            .header .nav-tabs{display:none}
+            .header .toolbar{display:none !important}
+            .format-bar{display:none !important}
+            .shape-bar{display:none !important}
+            .sidebar{display:none !important}
+            
+            /* Simplified header */
+            .header{padding:10px 12px;gap:10px}
             .logo{font-size:18px}
-            .nav-tabs{order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px}
-            .nav-tabs::-webkit-scrollbar{display:none}
-            .nav-tab{padding:6px 10px;font-size:11px}
-            .nav-tab span{display:none}
-            .toolbar{order:2;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:60%;padding:2px 4px}
-            .toolbar.show{display:flex}
-            .tool-btn{padding:6px;min-width:36px}
-            .tool-btn span{display:none}
-            .tool-btn i{font-size:16px}
-            .tool-divider{display:none}
-            .header-right{gap:6px}
-            .btn{padding:6px 10px;font-size:11px}
-            .btn span{display:none}
+            .header-right{gap:8px}
+            .header-right .btn{padding:10px 12px;font-size:12px}
+            .header-right .btn i{font-size:14px}
             
-            /* Main layout */
-            .main{flex-direction:column;height:auto;min-height:calc(100vh - 100px)}
-            .sidebar{width:100%;max-height:120px;flex-direction:row;padding:8px;order:2;border-right:none;border-top:1px solid var(--border)}
-            .sidebar.show{display:flex}
-            .sidebar-title{display:none}
-            .page-list{flex-direction:row;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-            .page-thumb{min-width:60px;max-width:60px}
-            .page-thumb-label{font-size:8px;padding:2px}
-            .page-actions{display:flex !important;position:static;justify-content:center;padding:2px;gap:4px;background:var(--bg2)}
-            .page-action{width:24px;height:24px;font-size:11px}
-            .zoom-controls{margin-top:0;margin-left:auto}
-            .doc-info{display:none}
+            /* Main area - full height scrollable */
+            .main{
+                flex-direction:column;
+                height:calc(100vh - 54px);
+                overflow:hidden;
+            }
             
-            /* Editor */
-            .editor{padding:10px;order:1}
-            .page-container{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch}
-            .page-container img{max-width:none}
+            /* Editor takes full space */
+            .editor{
+                flex:1;
+                padding:0;
+                overflow:auto;
+                -webkit-overflow-scrolling:touch;
+                display:flex;
+                flex-direction:column;
+            }
             
-            /* Home */
-            .home-container{padding:12px}
-            .home-header{margin-bottom:20px}
-            .home-header h1{font-size:24px}
-            .home-header p{font-size:13px}
-            .upload-hero{padding:30px 20px}
-            .upload-icon{width:60px;height:60px;font-size:24px;margin-bottom:12px}
-            .upload-hero h2{font-size:18px}
-            .tool-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-            .tool-card{padding:12px}
-            .tool-icon{width:36px;height:36px;font-size:14px;margin-bottom:6px}
-            .tool-card h3{font-size:12px}
-            .tool-card p{font-size:9px}
-            .tool-section{margin-bottom:20px}
-            .tool-section h2{font-size:12px;margin-bottom:8px}
-            .social-proof{flex-wrap:wrap;gap:12px;font-size:10px}
+            /* Home page scrollable */
+            .home-container{
+                padding:16px;
+                overflow-y:auto;
+                height:100%;
+            }
+            .home-header{margin-bottom:24px}
+            .home-header h1{font-size:26px}
+            .home-header p{font-size:14px}
+            .upload-hero{padding:32px 20px;margin-bottom:24px}
+            .upload-icon{width:64px;height:64px;font-size:26px;margin-bottom:16px}
+            .upload-hero h2{font-size:20px;margin-bottom:8px}
+            .tool-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+            .tool-card{padding:14px}
+            .tool-icon{width:40px;height:40px;font-size:16px;margin-bottom:8px}
+            .tool-card h3{font-size:13px}
+            .tool-card p{font-size:10px}
+            .tool-section{margin-bottom:24px}
+            .tool-section h2{font-size:13px;margin-bottom:10px}
+            .social-proof{flex-direction:column;gap:8px;align-items:center;font-size:11px}
             
-            /* Format bar */
-            .format-bar{padding:6px 10px;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-            .format-bar.show{display:flex}
-            .format-bar label{display:none}
-            .format-bar select{min-width:70px;padding:4px;font-size:10px}
-            .format-btn{width:32px;height:32px}
-            .format-divider{display:none}
-            .color-swatch{width:28px;height:28px}
+            /* Tool views scrollable */
+            .tool-view{
+                padding:16px;
+                overflow-y:auto;
+                height:100%;
+            }
+            .tool-view-header{margin-bottom:20px}
+            .tool-view-header h2{font-size:22px}
+            .tool-view-header p{font-size:13px}
+            .dropzone{padding:32px 20px}
+            .dropzone i{font-size:36px;margin-bottom:10px}
+            .dropzone h3{font-size:16px}
+            .options-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+            .option-card{padding:12px 8px}
+            .option-card h4{font-size:12px}
+            .file-list{max-height:200px}
+            .file-item{padding:10px 12px}
+            .result-box{padding:20px}
+            .preview-grid{grid-template-columns:repeat(3,1fr);gap:8px}
             
-            /* Shape bar */
-            .shape-bar{padding:6px 10px;overflow-x:auto;flex-wrap:nowrap}
-            .shape-btn{padding:6px 8px;font-size:10px;white-space:nowrap}
+            /* PDF Editor Mobile Layout */
+            .page-container{
+                margin:0 auto;
+                max-width:100%;
+                touch-action:pan-x pan-y pinch-zoom;
+            }
+            .page-container.show{
+                display:block;
+            }
+            .page-container img{
+                width:100%;
+                height:auto;
+            }
             
-            /* Tool views */
-            .tool-view{padding:0 10px}
-            .tool-view-header h2{font-size:20px}
-            .tool-view-header p{font-size:12px}
-            .dropzone{padding:30px 20px}
-            .dropzone i{font-size:32px;margin-bottom:8px}
-            .dropzone h3{font-size:14px}
-            .options-grid{grid-template-columns:repeat(3,1fr);gap:6px}
-            .option-card{padding:10px 6px}
-            .option-card h4{font-size:11px}
-            .option-card p{font-size:9px}
-            .file-item{padding:8px 10px}
-            .file-icon{width:30px;height:30px;font-size:12px}
-            .file-name{font-size:12px}
-            .result-box{padding:16px}
-            .result-stat-value{font-size:22px}
-            .preview-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+            /* Text editing */
+            .text-box{
+                font-size:12px !important;
+                min-height:20px;
+            }
+            .added-el{min-width:50px;min-height:50px}
+            .added-text{padding:10px;font-size:16px;min-width:100px}
+            .el-controls{top:-36px}
+            .el-ctrl{width:32px;height:32px;font-size:16px}
+            .resize-handle{width:24px;height:24px;bottom:-12px;right:-12px}
             
             /* Modals */
-            .modal{max-width:calc(100% - 24px);margin:12px}
-            .modal-header{padding:16px}
-            .modal-header i{font-size:24px;margin-bottom:6px}
-            .modal-header h2{font-size:14px}
-            .modal-body{padding:16px}
-            .signature-pad{width:100%;height:120px}
-            
-            /* Text editing on mobile */
-            .text-box{min-height:24px;font-size:inherit !important}
-            .text-box:focus{position:relative;z-index:100}
-            .added-el{min-width:44px;min-height:44px}
-            .added-text{padding:8px 12px;font-size:14px;min-width:80px}
-            .el-controls{top:-32px}
-            .el-ctrl{width:28px;height:28px;font-size:14px}
-            .resize-handle{width:20px;height:20px;bottom:-10px;right:-10px}
+            .modal-overlay{padding:20px;align-items:center}
+            .modal{max-width:100%;margin:0;border-radius:16px}
+            .modal-header{padding:20px}
+            .modal-body{padding:20px}
+            .signature-pad{width:100% !important;height:150px !important;touch-action:none}
             
             /* Toast */
-            .toast{bottom:80px;padding:8px 14px;font-size:11px;max-width:calc(100% - 24px)}
+            .toast{bottom:100px;left:16px;right:16px;transform:translateX(0) translateY(100px)}
+            .toast.show{transform:translateX(0) translateY(0)}
+        }
+        
+        /* ===== MOBILE LEFT TOOLBAR ===== */
+        .mobile-left-toolbar{
+            display:none;
+            position:fixed;
+            left:0;
+            top:54px;
+            bottom:0;
+            width:56px;
+            background:var(--bg2);
+            border-right:1px solid var(--border);
+            flex-direction:column;
+            padding:8px 4px;
+            gap:4px;
+            z-index:90;
+            overflow-y:auto;
+        }
+        .mobile-left-toolbar.show{display:flex}
+        .mobile-tool{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:3px;
+            padding:10px 4px;
+            background:transparent;
+            border:none;
+            border-radius:8px;
+            color:var(--text2);
+            cursor:pointer;
+            font-size:9px;
+            font-family:inherit;
+        }
+        .mobile-tool:active{background:var(--bg3)}
+        .mobile-tool.active{background:var(--accent);color:#fff}
+        .mobile-tool i{font-size:18px}
+        .mobile-tool span{display:block;text-align:center;line-height:1.1}
+        .mobile-tool-divider{
+            height:1px;
+            background:var(--border);
+            margin:4px 0;
+        }
+        
+        /* Mobile bottom bar for pages/zoom */
+        .mobile-bottom-bar{
+            display:none;
+            position:fixed;
+            bottom:0;
+            left:56px;
+            right:0;
+            background:var(--bg2);
+            border-top:1px solid var(--border);
+            padding:8px 12px;
+            z-index:90;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+        }
+        .mobile-bottom-bar.show{display:flex}
+        .mobile-page-nav{
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .mobile-page-btn{
+            width:36px;
+            height:36px;
+            border-radius:8px;
+            border:none;
+            background:var(--bg3);
+            color:var(--text);
+            cursor:pointer;
+            font-size:14px;
+        }
+        .mobile-page-btn:active{background:var(--accent)}
+        .mobile-page-btn:disabled{opacity:0.3}
+        .mobile-page-info{
+            font-size:12px;
+            color:var(--text2);
+            min-width:60px;
+            text-align:center;
+        }
+        .mobile-zoom-controls{
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+        .mobile-zoom-btn{
+            width:32px;
+            height:32px;
+            border-radius:6px;
+            border:none;
+            background:var(--bg3);
+            color:var(--text2);
+            cursor:pointer;
+        }
+        .mobile-zoom-btn:active{background:var(--accent);color:#fff}
+        .mobile-zoom-level{font-size:11px;color:var(--text2);min-width:36px;text-align:center}
+        
+        /* Mobile menu button */
+        .mobile-menu-btn{
+            display:none;
+            width:40px;
+            height:40px;
+            border-radius:8px;
+            border:none;
+            background:var(--bg3);
+            color:var(--text);
+            cursor:pointer;
+            font-size:18px;
+        }
+        
+        /* Mobile nav drawer */
+        .mobile-nav-drawer{
+            display:none;
+            position:fixed;
+            top:54px;
+            left:0;
+            right:0;
+            background:var(--bg2);
+            border-bottom:1px solid var(--border);
+            padding:8px;
+            z-index:95;
+            flex-direction:column;
+            gap:4px;
+        }
+        .mobile-nav-drawer.show{display:flex}
+        .mobile-nav-item{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:14px 16px;
+            background:transparent;
+            border:none;
+            border-radius:8px;
+            color:var(--text2);
+            cursor:pointer;
+            font-size:14px;
+            font-family:inherit;
+            text-align:left;
+        }
+        .mobile-nav-item:active{background:var(--bg3)}
+        .mobile-nav-item.active{background:var(--accent);color:#fff}
+        .mobile-nav-item i{width:20px;font-size:16px}
+        
+        @media (max-width: 768px) {
+            .mobile-menu-btn{display:flex;align-items:center;justify-content:center}
+            
+            /* Adjust editor when mobile toolbar is visible */
+            .editor.mobile-edit-mode{
+                margin-left:56px;
+                margin-bottom:60px;
+                width:calc(100% - 56px);
+            }
         }
         
         /* Extra small screens */
         @media (max-width: 400px) {
             .logo{font-size:16px}
-            .nav-tab{padding:5px 8px;font-size:10px}
-            .tool-grid{grid-template-columns:repeat(2,1fr)}
-            .options-grid{grid-template-columns:1fr 1fr}
-            .home-header h1{font-size:20px}
+            .header-right .btn span{display:none}
+            .tool-grid{gap:8px}
+            .tool-card{padding:12px}
+            .home-header h1{font-size:22px}
             .upload-hero{padding:24px 16px}
-            .upload-icon{width:50px;height:50px;font-size:20px}
+            .mobile-left-toolbar{width:50px}
+            .mobile-tool{padding:8px 2px;font-size:8px}
+            .mobile-tool i{font-size:16px}
+            .mobile-bottom-bar{left:50px}
+            .editor.mobile-edit-mode{margin-left:50px;width:calc(100% - 50px)}
         }
         
         /* Touch improvements */
         @media (pointer: coarse) {
-            .tool-btn,.btn,.nav-tab,.page-action,.file-btn,.format-btn,.shape-btn,.option-card,.tool-card{
+            .mobile-tool,.mobile-page-btn,.mobile-zoom-btn,.mobile-nav-item{
                 min-height:44px;
-                min-width:44px;
-            }
-            .text-box{min-height:32px}
-            .page-thumb{min-width:70px}
-        }
-        
-        /* Mobile toolbar at bottom */
-        @media (max-width: 768px) {
-            .mobile-toolbar{
-                position:fixed;
-                bottom:0;
-                left:0;
-                right:0;
-                background:var(--bg2);
-                border-top:1px solid var(--border);
-                padding:8px 4px;
-                display:none;
-                justify-content:space-around;
-                z-index:100;
-                gap:2px;
-            }
-            .mobile-toolbar.show{display:flex}
-            .mobile-toolbar .tool-btn{
-                flex-direction:column;
-                gap:3px;
-                padding:8px 12px;
-                min-width:60px;
-                border-radius:8px;
-            }
-            .mobile-toolbar .tool-btn span{display:block;font-size:10px}
-            .mobile-toolbar .tool-btn i{font-size:18px}
-            .mobile-toolbar .tool-btn.active{background:var(--accent);color:#fff}
-            
-            /* Mobile pages panel */
-            .mobile-pages{
-                position:fixed;
-                bottom:75px;
-                left:10px;
-                right:10px;
-                background:var(--bg2);
-                border-radius:12px;
-                padding:12px;
-                z-index:99;
-                box-shadow:0 -4px 30px rgba(0,0,0,.5);
-                display:none;
-                max-height:180px;
-            }
-            .mobile-pages.show{display:block}
-            .mobile-pages-grid{
-                display:flex;
-                gap:10px;
-                overflow-x:auto;
-                padding-bottom:8px;
-                -webkit-overflow-scrolling:touch;
-            }
-            .mobile-pages-grid::-webkit-scrollbar{height:3px}
-            .mobile-pages-grid::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
-            .mobile-page{
-                flex-shrink:0;
-                width:70px;
-                border-radius:6px;
-                overflow:hidden;
-                border:2px solid var(--border);
-                background:var(--bg);
-            }
-            .mobile-page.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.3)}
-            .mobile-page img{width:100%;display:block}
-            
-            /* Adjust main content for bottom toolbar */
-            .main{padding-bottom:75px}
-            
-            /* Better touch targets for text editing */
-            .added-text{
-                min-width:100px;
-                min-height:44px;
-                padding:10px 14px;
-                font-size:16px;
-                line-height:1.4;
-            }
-            
-            /* Modal adjustments for mobile keyboard */
-            .modal-overlay{align-items:flex-start;padding-top:10vh}
-            
-            /* Larger signature pad on mobile */
-            .signature-pad{
-                width:100% !important;
-                max-width:100%;
-                height:150px !important;
-                touch-action:none;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
+        <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
         <div class="logo" onclick="location.reload()"><i class="fas fa-file-pdf"></i> Luleit</div>
         <nav class="nav-tabs" id="nav-tabs">
             <button class="nav-tab active" data-view="home"><i class="fas fa-home"></i> Home</button>
@@ -432,10 +508,49 @@
             <button class="tool-btn" data-tool="erase"><i class="fas fa-eraser"></i><span>Erase</span></button>
         </div>
         <div class="header-right">
-            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i> Open</button>
-            <button class="btn btn-success" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i> Download Free</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i> <span>Open</span></button>
+            <button class="btn btn-success" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i> <span>Download</span></button>
         </div>
     </header>
+    
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-nav-drawer" id="mobile-nav-drawer">
+        <button class="mobile-nav-item active" data-view="home" onclick="mobileNavTo('home')"><i class="fas fa-home"></i> Home</button>
+        <button class="mobile-nav-item" data-view="edit" onclick="mobileNavTo('edit')"><i class="fas fa-edit"></i> Edit PDF</button>
+        <button class="mobile-nav-item" data-view="merge" onclick="mobileNavTo('merge')"><i class="fas fa-layer-group"></i> Merge</button>
+        <button class="mobile-nav-item" data-view="split" onclick="mobileNavTo('split')"><i class="fas fa-cut"></i> Split</button>
+        <button class="mobile-nav-item" data-view="compress" onclick="mobileNavTo('compress')"><i class="fas fa-compress"></i> Compress</button>
+        <button class="mobile-nav-item" data-view="convert" onclick="mobileNavTo('convert')"><i class="fas fa-exchange-alt"></i> Convert</button>
+        <button class="mobile-nav-item" data-view="secure" onclick="mobileNavTo('secure')"><i class="fas fa-lock"></i> Security</button>
+    </div>
+    
+    <!-- Mobile Left Toolbar (for editing) -->
+    <div class="mobile-left-toolbar" id="mobile-left-toolbar">
+        <button class="mobile-tool active" data-tool="select" onclick="setMobileTool('select')"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
+        <button class="mobile-tool" data-tool="text" onclick="setMobileTool('text')"><i class="fas fa-font"></i><span>Text</span></button>
+        <button class="mobile-tool" data-tool="image" onclick="$('image-input').click()"><i class="fas fa-image"></i><span>Image</span></button>
+        <button class="mobile-tool" data-tool="sign" onclick="setMobileTool('sign');$('sign-modal').classList.add('show')"><i class="fas fa-signature"></i><span>Sign</span></button>
+        <div class="mobile-tool-divider"></div>
+        <button class="mobile-tool" data-tool="draw" onclick="setMobileTool('draw')"><i class="fas fa-pen"></i><span>Draw</span></button>
+        <button class="mobile-tool" data-tool="highlight" onclick="setMobileTool('highlight')"><i class="fas fa-highlighter"></i><span>Highlight</span></button>
+        <div class="mobile-tool-divider"></div>
+        <button class="mobile-tool" onclick="mobileRotatePage()"><i class="fas fa-redo"></i><span>Rotate</span></button>
+        <button class="mobile-tool" onclick="undo()"><i class="fas fa-undo"></i><span>Undo</span></button>
+    </div>
+    
+    <!-- Mobile Bottom Bar (page nav + zoom) -->
+    <div class="mobile-bottom-bar" id="mobile-bottom-bar">
+        <div class="mobile-page-nav">
+            <button class="mobile-page-btn" onclick="mobilePrevPage()"><i class="fas fa-chevron-left"></i></button>
+            <span class="mobile-page-info" id="mobile-page-info">1 / 1</span>
+            <button class="mobile-page-btn" onclick="mobileNextPage()"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="mobile-zoom-controls">
+            <button class="mobile-zoom-btn" onclick="mobileZoomOut()"><i class="fas fa-minus"></i></button>
+            <span class="mobile-zoom-level" id="mobile-zoom-level">100%</span>
+            <button class="mobile-zoom-btn" onclick="mobileZoomIn()"><i class="fas fa-plus"></i></button>
+        </div>
+    </div>
     <div class="format-bar" id="format-bar">
         <label>Font:</label><select id="font-family"></select>
         <label>Size:</label><select id="font-size"></select>
@@ -624,24 +739,6 @@
     </div>
     <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Processing...</p></div>
     <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-text"></span></div>
-    
-    <!-- Mobile Bottom Toolbar -->
-    <div class="mobile-toolbar" id="mobile-toolbar">
-        <button class="tool-btn active" data-tool="select" onclick="setMobileTool('select')"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
-        <button class="tool-btn" data-tool="text" onclick="setMobileTool('text')"><i class="fas fa-font"></i><span>Text</span></button>
-        <button class="tool-btn" data-tool="draw" onclick="setMobileTool('draw')"><i class="fas fa-pen"></i><span>Draw</span></button>
-        <button class="tool-btn" data-tool="sign" onclick="setMobileTool('sign')"><i class="fas fa-signature"></i><span>Sign</span></button>
-        <button class="tool-btn" onclick="showMobilePages()"><i class="fas fa-copy"></i><span>Pages</span></button>
-    </div>
-    
-    <!-- Mobile Page Selector -->
-    <div class="mobile-pages" id="mobile-pages">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-size:12px;color:var(--text2)">Pages</span>
-            <button onclick="closeMobilePages()" style="background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="mobile-pages-grid" id="mobile-pages-grid"></div>
-    </div>
     
     <input type="file" id="file-input" accept=".pdf">
     <input type="file" id="merge-input" accept=".pdf" multiple>
@@ -936,46 +1033,84 @@ $('page-container')?.addEventListener('touchmove',e=>{
 // ===== MOBILE FUNCTIONS =====
 function isMobile(){return window.innerWidth<=768}
 
+// Toggle mobile navigation drawer
+function toggleMobileNav(){
+    const drawer=$('mobile-nav-drawer');
+    const btn=$('mobile-menu-btn');
+    drawer.classList.toggle('show');
+    btn.innerHTML=drawer.classList.contains('show')?'<i class="fas fa-times"></i>':'<i class="fas fa-bars"></i>';
+}
+
+// Navigate via mobile nav
+function mobileNavTo(view){
+    switchView(view);
+    toggleMobileNav();
+    document.querySelectorAll('.mobile-nav-item').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+}
+
+// Set mobile tool
 function setMobileTool(tool){
     currentTool=tool;
-    document.querySelectorAll('#mobile-toolbar .tool-btn').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+    document.querySelectorAll('.mobile-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
     document.querySelectorAll('.toolbar .tool-btn[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
     $('draw-canvas').classList.toggle('active',['draw','highlight'].includes(tool));
     if(tool==='text')showToast('Tap on PDF to add text');
-    if(tool==='sign')$('sign-modal').classList.add('show');
-    closeMobilePages();
 }
 
-function showMobilePages(){
-    if(!pdfData)return showToast('Load a PDF first','error');
-    const grid=$('mobile-pages-grid');
-    grid.innerHTML='';
-    pdfData.pages.forEach((p,i)=>{
-        const div=document.createElement('div');
-        div.className='mobile-page'+(i+1===currentPage?' active':'');
-        div.innerHTML=`<img src="${p.image}">`;
-        div.onclick=()=>{renderPage(i+1);closeMobilePages()};
-        grid.appendChild(div);
-    });
-    $('mobile-pages').classList.add('show');
+// Mobile page navigation
+function mobilePrevPage(){
+    if(currentPage>1){renderPage(currentPage-1);updateMobilePageInfo()}
+}
+function mobileNextPage(){
+    if(pdfData&&currentPage<pdfData.pageCount){renderPage(currentPage+1);updateMobilePageInfo()}
+}
+function updateMobilePageInfo(){
+    if(pdfData)$('mobile-page-info').textContent=currentPage+' / '+pdfData.pageCount;
 }
 
-function closeMobilePages(){$('mobile-pages').classList.remove('show')}
+// Mobile zoom
+function mobileZoomIn(){
+    zoomLevel=Math.min(zoomLevel+0.25,3);
+    $('page-container').style.transform='scale('+zoomLevel+')';
+    $('mobile-zoom-level').textContent=Math.round(zoomLevel*100)+'%';
+    $('zoom-level').textContent=Math.round(zoomLevel*100)+'%';
+}
+function mobileZoomOut(){
+    zoomLevel=Math.max(zoomLevel-0.25,0.5);
+    $('page-container').style.transform='scale('+zoomLevel+')';
+    $('mobile-zoom-level').textContent=Math.round(zoomLevel*100)+'%';
+    $('zoom-level').textContent=Math.round(zoomLevel*100)+'%';
+}
 
-// Show/hide mobile toolbar based on view
-function updateMobileToolbar(){
-    if(isMobile()&&pdfData&&document.querySelector('.page-container.show')){
-        $('mobile-toolbar').classList.add('show');
+// Mobile rotate page
+function mobileRotatePage(){
+    if(pdfData)rotatePage(currentPage);
+}
+
+// Show/hide mobile UI based on view
+function updateMobileUI(){
+    const isEditing=pdfData&&document.querySelector('.page-container.show');
+    if(isMobile()){
+        $('mobile-left-toolbar').classList.toggle('show',isEditing);
+        $('mobile-bottom-bar').classList.toggle('show',isEditing);
+        $('editor').classList.toggle('mobile-edit-mode',isEditing);
+        if(isEditing)updateMobilePageInfo();
     }else{
-        $('mobile-toolbar').classList.remove('show');
+        $('mobile-left-toolbar').classList.remove('show');
+        $('mobile-bottom-bar').classList.remove('show');
+        $('editor').classList.remove('mobile-edit-mode');
+        $('mobile-nav-drawer').classList.remove('show');
     }
 }
 
-// Update switchView to handle mobile toolbar
+// Override switchView to handle mobile UI
 const origSwitchView=switchView;
 switchView=function(v){
     origSwitchView(v);
-    setTimeout(updateMobileToolbar,100);
+    setTimeout(updateMobileUI,100);
+    // Close nav drawer if open
+    $('mobile-nav-drawer').classList.remove('show');
+    $('mobile-menu-btn').innerHTML='<i class="fas fa-bars"></i>';
 };
 
 // Touch drawing support
@@ -1058,14 +1193,20 @@ $('sig-canvas')?.addEventListener('touchmove',e=>{
 $('sig-canvas')?.addEventListener('touchend',()=>{sigDrawing=false});
 
 // Handle window resize
-window.addEventListener('resize',updateMobileToolbar);
+window.addEventListener('resize',updateMobileUI);
 
-// Close mobile pages on outside tap
+// Close nav drawer on outside tap
 document.addEventListener('click',e=>{
-    if($('mobile-pages').classList.contains('show')&&!e.target.closest('#mobile-pages')&&!e.target.closest('#mobile-toolbar')){
-        closeMobilePages();
+    if($('mobile-nav-drawer').classList.contains('show')&&
+       !e.target.closest('#mobile-nav-drawer')&&
+       !e.target.closest('#mobile-menu-btn')){
+        $('mobile-nav-drawer').classList.remove('show');
+        $('mobile-menu-btn').innerHTML='<i class="fas fa-bars"></i>';
     }
 });
+
+// Initialize mobile UI on load
+setTimeout(updateMobileUI,100);
 </script>
 </body>
 </html>
