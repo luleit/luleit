@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luleit - PDF Editor</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XLD83G2Q6"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-7XLD83G2Q6');</script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--text:#fff;--text2:#94a3b8;--muted:#64748b;--accent:#6366f1;--success:#10b981;--warn:#f59e0b;--danger:#ef4444;--border:#475569}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .header{background:var(--bg2);padding:10px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+        .logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer}
+        .nav-tabs{display:flex;gap:4px;background:var(--bg3);border-radius:8px;padding:4px}
+        .nav-tab{padding:8px 14px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;font-size:12px;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap}
+        .nav-tab:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+        .nav-tab.active{background:var(--accent);color:#fff}
+        .toolbar{display:none;align-items:center;gap:4px;background:var(--bg3);padding:4px 8px;border-radius:8px;margin-left:auto}
+        .toolbar.show{display:flex}
+        .tool-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 8px;background:transparent;border:none;border-radius:6px;color:var(--text2);cursor:pointer;font-size:9px;font-family:inherit}
+        .tool-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+        .tool-btn.active{background:var(--accent);color:#fff}
+        .tool-btn i{font-size:14px}
+        .tool-divider{width:1px;height:24px;background:var(--border);margin:0 4px}
+        .header-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+        .btn{padding:7px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;transition:all .15s}
+        .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+        .btn-ghost:hover{background:var(--bg3);color:var(--text)}
+        .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+        .btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+        .main{display:flex;height:calc(100vh - 57px)}
+        .sidebar{width:160px;background:var(--bg2);padding:12px;overflow-y:auto;display:none;flex-direction:column;border-right:1px solid var(--border)}
+        .sidebar.show{display:flex}
+        .sidebar-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}
+        .page-list{display:flex;flex-direction:column;gap:6px}
+        .page-thumb{background:var(--bg);border-radius:4px;cursor:pointer;border:2px solid transparent;overflow:hidden;position:relative}
+        .page-thumb:hover{border-color:var(--accent)}
+        .page-thumb.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,0.3)}
+        .page-thumb img{width:100%;display:block}
+        .page-thumb-label{padding:3px;text-align:center;font-size:9px;color:var(--text2);background:var(--bg2)}
+        .zoom-controls{display:flex;align-items:center;gap:3px;background:var(--bg);padding:4px;border-radius:4px;margin-top:auto}
+        .zoom-btn{width:24px;height:24px;background:var(--bg3);border:none;border-radius:3px;color:var(--text2);cursor:pointer;font-size:11px}
+        .zoom-btn:hover{background:var(--accent);color:#fff}
+        .zoom-level{font-size:11px;color:var(--text);min-width:40px;text-align:center}
+        .editor{flex:1;overflow:auto;padding:20px;background:#020617;display:flex;justify-content:center;align-items:flex-start}
+        .home-container{width:100%;max-width:1100px;padding:20px}
+        .home-header{text-align:center;margin-bottom:40px}
+        .home-header h1{font-size:36px;margin-bottom:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .home-header p{color:var(--text2);font-size:16px}
+        .upload-hero{text-align:center;padding:50px;border:2px dashed var(--border);border-radius:16px;cursor:pointer;background:rgba(30,41,59,0.5);margin-bottom:40px;transition:all .2s}
+        .upload-hero:hover{border-color:var(--accent);background:rgba(99,102,241,0.1)}
+        .upload-icon{width:80px;height:80px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+        .tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+        .tool-card{background:var(--bg2);border-radius:10px;padding:16px;cursor:pointer;border:1px solid var(--border);text-align:center;transition:all .2s}
+        .tool-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+        .tool-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:18px}
+        .tool-icon.purple{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+        .tool-icon.green{background:linear-gradient(135deg,#10b981,#059669)}
+        .tool-icon.pink{background:linear-gradient(135deg,#ec4899,#db2777)}
+        .tool-icon.blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+        .tool-card h3{font-size:13px;margin-bottom:3px}
+        .tool-card p{font-size:10px;color:var(--muted)}
+        .tool-section{margin-bottom:30px}
+        .tool-section h2{font-size:14px;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+        .tool-section h2 i{color:var(--accent)}
+        .page-container{position:relative;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5);display:none;transform-origin:top center}
+        .page-container.show{display:block}
+        .page-container img{display:block}
+        .text-layer{position:absolute;top:0;left:0;width:100%;height:100%}
+        .text-box{position:absolute;background:transparent;border:1px solid transparent;padding:2px 4px;cursor:text;outline:none;color:transparent;caret-color:#000;font-family:inherit}
+        .text-box:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4)}
+        .text-box:focus{background:#fff;color:#000;border-color:var(--accent);box-shadow:0 4px 20px rgba(99,102,241,.3);z-index:50}
+        .text-box.edited{border:2px solid var(--success);background:#fff;color:#000}
+        .added-el{position:absolute;cursor:move;border:2px solid transparent}
+        .added-el:hover,.added-el.selected{border-color:var(--accent)}
+        .added-el.selected{box-shadow:0 0 0 3px rgba(99,102,241,.3)}
+        .added-text{background:#fff;padding:6px 10px;color:#000;outline:none;min-width:60px;border-radius:2px}
+        .added-image img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+        .resize-handle{position:absolute;width:10px;height:10px;background:var(--accent);border:2px solid #fff;border-radius:2px;bottom:-5px;right:-5px;cursor:se-resize}
+        .el-controls{position:absolute;top:-28px;left:50%;transform:translateX(-50%);display:none;background:var(--bg2);border-radius:5px;padding:3px;gap:3px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+        .added-el.selected .el-controls{display:flex}
+        .el-ctrl{width:24px;height:24px;border:none;border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px}
+        .el-ctrl:hover{background:var(--bg3);color:#fff}
+        .el-ctrl.danger:hover{background:var(--danger)}
+        .draw-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+        .draw-canvas.active{pointer-events:auto;cursor:crosshair}
+        .format-bar{display:none;align-items:center;gap:6px;background:var(--bg2);padding:8px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .format-bar.show{display:flex}
+        .format-bar label{font-size:11px;color:var(--muted)}
+        .format-bar select{padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;background:var(--bg3);color:var(--text);min-width:110px}
+        .color-swatches{display:flex;gap:3px}
+        .color-swatch{width:24px;height:24px;border-radius:5px;border:2px solid transparent;cursor:pointer}
+        .color-swatch.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:1000}
+        .modal-overlay.show{display:flex}
+        .modal{background:var(--bg2);border-radius:14px;width:100%;max-width:420px;overflow:hidden}
+        .modal-header{background:linear-gradient(135deg,#10b981,#059669);padding:24px;text-align:center;position:relative}
+        .modal-close{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
+        .modal-header i{font-size:32px;margin-bottom:12px}
+        .modal-header h2{font-size:18px}
+        .modal-body{padding:24px}
+        .payment-price{text-align:center;padding:20px;background:var(--bg);border-radius:12px;margin-bottom:20px}
+        .payment-price-amount{font-size:42px;font-weight:800;color:var(--text)}
+        .payment-price-note{font-size:12px;color:var(--muted);margin-top:6px}
+        .payment-features{margin-bottom:20px}
+        .payment-feature{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:13px;border-bottom:1px solid var(--border)}
+        .payment-feature:last-child{border-bottom:none}
+        .payment-feature i{color:var(--success);width:20px}
+        #payment-element{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;min-height:120px}
+        .payment-error{color:var(--danger);font-size:12px;text-align:center;margin-top:10px;display:none}
+        .payment-error.show{display:block}
+        .payment-secure{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--muted);margin-top:16px}
+        .payment-secure i{color:var(--success)}
+        .modal-btn{width:100%;padding:14px;margin-top:10px;justify-content:center;font-size:14px;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600}
+        .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
+        .loading.show{display:flex}
+        .spinner{width:44px;height:44px;border:3px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .loading p{margin-top:14px;color:var(--text2)}
+        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg2);padding:10px 18px;border-radius:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--border);z-index:3000;transition:transform .3s;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+        .toast.show{transform:translateX(-50%) translateY(0)}
+        .toast.success{border-color:var(--success)}
+        .toast.success i{color:var(--success)}
+        .toast.error{border-color:var(--danger)}
+        .toast.error i{color:var(--danger)}
+        .signature-pad{border:2px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair}
+        input[type="file"]{display:none}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+        .social-proof{display:flex;justify-content:center;gap:24px;color:var(--muted);font-size:12px;margin-top:30px}
+        .social-proof span{display:flex;align-items:center;gap:5px}
+        .social-proof i{color:var(--accent)}
+        .tool-view{width:100%;max-width:700px;display:none}
+        .tool-view.show{display:block}
+        .dropzone{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px}
+        .dropzone:hover{border-color:var(--accent);background:rgba(99,102,241,.1)}
+        .dropzone i{font-size:40px;color:var(--accent);margin-bottom:12px;display:block}
+        .file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;max-height:300px;overflow-y:auto}
+        .file-item{display:flex;align-items:center;gap:10px;background:var(--bg2);padding:10px 14px;border-radius:8px;border:1px solid var(--border)}
+        .file-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+        .file-info{flex:1;min-width:0}
+        .file-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .file-size{font-size:11px;color:var(--muted)}
+        .action-btns{display:flex;justify-content:center;gap:10px}
+        .options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+        .option-card{padding:14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .2s}
+        .option-card:hover,.option-card.active{border-color:var(--accent);background:rgba(99,102,241,.1)}
+        .option-card h4{font-size:13px;margin-bottom:2px}
+        .option-card p{font-size:10px;color:var(--muted)}
+        .result-box{background:var(--bg2);border-radius:12px;padding:24px;text-align:center;margin-top:20px}
+        .result-stats{display:flex;justify-content:center;gap:30px;margin:20px 0}
+        .result-stat{text-align:center}
+        .result-stat-value{font-size:28px;font-weight:700}
+        .result-stat-value.success{color:var(--success)}
+        .result-stat-label{font-size:11px;color:var(--muted)}
+        @media(max-width:768px){.header .nav-tabs,.header .toolbar,.format-bar,.sidebar{display:none!important}.header{padding:10px 12px}.main{flex-direction:column}.editor{padding:10px}.home-container{padding:16px}.tool-grid{grid-template-columns:repeat(2,1fr)}.modal{max-width:100%;margin:20px}}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo" onclick="location.reload()"><i class="fas fa-file-pdf"></i> Luleit</div>
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-view="home"><i class="fas fa-home"></i> Home</button>
+            <button class="nav-tab" data-view="edit"><i class="fas fa-edit"></i> Edit</button>
+            <button class="nav-tab" data-view="merge"><i class="fas fa-layer-group"></i> Merge</button>
+            <button class="nav-tab" data-view="compress"><i class="fas fa-compress"></i> Compress</button>
+        </nav>
+        <div class="toolbar" id="toolbar">
+            <button class="tool-btn" onclick="undo()" id="undo-btn" disabled><i class="fas fa-undo"></i><span>Undo</span></button>
+            <button class="tool-btn" onclick="redo()" id="redo-btn" disabled><i class="fas fa-redo"></i><span>Redo</span></button>
+            <div class="tool-divider"></div>
+            <button class="tool-btn active" data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
+            <button class="tool-btn" data-tool="text"><i class="fas fa-font"></i><span>Text</span></button>
+            <button class="tool-btn" data-tool="image"><i class="fas fa-image"></i><span>Image</span></button>
+            <button class="tool-btn" data-tool="sign"><i class="fas fa-signature"></i><span>Sign</span></button>
+            <div class="tool-divider"></div>
+            <button class="tool-btn" data-tool="draw"><i class="fas fa-pen"></i><span>Draw</span></button>
+            <button class="tool-btn" data-tool="highlight"><i class="fas fa-highlighter"></i><span>Highlight</span></button>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i> Open</button>
+            <button class="btn btn-success" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i> Download</button>
+        </div>
+    </header>
+    <div class="format-bar" id="format-bar">
+        <label>Font:</label><select id="font-family"></select>
+        <label>Size:</label><select id="font-size"></select>
+        <div style="width:1px;height:24px;background:var(--border);margin:0 6px"></div>
+        <label>Color:</label><div class="color-swatches" id="color-swatches"></div>
+    </div>
+    <main class="main">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-title">Pages</div>
+            <div class="page-list" id="page-list"></div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></button>
+                <span class="zoom-level" id="zoom-level">100%</span>
+                <button class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></button>
+            </div>
+        </aside>
+        <div class="editor" id="editor">
+            <div class="home-container tab-content active" id="home-view">
+                <div class="home-header"><h1>PDF Editor</h1><p>Edit, merge, compress your PDFs</p></div>
+                <div class="upload-hero" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <h2>Edit PDF</h2>
+                    <p style="color:var(--muted);margin-bottom:16px">Drop your PDF here or click to browse</p>
+                    <button class="btn btn-primary"><i class="fas fa-file-pdf"></i> Select PDF</button>
+                </div>
+                <div class="tool-section">
+                    <h2><i class="fas fa-star"></i> Tools</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card" onclick="switchView('merge')"><div class="tool-icon purple"><i class="fas fa-layer-group"></i></div><h3>Merge PDF</h3><p>Combine PDFs</p></div>
+                        <div class="tool-card" onclick="switchView('compress')"><div class="tool-icon green"><i class="fas fa-compress"></i></div><h3>Compress</h3><p>Reduce size</p></div>
+                        <div class="tool-card" onclick="document.getElementById('file-input').click()"><div class="tool-icon pink"><i class="fas fa-edit"></i></div><h3>Edit PDF</h3><p>Edit text</p></div>
+                        <div class="tool-card" onclick="document.getElementById('file-input').click()"><div class="tool-icon blue"><i class="fas fa-signature"></i></div><h3>Sign PDF</h3><p>Add signature</p></div>
+                    </div>
+                </div>
+                <div class="social-proof"><span><i class="fas fa-users"></i> 100,000+ users</span><span><i class="fas fa-shield-alt"></i> Secure</span></div>
+            </div>
+            <div class="tool-view" id="merge-view">
+                <h2 style="text-align:center;margin-bottom:20px"><i class="fas fa-layer-group"></i> Merge PDFs</h2>
+                <div class="dropzone" onclick="document.getElementById('merge-input').click()"><i class="fas fa-plus-circle"></i><h3>Add PDF Files</h3></div>
+                <div class="file-list" id="merge-files"></div>
+                <div class="action-btns" id="merge-actions" style="display:none"><button class="btn btn-primary" onclick="doMerge()"><i class="fas fa-magic"></i> Merge</button></div>
+            </div>
+            <div class="tool-view" id="compress-view">
+                <h2 style="text-align:center;margin-bottom:20px"><i class="fas fa-compress"></i> Compress PDF</h2>
+                <div class="dropzone" onclick="document.getElementById('compress-input').click()"><i class="fas fa-file-archive"></i><h3>Select PDF</h3></div>
+                <div class="options-grid">
+                    <div class="option-card" data-quality="high"><h4>High</h4><p>Best quality</p></div>
+                    <div class="option-card active" data-quality="medium"><h4>Medium</h4><p>Balanced</p></div>
+                    <div class="option-card" data-quality="low"><h4>Maximum</h4><p>Smallest</p></div>
+                </div>
+                <div id="compress-result"></div>
+            </div>
+            <div class="page-container" id="page-container">
+                <img id="page-image" draggable="false">
+                <canvas class="draw-canvas" id="draw-canvas"></canvas>
+                <div class="text-layer" id="text-layer"></div>
+            </div>
+        </div>
+    </main>
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal('payment-modal')"><i class="fas fa-times"></i></button>
+                <i class="fas fa-download"></i><h2>Download Your PDF</h2>
+            </div>
+            <div class="modal-body">
+                <div class="payment-price"><div class="payment-price-amount" id="payment-price">$2.99</div><div class="payment-price-note">One-time payment</div></div>
+                <div class="payment-features">
+                    <div class="payment-feature"><i class="fas fa-check"></i> High-quality PDF with all edits</div>
+                    <div class="payment-feature"><i class="fas fa-check"></i> No watermarks</div>
+                    <div class="payment-feature"><i class="fas fa-check"></i> Instant download</div>
+                </div>
+                <div id="payment-element"></div>
+                <div class="payment-error" id="payment-error"></div>
+                <button class="btn btn-success modal-btn" id="payment-submit" onclick="submitPayment()"><i class="fas fa-lock"></i> Pay <span id="payment-btn-price">$2.99</span></button>
+                <div class="payment-secure"><i class="fas fa-shield-alt"></i> Secured by Stripe</div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="sign-modal">
+        <div class="modal" style="max-width:450px">
+            <div class="modal-header" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                <button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button>
+                <i class="fas fa-signature"></i><h2>Draw Signature</h2>
+            </div>
+            <div class="modal-body">
+                <canvas id="sig-canvas" class="signature-pad" width="400" height="150"></canvas>
+                <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
+                    <button class="btn btn-ghost" onclick="sigCtx.clearRect(0,0,400,150)"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="btn btn-primary" onclick="applySignature()"><i class="fas fa-check"></i> Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Processing...</p></div>
+    <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-text"></span></div>
+    <input type="file" id="file-input" accept=".pdf">
+    <input type="file" id="merge-input" accept=".pdf" multiple>
+    <input type="file" id="compress-input" accept=".pdf">
+    <input type="file" id="image-input" accept="image/*">
+<script>
+let pdfData=null,pdfId=null,currentPage=1,edits={},addedTexts={},addedImages={},drawings={};
+let currentTool='select',drawColor='#000',isDrawing=false,lastX=0,lastY=0,zoomLevel=1;
+let undoStack=[],redoStack=[],selectedEl=null,documentStyle=null;
+let mergeFiles=[];
+let stripe=null,elements=null,paymentElement=null,clientSecret=null,downloadToken=null;
+const sessionStart=Date.now();
+const $=id=>document.getElementById(id);
+const ctx=$('draw-canvas').getContext('2d');
+const sigCtx=$('sig-canvas').getContext('2d');
+let sigDrawing=false;
+
+function showToast(m,t='success'){const e=$('toast');$('toast-text').textContent=m;e.className='toast show '+t;e.querySelector('i').className='fas fa-'+(t==='success'?'check-circle':'exclamation-circle');setTimeout(()=>e.classList.remove('show'),3000)}
+function showLoading(s,t='Processing...'){$('loading').classList.toggle('show',s);$('loading-text').textContent=t}
+function closeModal(id){$(id).classList.remove('show')}
+
+function switchView(v){
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+    document.querySelectorAll('.tab-content,.tool-view').forEach(e=>e.classList.remove('show','active'));
+    if(v==='home'){$('home-view').classList.add('active');$('sidebar').classList.remove('show');$('toolbar').classList.remove('show');$('format-bar').classList.remove('show');$('page-container').classList.remove('show')}
+    else if(v==='edit'&&pdfData){$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show')}
+    else if(['merge','compress'].includes(v)){$(v+'-view').classList.add('show');$('sidebar').classList.remove('show');$('toolbar').classList.remove('show');$('format-bar').classList.remove('show');$('page-container').classList.remove('show')}
+}
+document.querySelectorAll('.nav-tab').forEach(t=>{t.onclick=()=>switchView(t.dataset.view)});
+document.querySelectorAll('.option-card').forEach(c=>{c.onclick=()=>{c.parentElement.querySelectorAll('.option-card').forEach(x=>x.classList.remove('active'));c.classList.add('active')}});
+
+function saveState(){undoStack.push(JSON.stringify({edits,addedTexts,addedImages,drawings}));if(undoStack.length>50)undoStack.shift();redoStack=[];updateBtns()}
+function undo(){if(!undoStack.length)return;redoStack.push(JSON.stringify({edits,addedTexts,addedImages,drawings}));const s=JSON.parse(undoStack.pop());edits=s.edits;addedTexts=s.addedTexts;addedImages=s.addedImages;drawings=s.drawings;renderPage(currentPage);updateBtns()}
+function redo(){if(!redoStack.length)return;undoStack.push(JSON.stringify({edits,addedTexts,addedImages,drawings}));const s=JSON.parse(redoStack.pop());edits=s.edits;addedTexts=s.addedTexts;addedImages=s.addedImages;drawings=s.drawings;renderPage(currentPage);updateBtns()}
+function updateBtns(){$('undo-btn').disabled=!undoStack.length;$('redo-btn').disabled=!redoStack.length;$('download-btn').disabled=!pdfData}
+function zoomIn(){zoomLevel=Math.min(zoomLevel+.25,3);$('page-container').style.transform=`scale(${zoomLevel})`;$('zoom-level').textContent=Math.round(zoomLevel*100)+'%'}
+function zoomOut(){zoomLevel=Math.max(zoomLevel-.25,.5);$('page-container').style.transform=`scale(${zoomLevel})`;$('zoom-level').textContent=Math.round(zoomLevel*100)+'%'}
+
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.tool-btn[data-tool]').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentTool=b.dataset.tool;$('draw-canvas').classList.toggle('active',['draw','highlight'].includes(currentTool));if(currentTool==='text')showToast('Click to add text');if(currentTool==='image')$('image-input').click();if(currentTool==='sign')$('sign-modal').classList.add('show');deselectEl()}});
+
+function setupFormatBar(s){documentStyle=s;const fs=$('font-family');fs.innerHTML='';['Arial','Times New Roman','Courier New','Georgia'].forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fs.appendChild(o)});const ss=$('font-size');ss.innerHTML='';[8,10,12,14,16,18,20,24,28,32].forEach(z=>{const o=document.createElement('option');o.value=z;o.textContent=z+'px';ss.appendChild(o)});ss.value=12;const cs=$('color-swatches');cs.innerHTML='';['#000000','#ef4444','#f59e0b','#10b981','#3b82f6'].forEach((c,i)=>{const d=document.createElement('div');d.className='color-swatch'+(i===0?' active':'');d.style.background=c;d.onclick=()=>{document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));d.classList.add('active');drawColor=c};cs.appendChild(d)})}
+
+$('file-input').onchange=async e=>{const f=e.target.files[0];if(f)await loadPDF(f)};
+async function loadPDF(f){showLoading(true,'Loading PDF...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;edits={};addedTexts={};addedImages={};drawings={};undoStack=[];redoStack=[];setupFormatBar(pdfData.documentStyle||{});switchView('edit');$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Loaded: ${pdfData.pageCount} pages`)}catch(e){showToast('Error: '+e.message,'error')}showLoading(false)}
+
+function renderPageList(){const l=$('page-list');l.innerHTML='';pdfData.pages.forEach((p,i)=>{const d=document.createElement('div');d.className='page-thumb'+(i+1===currentPage?' active':'');d.innerHTML=`<img src="${p.image}" draggable="false"><div class="page-thumb-label">Page ${i+1}</div>`;d.onclick=()=>renderPage(i+1);l.appendChild(d)})}
+
+function renderPage(n){currentPage=n;const p=pdfData.pages[n-1];$('page-image').src=p.image;$('draw-canvas').width=p.width;$('draw-canvas').height=p.height;if(drawings[n]){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=drawings[n]}else ctx.clearRect(0,0,$('draw-canvas').width,$('draw-canvas').height);document.querySelectorAll('.page-thumb').forEach((e,i)=>e.classList.toggle('active',i+1===n));renderTextLayer(p);deselectEl()}
+
+function renderTextLayer(p){const l=$('text-layer');l.innerHTML='';p.textBlocks.forEach((b,i)=>{const k=`${currentPage}-${i}`,e=edits[k];const inp=document.createElement('input');inp.type='text';inp.className='text-box'+(e?' edited':'');inp.value=e?e.newText:b.text;inp.style.cssText=`left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};`;inp.dataset.key=k;inp.dataset.orig=b.text;inp.dataset.block=JSON.stringify(b);inp.onfocus=function(){this.style.width=Math.max(b.width,300)+'px'};inp.onblur=function(){const nv=this.value,ov=this.dataset.orig;this.style.width=b.width+'px';if(nv!==ov){saveState();edits[k]={pageNum:currentPage,originalText:ov,newText:nv,originalX:b.originalX,originalY:b.originalY,originalWidth:b.originalWidth,originalHeight:b.originalHeight,originalFontSize:b.originalFontSize};this.classList.add('edited');showToast('Saved')}else if(edits[k]){delete edits[k];this.classList.remove('edited')}};inp.onkeydown=function(e){if(e.key==='Enter')this.blur()};l.appendChild(inp)});(addedTexts[currentPage]||[]).forEach((t,i)=>createAddedText(t,i));(addedImages[currentPage]||[]).forEach((m,i)=>createAddedImage(m,i));l.onclick=e=>{if(e.target===l&&currentTool==='text'){saveState();if(!addedTexts[currentPage])addedTexts[currentPage]=[];const r=l.getBoundingClientRect();addedTexts[currentPage].push({x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel,text:'Text',fontFamily:'Arial',fontSize:14,color:'#000'});renderPage(currentPage);document.querySelector('.tool-btn[data-tool="select"]').click()}}}
+
+function createAddedText(t,i){const e=document.createElement('div');e.className='added-el added-text';e.contentEditable=true;e.innerText=t.text;e.dataset.idx=i;e.dataset.type='text';e.style.cssText=`left:${t.x}px;top:${t.y}px;font-family:${t.fontFamily};font-size:${t.fontSize}px;color:${t.color||'#000'};`;e.innerHTML+=`<div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedTexts[currentPage]?.[i]){addedTexts[currentPage][i].x=parseFloat(e.style.left);addedTexts[currentPage][i].y=parseFloat(e.style.top)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};e.onblur=()=>{if(addedTexts[currentPage]?.[i])addedTexts[currentPage][i].text=e.innerText.replace(/<[^>]*>/g,'')};$('text-layer').appendChild(e)}
+
+function createAddedImage(m,i){const e=document.createElement('div');e.className='added-el added-image';e.dataset.idx=i;e.dataset.type='image';e.style.cssText=`left:${m.x}px;top:${m.y}px;width:${m.width}px;height:${m.height}px;`;e.innerHTML=`<img src="${m.src}"><div class="resize-handle"></div><div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedImages[currentPage]?.[i]){addedImages[currentPage][i].x=parseFloat(e.style.left);addedImages[currentPage][i].y=parseFloat(e.style.top)}});makeResize(e,()=>{if(addedImages[currentPage]?.[i]){addedImages[currentPage][i].width=parseFloat(e.style.width);addedImages[currentPage][i].height=parseFloat(e.style.height)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};$('text-layer').appendChild(e)}
+
+function makeDrag(el,cb){let dr=false,sx,sy,ox,oy;el.onmousedown=e=>{if(e.target.classList.contains('resize-handle')||e.target.closest('.el-controls'))return;if(el.contentEditable==='true'&&document.activeElement===el)return;dr=true;sx=e.clientX;sy=e.clientY;ox=parseFloat(el.style.left);oy=parseFloat(el.style.top);e.preventDefault()};document.addEventListener('mousemove',e=>{if(!dr)return;el.style.left=(ox+(e.clientX-sx)/zoomLevel)+'px';el.style.top=(oy+(e.clientY-sy)/zoomLevel)+'px'});document.addEventListener('mouseup',()=>{if(dr){dr=false;cb?.()}})}
+function makeResize(el,cb){const h=el.querySelector('.resize-handle');if(!h)return;let rs=false,sx,sy,ow,oh;h.onmousedown=e=>{rs=true;sx=e.clientX;sy=e.clientY;ow=parseFloat(el.style.width);oh=parseFloat(el.style.height);e.stopPropagation();e.preventDefault()};document.addEventListener('mousemove',e=>{if(!rs)return;el.style.width=Math.max(50,ow+(e.clientX-sx)/zoomLevel)+'px';el.style.height=Math.max(50,oh+(e.clientY-sy)/zoomLevel)+'px'});document.addEventListener('mouseup',()=>{if(rs){rs=false;cb?.()}})}
+function selectEl(el){deselectEl();selectedEl=el;el.classList.add('selected')}
+function deselectEl(){if(selectedEl)selectedEl.classList.remove('selected');selectedEl=null}
+function deleteEl(el){const i=parseInt(el.dataset.idx),t=el.dataset.type;saveState();if(t==='text')addedTexts[currentPage]?.splice(i,1);else if(t==='image')addedImages[currentPage]?.splice(i,1);renderPage(currentPage);showToast('Deleted')}
+
+$('image-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{saveState();if(!addedImages[currentPage])addedImages[currentPage]=[];addedImages[currentPage].push({x:100,y:100,width:200,height:200,src:ev.target.result});renderPage(currentPage);showToast('Image added')};r.readAsDataURL(f);document.querySelector('.tool-btn[data-tool="select"]').click()};
+
+$('draw-canvas').onmousedown=e=>{if(!['draw','highlight'].includes(currentTool))return;saveState();isDrawing=true;const r=$('draw-canvas').getBoundingClientRect();lastX=(e.clientX-r.left)*($('draw-canvas').width/r.width);lastY=(e.clientY-r.top)*($('draw-canvas').height/r.height)};
+$('draw-canvas').onmousemove=e=>{if(!isDrawing)return;const r=$('draw-canvas').getBoundingClientRect(),x=(e.clientX-r.left)*($('draw-canvas').width/r.width),y=(e.clientY-r.top)*($('draw-canvas').height/r.height);ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.lineCap='round';ctx.strokeStyle=currentTool==='highlight'?'rgba(255,255,0,.4)':drawColor;ctx.lineWidth=currentTool==='highlight'?20:3;ctx.stroke();lastX=x;lastY=y};
+$('draw-canvas').onmouseup=$('draw-canvas').onmouseleave=()=>{if(isDrawing){isDrawing=false;drawings[currentPage]=$('draw-canvas').toDataURL()}};
+
+$('sig-canvas').onmousedown=e=>{sigDrawing=true;const r=$('sig-canvas').getBoundingClientRect();sigCtx.beginPath();sigCtx.moveTo(e.clientX-r.left,e.clientY-r.top)};
+$('sig-canvas').onmousemove=e=>{if(!sigDrawing)return;const r=$('sig-canvas').getBoundingClientRect();sigCtx.lineTo(e.clientX-r.left,e.clientY-r.top);sigCtx.stroke()};
+$('sig-canvas').onmouseup=$('sig-canvas').onmouseleave=()=>{sigDrawing=false};
+function applySignature(){const d=$('sig-canvas').toDataURL();saveState();if(!addedImages[currentPage])addedImages[currentPage]=[];addedImages[currentPage].push({x:100,y:100,width:150,height:50,src:d});renderPage(currentPage);closeModal('sign-modal');sigCtx.clearRect(0,0,400,150);showToast('Signature added')}
+
+$('merge-input').onchange=e=>{Array.from(e.target.files).forEach(f=>{if(mergeFiles.length<20)mergeFiles.push(f)});renderMergeFiles()};
+function renderMergeFiles(){$('merge-files').innerHTML='';mergeFiles.forEach((f,i)=>{$('merge-files').innerHTML+=`<div class="file-item"><div class="file-icon"><i class="fas fa-file-pdf"></i></div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div><button class="btn btn-ghost" onclick="mergeFiles.splice(${i},1);renderMergeFiles()"><i class="fas fa-times"></i></button></div>`});$('merge-actions').style.display=mergeFiles.length>=2?'flex':'none'}
+async function doMerge(){if(mergeFiles.length<2)return showToast('Need 2+ files','error');showLoading(true,'Merging...');const fd=new FormData();mergeFiles.forEach(f=>fd.append('files',f));try{const r=await fetch('/merge-pdfs',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;mergeFiles=[];renderMergeFiles();switchView('edit');setupFormatBar({});$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Merged! ${pdfData.pageCount} pages`)}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('compress-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const q=document.querySelector('#compress-view .option-card.active')?.dataset.quality||'medium';showLoading(true,'Compressing...');const fd=new FormData();fd.append('file',f);fd.append('quality',q);try{const r=await fetch('/compress-pdf',{method:'POST',body:fd});const d=await r.json();$('compress-result').innerHTML=`<div class="result-box"><h3 style="color:var(--success)"><i class="fas fa-check-circle"></i> Compressed!</h3><div class="result-stats"><div class="result-stat"><div class="result-stat-value">${d.originalSize}</div><div class="result-stat-label">Original</div></div><div style="font-size:24px;color:var(--success)">→</div><div class="result-stat"><div class="result-stat-value success">${d.compressedSize}</div><div class="result-stat-label">Compressed</div></div></div><button class="btn btn-success" onclick="location.href='/download-direct/${d.pdfId}'"><i class="fas fa-download"></i> Download</button></div>`;showToast('Compressed!')}catch(e){showToast('Error','error')}showLoading(false)};
+
+async function handleDownload(){
+    if(!pdfData)return showToast('No PDF loaded','error');
+    showLoading(true,'Preparing...');
+    try{
+        const configR=await fetch('/api/stripe-config');
+        const config=await configR.json();
+        console.log('Stripe config:',config);
+        if(!config.enabled||!config.publishable_key){
+            console.log('Stripe not enabled, free download');
+            await doFreeDownload();
+            return;
+        }
+        if(!stripe)stripe=Stripe(config.publishable_key);
+        const pricingR=await fetch('/api/pricing');
+        const pricing=await pricingR.json();
+        console.log('Pricing:',pricing);
+        $('payment-price').textContent=pricing.display_price;
+        $('payment-btn-price').textContent=pricing.display_price;
+        const fd=new FormData();
+        fd.append('pdf_id',pdfId);
+        fd.append('edit_count',Object.keys(edits).length.toString());
+        fd.append('page_count',(pdfData?.pageCount||1).toString());
+        fd.append('time_spent_seconds',Math.floor((Date.now()-sessionStart)/1000).toString());
+        const intentR=await fetch('/api/create-payment',{method:'POST',body:fd});
+        if(!intentR.ok){const err=await intentR.text();console.error('Payment error:',err);throw new Error('Payment setup failed');}
+        const intentData=await intentR.json();
+        console.log('Payment intent:',intentData);
+        if(!intentData.clientSecret)throw new Error('Missing client secret');
+        clientSecret=intentData.clientSecret;
+        $('payment-price').textContent=intentData.display_price;
+        $('payment-btn-price').textContent=intentData.display_price;
+        $('payment-element').innerHTML='';
+        elements=stripe.elements({clientSecret:clientSecret,appearance:{theme:'night',variables:{colorPrimary:'#6366f1',colorBackground:'#1e293b',colorText:'#ffffff',colorDanger:'#ef4444',fontFamily:'Inter, sans-serif',borderRadius:'8px'}}});
+        paymentElement=elements.create('payment',{layout:'tabs'});
+        paymentElement.mount('#payment-element');
+        showLoading(false);
+        $('payment-modal').classList.add('show');
+    }catch(e){console.error('handleDownload error:',e);showLoading(false);showToast('Error: '+e.message,'error');}
+}
+
+async function submitPayment(){
+    if(!stripe||!elements){showToast('Payment not ready','error');return;}
+    const btn=$('payment-submit');
+    btn.disabled=true;
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Processing...';
+    $('payment-error').classList.remove('show');
+    try{
+        const{error,paymentIntent}=await stripe.confirmPayment({elements,confirmParams:{return_url:window.location.href},redirect:'if_required'});
+        if(error){$('payment-error').textContent=error.message;$('payment-error').classList.add('show');btn.disabled=false;btn.innerHTML='<i class="fas fa-lock"></i> Pay '+$('payment-btn-price').textContent;return;}
+        if(paymentIntent&&paymentIntent.status==='succeeded'){
+            const fd=new FormData();fd.append('payment_intent_id',paymentIntent.id);
+            const r=await fetch('/api/verify-payment',{method:'POST',body:fd});
+            const data=await r.json();
+            if(data.success){downloadToken=data.download_token;closeModal('payment-modal');await doTokenDownload();}
+            else throw new Error('Verification failed');
+        }
+    }catch(e){$('payment-error').textContent=e.message||'Payment failed';$('payment-error').classList.add('show');}
+    btn.disabled=false;btn.innerHTML='<i class="fas fa-lock"></i> Pay '+$('payment-btn-price').textContent;
+}
+
+async function doTokenDownload(){
+    showLoading(true,'Downloading...');
+    const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('edits',JSON.stringify(Object.values(edits)));fd.append('token',downloadToken);
+    try{const r=await fetch('/save-and-download',{method:'POST',body:fd});if(!r.ok)throw new Error('Download failed');const blob=await r.blob();const url=window.URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='luleit-edited.pdf';document.body.appendChild(a);a.click();window.URL.revokeObjectURL(url);a.remove();showToast('Downloaded!');}catch(e){showToast('Download failed','error');}
+    showLoading(false);
+}
+
+async function doFreeDownload(){
+    showLoading(true,'Downloading...');
+    const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('edits',JSON.stringify(Object.values(edits)));
+    try{const r=await fetch('/save-and-download',{method:'POST',body:fd});if(!r.ok)throw new Error('Download failed');const blob=await r.blob();const url=window.URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='luleit-edited.pdf';document.body.appendChild(a);a.click();window.URL.revokeObjectURL(url);a.remove();showToast('Downloaded!');}catch(e){showToast('Download failed: '+e.message,'error');}
+    showLoading(false);
+}
+
+document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}if(e.key==='Escape')deselectEl()};
+document.onclick=e=>{if(!e.target.closest('.added-el,.format-bar'))deselectEl()};
+document.ondragover=e=>e.preventDefault();
+document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')loadPDF(f)};
+console.log('Luleit loaded');
+</script>
+</body>
+</html>
