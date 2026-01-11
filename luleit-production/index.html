@@ -3,17 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luleit - PDF Editor | All-in-One PDF Tools</title>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XLD83G2Q6"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-7XLD83G2Q6');
-    </script>
-    <!-- Stripe -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <title>Luleit - Free PDF Editor | All-in-One PDF Tools</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -85,49 +75,12 @@
         .tool-section h2 i{color:var(--accent)}
         .page-container{position:relative;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5);display:none;transform-origin:top center}
         .page-container.show{display:block}
-        .page-container img{display:block;user-select:none;-webkit-user-drag:none}
-        .text-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-        .text-box{position:absolute;background:transparent;border:2px solid transparent;padding:2px 4px;cursor:pointer;outline:none;color:transparent;font-family:inherit;pointer-events:auto;border-radius:2px;transition:background .15s,border-color .15s;white-space:pre-wrap;word-break:break-word;overflow:hidden;box-sizing:border-box}
-        .text-box:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.4)}
-        .text-box.edited{border-color:var(--success);background:rgba(16,185,129,.08);color:#000}
-        .text-box.editing{background:#fff !important;color:#000 !important;border-color:var(--accent) !important;box-shadow:0 4px 20px rgba(99,102,241,.4);z-index:1000;pointer-events:auto;overflow:visible;min-width:100px}
-        
-        /* Mobile text edit popup - appears when tapping text on mobile */
-        .text-edit-popup{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:2px solid var(--accent);padding:16px;z-index:2000;display:none;flex-direction:column;gap:12px;box-shadow:0 -10px 40px rgba(0,0,0,.5);border-radius:16px 16px 0 0;max-height:50vh}
-        .text-edit-popup.show{display:flex}
-        .text-edit-popup-header{display:flex;justify-content:space-between;align-items:center}
-        .text-edit-popup-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
-        .text-edit-popup-title i{color:var(--accent)}
-        .text-edit-popup-close{background:var(--bg3);border:none;color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
-        .text-edit-popup textarea{width:100%;padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:16px;font-family:inherit;resize:none;min-height:80px}
-        .text-edit-popup textarea:focus{border-color:var(--accent);outline:none}
-        .text-edit-popup-original{font-size:11px;color:var(--text2);padding:8px;background:var(--bg);border-radius:6px;margin-bottom:4px}
-        .text-edit-popup-original strong{color:var(--text)}
-        .text-edit-popup-actions{display:flex;gap:8px}
-        .text-edit-popup-actions .btn{flex:1;justify-content:center;padding:12px}
-        
-        /* Improved signature modal with tabs */
-        .sig-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--bg3);border-radius:8px;padding:4px}
-        .sig-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;font-size:13px;font-family:inherit;font-weight:500}
-        .sig-tab.active{background:var(--accent);color:#fff}
-        .sig-tab-content{display:none}
-        .sig-tab-content.active{display:block}
-        .sig-text-input{width:100%;padding:14px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:18px;text-align:center;margin-bottom:12px}
-        .sig-text-input:focus{border-color:var(--accent);outline:none}
-        .sig-font-options{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
-        .sig-font-option{padding:12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;text-align:center;font-size:20px;transition:all .15s}
-        .sig-font-option:hover{border-color:var(--accent)}
-        .sig-font-option.active{border-color:var(--accent);background:rgba(99,102,241,.1)}
-        .sig-font-option.script{font-family:'Brush Script MT',cursive}
-        .sig-font-option.elegant{font-family:'Georgia',serif;font-style:italic}
-        .sig-font-option.bold{font-family:'Arial Black',sans-serif}
-        .sig-font-option.classic{font-family:'Times New Roman',serif}
-        .sig-preview{background:#fff;border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;min-height:60px;display:flex;align-items:center;justify-content:center}
-        .sig-preview-text{font-size:32px;color:#000}
-        .sig-color-options{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
-        .sig-color{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent}
-        .sig-color.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
-        
+        .page-container img{display:block}
+        .text-layer{position:absolute;top:0;left:0;width:100%;height:100%}
+        .text-box{position:absolute;background:transparent;border:1px solid transparent;padding:2px 4px;cursor:text;outline:none;color:transparent;caret-color:#000;font-family:inherit}
+        .text-box:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4)}
+        .text-box:focus{background:#fff;color:#000;border-color:var(--accent);box-shadow:0 4px 20px rgba(99,102,241,.3);z-index:50}
+        .text-box.edited{border:2px solid var(--success);background:#fff;color:#000}
         .added-el{position:absolute;cursor:move;border:2px solid transparent}
         .added-el:hover,.added-el.selected{border-color:var(--accent)}
         .added-el.selected{box-shadow:0 0 0 3px rgba(99,102,241,.3)}
@@ -205,49 +158,11 @@
         .feature-item i{color:var(--success)}
         .modal-btn{width:100%;padding:11px;margin-top:6px;justify-content:center;font-size:13px}
         .badge{background:linear-gradient(135deg,#f59e0b,#ef4444);padding:5px 10px;border-radius:16px;font-size:10px;font-weight:600;display:inline-block;margin-bottom:10px}
-        
-        /* Payment Modal Styles */
-        .payment-modal{max-width:420px}
-        .payment-modal .modal-header{background:linear-gradient(135deg,#10b981,#059669)}
-        .payment-price{text-align:center;padding:16px;background:var(--bg);border-radius:10px;margin-bottom:16px}
-        .payment-price-amount{font-size:36px;font-weight:800;color:var(--text)}
-        .payment-price-note{font-size:11px;color:var(--muted);margin-top:4px}
-        .payment-features{margin-bottom:16px}
-        .payment-feature{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;border-bottom:1px solid var(--border)}
-        .payment-feature:last-child{border-bottom:none}
-        .payment-feature i{color:var(--success);width:20px}
-        #payment-element{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px}
-        .payment-error{color:var(--danger);font-size:12px;text-align:center;margin-top:8px;display:none}
-        .payment-error.show{display:block}
-        .payment-secure{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--muted);margin-top:12px}
-        .payment-secure i{color:var(--success)}
-        .payment-methods{display:flex;justify-content:center;gap:8px;margin-top:12px}
-        .payment-methods img{height:24px;opacity:0.7}
-        
-        .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.98);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
+        .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
         .loading.show{display:flex}
-        .loading-content{text-align:center;max-width:320px;padding:20px}
-        .loading-icon{width:80px;height:80px;margin:0 auto 24px;position:relative}
-        .loading-icon-bg{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;animation:pulse-glow 2s ease-in-out infinite}
-        .loading-icon i{font-size:32px;color:#fff}
-        @keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(99,102,241,.4)}50%{box-shadow:0 0 40px rgba(99,102,241,.8)}}
-        .loading-spinner{position:absolute;top:-4px;left:-4px;width:88px;height:88px;border:3px solid transparent;border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
-        .loading-title{font-size:18px;font-weight:600;margin-bottom:8px}
-        .loading-text{color:var(--text2);font-size:14px;margin-bottom:20px;min-height:20px}
-        .loading-progress{background:var(--bg3);border-radius:10px;height:6px;overflow:hidden;margin-bottom:12px}
-        .loading-progress-bar{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6,#d946ef);border-radius:10px;width:0%;transition:width .3s ease;animation:progress-shimmer 1.5s ease-in-out infinite}
-        @keyframes progress-shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-        .loading-steps{text-align:left;margin-top:20px}
-        .loading-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text2);opacity:0.4;transition:all .3s}
-        .loading-step.active{opacity:1;color:var(--text)}
-        .loading-step.done{opacity:1;color:var(--success)}
-        .loading-step-icon{width:24px;height:24px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
-        .loading-step.active .loading-step-icon{background:var(--accent);color:#fff;animation:pulse 1s ease-in-out infinite}
-        .loading-step.done .loading-step-icon{background:var(--success);color:#fff}
-        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-        .loading-tip{margin-top:24px;padding:12px;background:var(--bg2);border-radius:8px;font-size:11px;color:var(--text2)}
-        .loading-tip i{color:var(--accent);margin-right:6px}
+        .spinner{width:44px;height:44px;border:3px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
+        .loading p{margin-top:14px;color:var(--text2)}
         .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg2);padding:10px 18px;border-radius:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--border);z-index:3000;transition:transform .3s;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
         .toast.show{transform:translateX(-50%) translateY(0)}
         .toast.success{border-color:var(--success)}
@@ -267,299 +182,10 @@
         .preview-item.selected{border-color:var(--success)}
         .preview-item img{width:100%;display:block}
         .preview-item-label{padding:4px;text-align:center;font-size:10px;background:var(--bg2)}
-        
-        /* ===== MOBILE RESPONSIVE - LEFT TOOLBAR LAYOUT ===== */
-        @media (max-width: 768px) {
-            /* Hide desktop elements on mobile */
-            .header .nav-tabs{display:none}
-            .header .toolbar{display:none !important}
-            .format-bar{display:none !important}
-            .shape-bar{display:none !important}
-            .sidebar{display:none !important}
-            
-            /* Simplified header */
-            .header{padding:10px 12px;gap:10px}
-            .logo{font-size:18px}
-            .header-right{gap:8px}
-            .header-right .btn{padding:10px 12px;font-size:12px}
-            .header-right .btn i{font-size:14px}
-            
-            /* Main area - full height scrollable */
-            .main{
-                flex-direction:column;
-                height:calc(100vh - 54px);
-                overflow:hidden;
-            }
-            
-            /* Editor takes full space */
-            .editor{
-                flex:1;
-                padding:0;
-                overflow:auto;
-                -webkit-overflow-scrolling:touch;
-                display:flex;
-                flex-direction:column;
-            }
-            
-            /* Home page scrollable */
-            .home-container{
-                padding:16px;
-                overflow-y:auto;
-                height:100%;
-            }
-            .home-header{margin-bottom:24px}
-            .home-header h1{font-size:26px}
-            .home-header p{font-size:14px}
-            .upload-hero{padding:32px 20px;margin-bottom:24px}
-            .upload-icon{width:64px;height:64px;font-size:26px;margin-bottom:16px}
-            .upload-hero h2{font-size:20px;margin-bottom:8px}
-            .tool-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-            .tool-card{padding:14px}
-            .tool-icon{width:40px;height:40px;font-size:16px;margin-bottom:8px}
-            .tool-card h3{font-size:13px}
-            .tool-card p{font-size:10px}
-            .tool-section{margin-bottom:24px}
-            .tool-section h2{font-size:13px;margin-bottom:10px}
-            .social-proof{flex-direction:column;gap:8px;align-items:center;font-size:11px}
-            
-            /* Tool views scrollable */
-            .tool-view{
-                padding:16px;
-                overflow-y:auto;
-                height:100%;
-            }
-            .tool-view-header{margin-bottom:20px}
-            .tool-view-header h2{font-size:22px}
-            .tool-view-header p{font-size:13px}
-            .dropzone{padding:32px 20px}
-            .dropzone i{font-size:36px;margin-bottom:10px}
-            .dropzone h3{font-size:16px}
-            .options-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-            .option-card{padding:12px 8px}
-            .option-card h4{font-size:12px}
-            .file-list{max-height:200px}
-            .file-item{padding:10px 12px}
-            .result-box{padding:20px}
-            .preview-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-            
-            /* PDF Editor Mobile Layout */
-            .page-container{
-                margin:0 auto;
-                max-width:100%;
-                touch-action:pan-x pan-y pinch-zoom;
-            }
-            .page-container.show{
-                display:block;
-            }
-            .page-container img{
-                width:100%;
-                height:auto;
-            }
-            
-            /* Text editing */
-            .text-box{
-                font-size:12px !important;
-                min-height:20px;
-            }
-            .added-el{min-width:50px;min-height:50px}
-            .added-text{padding:10px;font-size:16px;min-width:100px}
-            .el-controls{top:-36px}
-            .el-ctrl{width:32px;height:32px;font-size:16px}
-            .resize-handle{width:24px;height:24px;bottom:-12px;right:-12px}
-            
-            /* Modals */
-            .modal-overlay{padding:20px;align-items:center}
-            .modal{max-width:100%;margin:0;border-radius:16px}
-            .modal-header{padding:20px}
-            .modal-body{padding:20px}
-            .signature-pad{width:100% !important;height:150px !important;touch-action:none}
-            
-            /* Toast */
-            .toast{bottom:100px;left:16px;right:16px;transform:translateX(0) translateY(100px)}
-            .toast.show{transform:translateX(0) translateY(0)}
-        }
-        
-        /* ===== MOBILE LEFT TOOLBAR ===== */
-        .mobile-left-toolbar{
-            display:none;
-            position:fixed;
-            left:0;
-            top:54px;
-            bottom:0;
-            width:56px;
-            background:var(--bg2);
-            border-right:1px solid var(--border);
-            flex-direction:column;
-            padding:8px 4px;
-            gap:4px;
-            z-index:90;
-            overflow-y:auto;
-        }
-        .mobile-left-toolbar.show{display:flex}
-        .mobile-tool{
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:3px;
-            padding:10px 4px;
-            background:transparent;
-            border:none;
-            border-radius:8px;
-            color:var(--text2);
-            cursor:pointer;
-            font-size:9px;
-            font-family:inherit;
-        }
-        .mobile-tool:active{background:var(--bg3)}
-        .mobile-tool.active{background:var(--accent);color:#fff}
-        .mobile-tool i{font-size:18px}
-        .mobile-tool span{display:block;text-align:center;line-height:1.1}
-        .mobile-tool-divider{
-            height:1px;
-            background:var(--border);
-            margin:4px 0;
-        }
-        
-        /* Mobile bottom bar for pages/zoom */
-        .mobile-bottom-bar{
-            display:none;
-            position:fixed;
-            bottom:0;
-            left:56px;
-            right:0;
-            background:var(--bg2);
-            border-top:1px solid var(--border);
-            padding:8px 12px;
-            z-index:90;
-            align-items:center;
-            justify-content:space-between;
-            gap:10px;
-        }
-        .mobile-bottom-bar.show{display:flex}
-        .mobile-page-nav{
-            display:flex;
-            align-items:center;
-            gap:8px;
-        }
-        .mobile-page-btn{
-            width:36px;
-            height:36px;
-            border-radius:8px;
-            border:none;
-            background:var(--bg3);
-            color:var(--text);
-            cursor:pointer;
-            font-size:14px;
-        }
-        .mobile-page-btn:active{background:var(--accent)}
-        .mobile-page-btn:disabled{opacity:0.3}
-        .mobile-page-info{
-            font-size:12px;
-            color:var(--text2);
-            min-width:60px;
-            text-align:center;
-        }
-        .mobile-zoom-controls{
-            display:flex;
-            align-items:center;
-            gap:6px;
-        }
-        .mobile-zoom-btn{
-            width:32px;
-            height:32px;
-            border-radius:6px;
-            border:none;
-            background:var(--bg3);
-            color:var(--text2);
-            cursor:pointer;
-        }
-        .mobile-zoom-btn:active{background:var(--accent);color:#fff}
-        .mobile-zoom-level{font-size:11px;color:var(--text2);min-width:36px;text-align:center}
-        
-        /* Mobile menu button */
-        .mobile-menu-btn{
-            display:none;
-            width:40px;
-            height:40px;
-            border-radius:8px;
-            border:none;
-            background:var(--bg3);
-            color:var(--text);
-            cursor:pointer;
-            font-size:18px;
-        }
-        
-        /* Mobile nav drawer */
-        .mobile-nav-drawer{
-            display:none;
-            position:fixed;
-            top:54px;
-            left:0;
-            right:0;
-            background:var(--bg2);
-            border-bottom:1px solid var(--border);
-            padding:8px;
-            z-index:95;
-            flex-direction:column;
-            gap:4px;
-        }
-        .mobile-nav-drawer.show{display:flex}
-        .mobile-nav-item{
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:14px 16px;
-            background:transparent;
-            border:none;
-            border-radius:8px;
-            color:var(--text2);
-            cursor:pointer;
-            font-size:14px;
-            font-family:inherit;
-            text-align:left;
-        }
-        .mobile-nav-item:active{background:var(--bg3)}
-        .mobile-nav-item.active{background:var(--accent);color:#fff}
-        .mobile-nav-item i{width:20px;font-size:16px}
-        
-        @media (max-width: 768px) {
-            .mobile-menu-btn{display:flex;align-items:center;justify-content:center}
-            
-            /* Adjust editor when mobile toolbar is visible */
-            .editor.mobile-edit-mode{
-                margin-left:56px;
-                margin-bottom:60px;
-                width:calc(100% - 56px);
-            }
-        }
-        
-        /* Extra small screens */
-        @media (max-width: 400px) {
-            .logo{font-size:16px}
-            .header-right .btn span{display:none}
-            .tool-grid{gap:8px}
-            .tool-card{padding:12px}
-            .home-header h1{font-size:22px}
-            .upload-hero{padding:24px 16px}
-            .mobile-left-toolbar{width:50px}
-            .mobile-tool{padding:8px 2px;font-size:8px}
-            .mobile-tool i{font-size:16px}
-            .mobile-bottom-bar{left:50px}
-            .editor.mobile-edit-mode{margin-left:50px;width:calc(100% - 50px)}
-        }
-        
-        /* Touch improvements */
-        @media (pointer: coarse) {
-            .mobile-tool,.mobile-page-btn,.mobile-zoom-btn,.mobile-nav-item{
-                min-height:44px;
-            }
-        }
     </style>
 </head>
 <body>
     <header class="header">
-        <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
         <div class="logo" onclick="location.reload()"><i class="fas fa-file-pdf"></i> Luleit</div>
         <nav class="nav-tabs" id="nav-tabs">
             <button class="nav-tab active" data-view="home"><i class="fas fa-home"></i> Home</button>
@@ -585,49 +211,10 @@
             <button class="tool-btn" data-tool="erase"><i class="fas fa-eraser"></i><span>Erase</span></button>
         </div>
         <div class="header-right">
-            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i> <span>Open</span></button>
-            <button class="btn btn-success" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i> <span>Download</span></button>
+            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i> Open</button>
+            <button class="btn btn-primary" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i> Download</button>
         </div>
     </header>
-    
-    <!-- Mobile Navigation Drawer -->
-    <div class="mobile-nav-drawer" id="mobile-nav-drawer">
-        <button class="mobile-nav-item active" data-view="home" onclick="mobileNavTo('home')"><i class="fas fa-home"></i> Home</button>
-        <button class="mobile-nav-item" data-view="edit" onclick="mobileNavTo('edit')"><i class="fas fa-edit"></i> Edit PDF</button>
-        <button class="mobile-nav-item" data-view="merge" onclick="mobileNavTo('merge')"><i class="fas fa-layer-group"></i> Merge</button>
-        <button class="mobile-nav-item" data-view="split" onclick="mobileNavTo('split')"><i class="fas fa-cut"></i> Split</button>
-        <button class="mobile-nav-item" data-view="compress" onclick="mobileNavTo('compress')"><i class="fas fa-compress"></i> Compress</button>
-        <button class="mobile-nav-item" data-view="convert" onclick="mobileNavTo('convert')"><i class="fas fa-exchange-alt"></i> Convert</button>
-        <button class="mobile-nav-item" data-view="secure" onclick="mobileNavTo('secure')"><i class="fas fa-lock"></i> Security</button>
-    </div>
-    
-    <!-- Mobile Left Toolbar (for editing) -->
-    <div class="mobile-left-toolbar" id="mobile-left-toolbar">
-        <button class="mobile-tool active" data-tool="select" onclick="setMobileTool('select')"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
-        <button class="mobile-tool" data-tool="text" onclick="setMobileTool('text')"><i class="fas fa-font"></i><span>Text</span></button>
-        <button class="mobile-tool" data-tool="image" onclick="$('image-input').click()"><i class="fas fa-image"></i><span>Image</span></button>
-        <button class="mobile-tool" data-tool="sign" onclick="setMobileTool('sign');$('sign-modal').classList.add('show')"><i class="fas fa-signature"></i><span>Sign</span></button>
-        <div class="mobile-tool-divider"></div>
-        <button class="mobile-tool" data-tool="draw" onclick="setMobileTool('draw')"><i class="fas fa-pen"></i><span>Draw</span></button>
-        <button class="mobile-tool" data-tool="highlight" onclick="setMobileTool('highlight')"><i class="fas fa-highlighter"></i><span>Highlight</span></button>
-        <div class="mobile-tool-divider"></div>
-        <button class="mobile-tool" onclick="mobileRotatePage()"><i class="fas fa-redo"></i><span>Rotate</span></button>
-        <button class="mobile-tool" onclick="undo()"><i class="fas fa-undo"></i><span>Undo</span></button>
-    </div>
-    
-    <!-- Mobile Bottom Bar (page nav + zoom) -->
-    <div class="mobile-bottom-bar" id="mobile-bottom-bar">
-        <div class="mobile-page-nav">
-            <button class="mobile-page-btn" onclick="mobilePrevPage()"><i class="fas fa-chevron-left"></i></button>
-            <span class="mobile-page-info" id="mobile-page-info">1 / 1</span>
-            <button class="mobile-page-btn" onclick="mobileNextPage()"><i class="fas fa-chevron-right"></i></button>
-        </div>
-        <div class="mobile-zoom-controls">
-            <button class="mobile-zoom-btn" onclick="mobileZoomOut()"><i class="fas fa-minus"></i></button>
-            <span class="mobile-zoom-level" id="mobile-zoom-level">100%</span>
-            <button class="mobile-zoom-btn" onclick="mobileZoomIn()"><i class="fas fa-plus"></i></button>
-        </div>
-    </div>
     <div class="format-bar" id="format-bar">
         <label>Font:</label><select id="font-family"></select>
         <label>Size:</label><select id="font-size"></select>
@@ -783,73 +370,15 @@
     </main>
     <!-- Download is free! No payment modal needed -->
     <div class="modal-overlay" id="sign-modal">
-        <div class="modal" style="max-width:480px">
-            <div class="modal-header"><button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button><i class="fas fa-signature"></i><h2>Add Signature</h2></div>
+        <div class="modal" style="max-width:450px">
+            <div class="modal-header"><button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button><i class="fas fa-signature"></i><h2>Draw Signature</h2></div>
             <div class="modal-body">
-                <div class="sig-tabs">
-                    <button class="sig-tab active" onclick="switchSigTab('draw')"><i class="fas fa-pen"></i> Draw</button>
-                    <button class="sig-tab" onclick="switchSigTab('type')"><i class="fas fa-keyboard"></i> Type</button>
-                    <button class="sig-tab" onclick="switchSigTab('upload')"><i class="fas fa-upload"></i> Upload</button>
-                </div>
-                
-                <!-- Draw Tab -->
-                <div class="sig-tab-content active" id="sig-draw-tab">
-                    <canvas id="sig-canvas" class="signature-pad" width="400" height="150"></canvas>
-                    <div style="display:flex;gap:8px;margin-top:10px">
-                        <button class="btn btn-ghost" onclick="clearSignature()" style="flex:1"><i class="fas fa-eraser"></i> Clear</button>
-                        <button class="btn btn-primary" onclick="applyDrawnSignature()" style="flex:1"><i class="fas fa-check"></i> Apply</button>
-                    </div>
-                </div>
-                
-                <!-- Type Tab -->
-                <div class="sig-tab-content" id="sig-type-tab">
-                    <input type="text" class="sig-text-input" id="sig-text-input" placeholder="Type your name" oninput="updateSigPreview()">
-                    <div class="sig-font-options">
-                        <div class="sig-font-option script active" data-font="script" onclick="selectSigFont('script')">Signature</div>
-                        <div class="sig-font-option elegant" data-font="elegant" onclick="selectSigFont('elegant')">Signature</div>
-                        <div class="sig-font-option bold" data-font="bold" onclick="selectSigFont('bold')">Signature</div>
-                        <div class="sig-font-option classic" data-font="classic" onclick="selectSigFont('classic')">Signature</div>
-                    </div>
-                    <div class="sig-color-options">
-                        <div class="sig-color active" style="background:#000" data-color="#000" onclick="selectSigColor('#000')"></div>
-                        <div class="sig-color" style="background:#1e40af" data-color="#1e40af" onclick="selectSigColor('#1e40af')"></div>
-                        <div class="sig-color" style="background:#166534" data-color="#166534" onclick="selectSigColor('#166534')"></div>
-                        <div class="sig-color" style="background:#991b1b" data-color="#991b1b" onclick="selectSigColor('#991b1b')"></div>
-                    </div>
-                    <div class="sig-preview" id="sig-preview">
-                        <span class="sig-preview-text" id="sig-preview-text" style="font-family:'Brush Script MT',cursive">Your Name</span>
-                    </div>
-                    <button class="btn btn-primary" onclick="applyTypedSignature()" style="width:100%"><i class="fas fa-check"></i> Apply Signature</button>
-                </div>
-                
-                <!-- Upload Tab -->
-                <div class="sig-tab-content" id="sig-upload-tab">
-                    <div class="dropzone" onclick="document.getElementById('sig-upload-input').click()" style="padding:30px">
-                        <i class="fas fa-image"></i>
-                        <h3>Upload Signature Image</h3>
-                        <p style="color:var(--muted);font-size:12px;margin-top:8px">PNG with transparent background works best</p>
-                    </div>
-                    <input type="file" id="sig-upload-input" accept="image/*" style="display:none" onchange="handleSigUpload(event)">
-                    <div id="sig-upload-preview" style="display:none;text-align:center;margin-top:12px">
-                        <img id="sig-upload-img" style="max-width:100%;max-height:100px;background:#fff;border-radius:8px;padding:10px">
-                        <button class="btn btn-primary" onclick="applyUploadedSignature()" style="width:100%;margin-top:12px"><i class="fas fa-check"></i> Apply</button>
-                    </div>
+                <canvas id="sig-canvas" class="signature-pad" width="400" height="150"></canvas>
+                <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
+                    <button class="btn btn-ghost" onclick="sigCtx.clearRect(0,0,400,150)"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="btn btn-primary" onclick="applySignature()"><i class="fas fa-check"></i> Apply</button>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Mobile Text Edit Popup -->
-    <div class="text-edit-popup" id="text-edit-popup">
-        <div class="text-edit-popup-header">
-            <div class="text-edit-popup-title"><i class="fas fa-edit"></i> Edit Text</div>
-            <button class="text-edit-popup-close" onclick="closeTextEditPopup()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="text-edit-popup-original" id="text-edit-original"><strong>Original:</strong> <span id="text-edit-original-text"></span></div>
-        <textarea id="text-edit-textarea" placeholder="Enter new text..."></textarea>
-        <div class="text-edit-popup-actions">
-            <button class="btn btn-ghost" onclick="closeTextEditPopup()"><i class="fas fa-times"></i> Cancel</button>
-            <button class="btn btn-success" onclick="saveTextEdit()"><i class="fas fa-check"></i> Save</button>
         </div>
     </div>
     <div class="modal-overlay" id="watermark-modal">
@@ -872,62 +401,8 @@
             </div>
         </div>
     </div>
-    
-    <!-- Payment Modal -->
-    <div class="modal-overlay" id="payment-modal">
-        <div class="modal payment-modal">
-            <div class="modal-header">
-                <button class="modal-close" onclick="closeModal('payment-modal')"><i class="fas fa-times"></i></button>
-                <i class="fas fa-download"></i>
-                <h2>Download Your PDF</h2>
-            </div>
-            <div class="modal-body">
-                <div class="payment-price">
-                    <div class="payment-price-amount" id="payment-price">$2.99</div>
-                    <div class="payment-price-note">One-time payment • Instant download</div>
-                </div>
-                
-                <div class="payment-features">
-                    <div class="payment-feature"><i class="fas fa-check"></i> High-quality PDF with all your edits</div>
-                    <div class="payment-feature"><i class="fas fa-check"></i> No watermarks or limitations</div>
-                    <div class="payment-feature"><i class="fas fa-check"></i> Instant secure download</div>
-                </div>
-                
-                <div id="payment-element"></div>
-                <div class="payment-error" id="payment-error"></div>
-                
-                <button class="btn btn-success modal-btn" id="payment-submit" onclick="submitPayment()">
-                    <i class="fas fa-lock"></i> Pay <span id="payment-btn-price">$2.99</span>
-                </button>
-                
-                <div class="payment-secure">
-                    <i class="fas fa-shield-alt"></i> Secured by Stripe • 256-bit encryption
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="loading" id="loading">
-        <div class="loading-content">
-            <div class="loading-icon">
-                <div class="loading-icon-bg"><i class="fas fa-file-pdf" id="loading-icon"></i></div>
-                <div class="loading-spinner"></div>
-            </div>
-            <div class="loading-title" id="loading-title">Preparing Your PDF</div>
-            <div class="loading-text" id="loading-text">Starting...</div>
-            <div class="loading-progress"><div class="loading-progress-bar" id="loading-progress"></div></div>
-            <div class="loading-steps" id="loading-steps">
-                <div class="loading-step" data-step="upload"><div class="loading-step-icon"><i class="fas fa-cloud-upload-alt"></i></div><span>Uploading file</span></div>
-                <div class="loading-step" data-step="analyze"><div class="loading-step-icon"><i class="fas fa-search"></i></div><span>Analyzing document</span></div>
-                <div class="loading-step" data-step="extract"><div class="loading-step-icon"><i class="fas fa-font"></i></div><span>Extracting text</span></div>
-                <div class="loading-step" data-step="render"><div class="loading-step-icon"><i class="fas fa-image"></i></div><span>Rendering pages</span></div>
-                <div class="loading-step" data-step="ready"><div class="loading-step-icon"><i class="fas fa-check"></i></div><span>Getting tools ready</span></div>
-            </div>
-            <div class="loading-tip" id="loading-tip"><i class="fas fa-lightbulb"></i><span>Tip: You can edit text by clicking directly on it</span></div>
-        </div>
-    </div>
+    <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Processing...</p></div>
     <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-text"></span></div>
-    
     <input type="file" id="file-input" accept=".pdf">
     <input type="file" id="merge-input" accept=".pdf" multiple>
     <input type="file" id="split-input" accept=".pdf">
@@ -952,109 +427,7 @@ const sigCtx=$('sig-canvas').getContext('2d');
 let sigDrawing=false;
 
 function showToast(m,t='success'){const e=$('toast');$('toast-text').textContent=m;e.className='toast show '+t;e.querySelector('i').className='fas fa-'+(t==='success'?'check-circle':'exclamation-circle');setTimeout(()=>e.classList.remove('show'),3000)}
-// ===== ENHANCED LOADING SYSTEM =====
-const loadingTips = [
-    "Tip: You can edit text by clicking directly on it",
-    "Tip: Use Ctrl+Z to undo changes",
-    "Tip: Pinch to zoom on mobile devices",
-    "Tip: Add signatures by clicking the Sign tool",
-    "Tip: Drag and drop images onto your PDF",
-    "Tip: Download is completely free!",
-    "Tip: Use the highlight tool to mark important text",
-    "Tip: You can rotate individual pages"
-];
-
-let loadingInterval = null;
-
-function showLoading(show, text = 'Processing...', type = 'simple') {
-    const el = $('loading');
-    if (show) {
-        el.classList.add('show');
-        $('loading-text').textContent = text;
-        $('loading-title').textContent = type === 'upload' ? 'Preparing Your PDF' : 'Processing';
-        $('loading-progress').style.width = '0%';
-        
-        // Reset steps
-        document.querySelectorAll('.loading-step').forEach(s => {
-            s.classList.remove('active', 'done');
-        });
-        
-        // Show/hide steps based on type
-        $('loading-steps').style.display = type === 'upload' ? 'block' : 'none';
-        
-        // Random tip
-        $('loading-tip').querySelector('span').textContent = loadingTips[Math.floor(Math.random() * loadingTips.length)];
-        
-        // Update icon
-        const icons = { upload: 'fa-cloud-upload-alt', merge: 'fa-layer-group', compress: 'fa-compress', convert: 'fa-exchange-alt', default: 'fa-file-pdf' };
-        $('loading-icon').className = 'fas ' + (icons[type] || icons.default);
-    } else {
-        el.classList.remove('show');
-        if (loadingInterval) {
-            clearInterval(loadingInterval);
-            loadingInterval = null;
-        }
-    }
-}
-
-function updateLoadingStep(step, progress) {
-    // Update progress bar
-    $('loading-progress').style.width = progress + '%';
-    
-    // Update steps
-    const steps = ['upload', 'analyze', 'extract', 'render', 'ready'];
-    const stepIndex = steps.indexOf(step);
-    
-    document.querySelectorAll('.loading-step').forEach((el, i) => {
-        if (i < stepIndex) {
-            el.classList.remove('active');
-            el.classList.add('done');
-        } else if (i === stepIndex) {
-            el.classList.add('active');
-            el.classList.remove('done');
-        } else {
-            el.classList.remove('active', 'done');
-        }
-    });
-    
-    // Update text based on step
-    const texts = {
-        upload: 'Uploading your file...',
-        analyze: 'Analyzing document structure...',
-        extract: 'Extracting editable text...',
-        render: 'Rendering high-quality pages...',
-        ready: 'Almost ready!'
-    };
-    $('loading-text').textContent = texts[step] || 'Processing...';
-}
-
-function simulateLoadingProgress(callback) {
-    let progress = 0;
-    const steps = ['upload', 'analyze', 'extract', 'render', 'ready'];
-    let stepIndex = 0;
-    
-    loadingInterval = setInterval(() => {
-        progress += Math.random() * 8 + 2;
-        if (progress > 95) progress = 95;
-        
-        // Move to next step at certain progress points
-        if (progress > 20 && stepIndex === 0) stepIndex = 1;
-        if (progress > 40 && stepIndex === 1) stepIndex = 2;
-        if (progress > 60 && stepIndex === 2) stepIndex = 3;
-        if (progress > 80 && stepIndex === 3) stepIndex = 4;
-        
-        updateLoadingStep(steps[stepIndex], progress);
-    }, 300);
-}
-
-function completeLoading() {
-    if (loadingInterval) {
-        clearInterval(loadingInterval);
-        loadingInterval = null;
-    }
-    updateLoadingStep('ready', 100);
-    setTimeout(() => showLoading(false), 500);
-}
+function showLoading(s,t='Processing...'){$('loading').classList.toggle('show',s);$('loading-text').textContent=t}
 function closeModal(id){$(id).classList.remove('show')}
 function hasEdits(){return Object.keys(edits).length+Object.values(addedTexts).flat().length+Object.values(addedImages).flat().length+Object.values(addedShapes).flat().length+Object.keys(drawings).length>0}
 
@@ -1089,477 +462,13 @@ $('underline-btn').onclick=function(){if(selectedEl){const u=selectedEl.style.te
 $('delete-btn').onclick=()=>{if(selectedEl)deleteEl(selectedEl)};
 
 $('file-input').onchange=async e=>{const f=e.target.files[0];if(f)await loadPDF(f)};
-async function loadPDF(f){
-    showLoading(true, 'Uploading your file...', 'upload');
-    simulateLoadingProgress();
-    
-    const fd = new FormData();
-    fd.append('file', f);
-    
-    try {
-        const r = await fetch('/upload-pdf', {method: 'POST', body: fd});
-        
-        if (!r.ok) throw new Error('Upload failed');
-        
-        updateLoadingStep('extract', 70);
-        pdfData = await r.json();
-        pdfId = pdfData.pdfId;
-        edits = {};
-        addedTexts = {};
-        addedImages = {};
-        addedShapes = {};
-        drawings = {};
-        undoStack = [];
-        redoStack = [];
-        
-        updateLoadingStep('render', 85);
-        setupFormatBar(pdfData.documentStyle);
-        
-        updateLoadingStep('ready', 95);
-        await new Promise(r => setTimeout(r, 300)); // Small delay for visual feedback
-        
-        switchView('edit');
-        $('page-container').classList.add('show');
-        $('sidebar').classList.add('show');
-        $('toolbar').classList.add('show');
-        $('format-bar').classList.add('show');
-        renderPageList();
-        renderPage(1);
-        updateBtns();
-        
-        completeLoading();
-        showToast(`Loaded: ${pdfData.pageCount} pages`);
-    } catch(e) {
-        showLoading(false);
-        showToast('Error: ' + (e.message || 'Failed to load PDF'), 'error');
-    }
-}
+async function loadPDF(f){showLoading(true,'Analyzing PDF...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;edits={};addedTexts={};addedImages={};addedShapes={};drawings={};undoStack=[];redoStack=[];setupFormatBar(pdfData.documentStyle);switchView('edit');$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Loaded: ${pdfData.pageCount} pages`)}catch(e){showToast('Error: '+e.message,'error')}showLoading(false)}
 
 function renderPageList(){const l=$('page-list');l.innerHTML='';pdfData.pages.forEach((p,i)=>{const d=document.createElement('div');d.className='page-thumb'+(i+1===currentPage?' active':'');d.innerHTML=`<img src="${p.image}" draggable="false"><div class="page-thumb-label">Page ${i+1}</div><div class="page-actions"><button class="page-action" onclick="event.stopPropagation();rotatePage(${i+1})"><i class="fas fa-redo"></i></button><button class="page-action danger" onclick="event.stopPropagation();deletePage(${i+1})"><i class="fas fa-trash"></i></button></div>`;d.onclick=()=>renderPage(i+1);l.appendChild(d)});$('doc-info').innerHTML=`<strong>${pdfData.fileName}</strong><br>${pdfData.pageCount} pages • ${pdfData.fileSize}`}
 
 function renderPage(n){currentPage=n;const p=pdfData.pages[n-1];$('page-image').src=p.image;$('draw-canvas').width=p.width;$('draw-canvas').height=p.height;if(drawings[n]){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=drawings[n]}else ctx.clearRect(0,0,$('draw-canvas').width,$('draw-canvas').height);document.querySelectorAll('.page-thumb').forEach((e,i)=>e.classList.toggle('active',i+1===n));renderTextLayer(p);deselectEl()}
 
-
-// Current text being edited (for mobile popup)
-let currentEditingTextBox = null;
-let currentEditingKey = null;
-let currentEditingBlock = null;
-
-function renderTextLayer(p){
-    const l = $('text-layer');
-    l.innerHTML = '';
-    
-    // Scale factor for positioning (PDF coords to rendered image coords)
-    const scaleX = p.width / p.originalWidth;
-    const scaleY = p.height / p.originalHeight;
-    
-    p.textBlocks.forEach((b, i) => {
-        const k = `${currentPage}-${i}`;
-        const e = edits[k];
-        const displayText = e ? e.newText : b.text;
-        
-        // Skip empty text
-        if (!displayText || displayText.trim() === '') return;
-        
-        const box = document.createElement('div');
-        box.className = 'text-box' + (e ? ' edited' : '');
-        box.textContent = displayText;
-        
-        // Calculate scaled position
-        const scaledX = b.originalX * scaleX;
-        const scaledY = b.originalY * scaleY;
-        const scaledWidth = b.originalWidth * scaleX;
-        const scaledHeight = b.originalHeight * scaleY;
-        const scaledFontSize = b.originalFontSize * scaleY;
-        
-        box.style.cssText = `
-            left: ${scaledX}px;
-            top: ${scaledY}px;
-            width: ${Math.max(scaledWidth, 20)}px;
-            min-height: ${scaledHeight}px;
-            font-size: ${scaledFontSize}px;
-            font-family: ${b.fontFamily || 'Arial, sans-serif'};
-            line-height: 1.2;
-        `;
-        
-        box.dataset.key = k;
-        box.dataset.orig = b.text;
-        box.dataset.block = JSON.stringify(b);
-        box.dataset.scalex = scaleX;
-        box.dataset.scaley = scaleY;
-        
-        // Click handler
-        box.onclick = function(evt) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            if (isMobile()) {
-                openTextEditPopup(this, k, b);
-            } else {
-                openInlineEdit(this, k, b);
-            }
-        };
-        
-        l.appendChild(box);
-    });
-    
-    // Render added elements
-    (addedTexts[currentPage] || []).forEach((t, i) => createAddedText(t, i));
-    (addedImages[currentPage] || []).forEach((m, i) => createAddedImage(m, i));
-    (addedShapes[currentPage] || []).forEach((s, i) => createAddedShape(s, i));
-    
-    // Shape drawing handlers
-    setupShapeDrawing(l);
-}
-
-function setupShapeDrawing(layer) {
-    let shapeStart = null;
-    
-    layer.onclick = e => {
-        if (e.target === layer && currentTool === 'text') {
-            saveState();
-            if (!addedTexts[currentPage]) addedTexts[currentPage] = [];
-            const r = layer.getBoundingClientRect();
-            addedTexts[currentPage].push({
-                x: (e.clientX - r.left) / zoomLevel,
-                y: (e.clientY - r.top) / zoomLevel,
-                text: 'Text',
-                fontFamily: documentStyle?.defaultFontFamily || 'Arial',
-                fontSize: documentStyle?.defaultSize || 14,
-                color: '#000000'
-            });
-            renderPage(currentPage);
-        }
-    };
-    
-    layer.onmousedown = e => {
-        if (currentTool === 'shape' && e.target === layer) {
-            const r = layer.getBoundingClientRect();
-            shapeStart = { x: (e.clientX - r.left) / zoomLevel, y: (e.clientY - r.top) / zoomLevel };
-        }
-    };
-    
-    layer.onmouseup = e => {
-        if (shapeStart && currentTool === 'shape') {
-            const r = layer.getBoundingClientRect();
-            const ex = (e.clientX - r.left) / zoomLevel, ey = (e.clientY - r.top) / zoomLevel;
-            const w = Math.abs(ex - shapeStart.x), h = Math.abs(ey - shapeStart.y);
-            if (w > 10 || h > 10) {
-                saveState();
-                if (!addedShapes[currentPage]) addedShapes[currentPage] = [];
-                addedShapes[currentPage].push({
-                    x: Math.min(shapeStart.x, ex), y: Math.min(shapeStart.y, ey),
-                    width: w, height: h, type: currentShape,
-                    stroke: $('shape-stroke').value,
-                    fill: $('shape-no-fill').checked ? 'transparent' : $('shape-fill').value
-                });
-                renderPage(currentPage);
-            }
-            shapeStart = null;
-        }
-    };
-}
-
-// Desktop inline edit - FIXED version
-let currentlyEditing = null;
-
-function openInlineEdit(box, key, block) {
-    // Close any existing edit first
-    if (currentlyEditing && currentlyEditing !== box) {
-        finishEditing(currentlyEditing);
-    }
-    
-    currentlyEditing = box;
-    const originalText = box.dataset.orig;
-    const currentText = edits[key] ? edits[key].newText : originalText;
-    
-    // Store current state
-    box.dataset.currentText = currentText;
-    
-    // Setup editing mode
-    box.classList.add('editing');
-    box.contentEditable = 'true';
-    box.textContent = currentText;
-    
-    // Expand width for editing
-    const minWidth = Math.max(parseFloat(box.style.width) || 100, 150);
-    box.style.minWidth = minWidth + 'px';
-    box.style.width = 'auto';
-    
-    // Focus and select all
-    box.focus();
-    
-    try {
-        const range = document.createRange();
-        range.selectNodeContents(box);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-    } catch(e) {}
-    
-    // Event handlers
-    box.onblur = () => finishEditing(box);
-    
-    box.onkeydown = function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            box.blur();
-        }
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            // Restore original and close
-            box.textContent = box.dataset.currentText;
-            box.blur();
-        }
-    };
-    
-    // Prevent click from bubbling and re-triggering
-    box.onclick = e => e.stopPropagation();
-}
-
-function finishEditing(box) {
-    if (!box || !box.classList.contains('editing')) return;
-    
-    const key = box.dataset.key;
-    const block = JSON.parse(box.dataset.block);
-    const originalText = box.dataset.orig;
-    const newText = box.textContent.trim();
-    
-    // Remove editing state
-    box.classList.remove('editing');
-    box.contentEditable = 'false';
-    box.style.minWidth = '';
-    box.style.width = (block.originalWidth * parseFloat(box.dataset.scalex || 1)) + 'px';
-    box.onblur = null;
-    box.onkeydown = null;
-    
-    // Restore click handler
-    box.onclick = function(evt) {
-        evt.preventDefault();
-        evt.stopPropagation();
-        if (isMobile()) {
-            openTextEditPopup(this, key, block);
-        } else {
-            openInlineEdit(this, key, block);
-        }
-    };
-    
-    // Handle text change
-    if (newText !== originalText) {
-        // Text was changed
-        saveState();
-        edits[key] = {
-            pageNum: currentPage,
-            originalText: originalText,
-            newText: newText,
-            originalX: block.originalX,
-            originalY: block.originalY,
-            originalWidth: block.originalWidth,
-            originalHeight: block.originalHeight,
-            originalFontSize: block.originalFontSize
-        };
-        box.classList.add('edited');
-        box.textContent = newText;
-        showToast('Text saved');
-    } else if (edits[key] && newText === originalText) {
-        // Text was reverted to original
-        delete edits[key];
-        box.classList.remove('edited');
-        box.textContent = originalText;
-    } else {
-        // No change, restore display
-        box.textContent = edits[key] ? edits[key].newText : originalText;
-    }
-    
-    currentlyEditing = null;
-}
-
-// Mobile popup edit
-function openTextEditPopup(box, key, block) {
-    currentEditingTextBox = box;
-    currentEditingKey = key;
-    currentEditingBlock = block;
-    
-    const existingEdit = edits[key];
-    const currentText = existingEdit ? existingEdit.newText : block.text;
-    
-    $('text-edit-original-text').textContent = block.text;
-    $('text-edit-textarea').value = currentText;
-    $('text-edit-popup').classList.add('show');
-    
-    setTimeout(() => {
-        $('text-edit-textarea').focus();
-        $('text-edit-textarea').select();
-    }, 100);
-    
-    // Dim other boxes
-    document.querySelectorAll('.text-box').forEach(b => {
-        if (b !== box) b.style.opacity = '0.3';
-    });
-    box.style.opacity = '1';
-    box.classList.add('editing');
-}
-
-function closeTextEditPopup() {
-    $('text-edit-popup').classList.remove('show');
-    
-    // Restore all boxes
-    document.querySelectorAll('.text-box').forEach(b => {
-        b.style.opacity = '1';
-        b.classList.remove('editing');
-    });
-    
-    currentEditingTextBox = null;
-    currentEditingKey = null;
-    currentEditingBlock = null;
-}
-
-function saveTextEdit() {
-    if (!currentEditingTextBox || !currentEditingKey || !currentEditingBlock) return;
-    
-    const newText = $('text-edit-textarea').value.trim();
-    const origText = currentEditingBlock.text;
-    
-    if (newText !== origText) {
-        saveState();
-        edits[currentEditingKey] = {
-            pageNum: currentPage,
-            originalText: origText,
-            newText: newText,
-            originalX: currentEditingBlock.originalX,
-            originalY: currentEditingBlock.originalY,
-            originalWidth: currentEditingBlock.originalWidth,
-            originalHeight: currentEditingBlock.originalHeight,
-            originalFontSize: currentEditingBlock.originalFontSize
-        };
-        currentEditingTextBox.textContent = newText;
-        currentEditingTextBox.classList.add('edited');
-        showToast('Text saved!');
-    } else if (edits[currentEditingKey]) {
-        // Reverted to original
-        delete edits[currentEditingKey];
-        currentEditingTextBox.classList.remove('edited');
-        currentEditingTextBox.textContent = origText;
-    }
-    
-    closeTextEditPopup();
-}
-
-// ===== SIGNATURE FUNCTIONS =====
-let sigFont = 'script';
-let sigColor = '#000';
-let uploadedSigData = null;
-
-function switchSigTab(tab) {
-    document.querySelectorAll('.sig-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab)));
-    document.querySelectorAll('.sig-tab-content').forEach(c => c.classList.remove('active'));
-    $(`sig-${tab}-tab`).classList.add('active');
-}
-
-function selectSigFont(font) {
-    sigFont = font;
-    document.querySelectorAll('.sig-font-option').forEach(f => f.classList.toggle('active', f.dataset.font === font));
-    updateSigPreview();
-}
-
-function selectSigColor(color) {
-    sigColor = color;
-    document.querySelectorAll('.sig-color').forEach(c => c.classList.toggle('active', c.dataset.color === color));
-    updateSigPreview();
-}
-
-function updateSigPreview() {
-    const text = $('sig-text-input').value || 'Your Name';
-    const preview = $('sig-preview-text');
-    preview.textContent = text;
-    preview.style.color = sigColor;
-    
-    const fonts = {
-        script: "'Brush Script MT', cursive",
-        elegant: "'Georgia', serif",
-        bold: "'Arial Black', sans-serif",
-        classic: "'Times New Roman', serif"
-    };
-    preview.style.fontFamily = fonts[sigFont];
-    preview.style.fontStyle = sigFont === 'elegant' ? 'italic' : 'normal';
-}
-
-function clearSignature() {
-    sigCtx.clearRect(0, 0, 400, 150);
-}
-
-function applyDrawnSignature() {
-    const canvas = $('sig-canvas');
-    const dataUrl = canvas.toDataURL();
-    addSignatureToPage(dataUrl);
-    clearSignature();
-    closeModal('sign-modal');
-}
-
-function applyTypedSignature() {
-    const text = $('sig-text-input').value.trim();
-    if (!text) return showToast('Enter your name', 'error');
-    
-    // Create canvas to render text as image
-    const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 80;
-    const ctx = canvas.getContext('2d');
-    
-    const fonts = {
-        script: "48px 'Brush Script MT', cursive",
-        elegant: "italic 40px 'Georgia', serif",
-        bold: "36px 'Arial Black', sans-serif",
-        classic: "40px 'Times New Roman', serif"
-    };
-    
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, 300, 80);
-    ctx.fillStyle = sigColor;
-    ctx.font = fonts[sigFont];
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, 150, 45);
-    
-    addSignatureToPage(canvas.toDataURL());
-    $('sig-text-input').value = '';
-    closeModal('sign-modal');
-}
-
-function handleSigUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = ev => {
-        uploadedSigData = ev.target.result;
-        $('sig-upload-img').src = uploadedSigData;
-        $('sig-upload-preview').style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-}
-
-function applyUploadedSignature() {
-    if (!uploadedSigData) return showToast('Upload an image first', 'error');
-    addSignatureToPage(uploadedSigData);
-    uploadedSigData = null;
-    $('sig-upload-preview').style.display = 'none';
-    closeModal('sign-modal');
-}
-
-function addSignatureToPage(dataUrl) {
-    saveState();
-    if (!addedImages[currentPage]) addedImages[currentPage] = [];
-    addedImages[currentPage].push({ x: 100, y: 100, width: 180, height: 60, src: dataUrl });
-    renderPage(currentPage);
-    showToast('Signature added!');
-}
-
-// Legacy function for compatibility
-function applySignature() {
-    applyDrawnSignature();
-}
-
-
+function renderTextLayer(p){const l=$('text-layer');l.innerHTML='';p.textBlocks.forEach((b,i)=>{const k=`${currentPage}-${i}`,e=edits[k];const inp=document.createElement('input');inp.type='text';inp.className='text-box'+(e?' edited':'');inp.value=e?e.newText:b.text;inp.style.cssText=`left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};`;inp.dataset.key=k;inp.dataset.orig=b.text;inp.dataset.block=JSON.stringify(b);inp.onfocus=function(){this.style.width=Math.max(b.width,300)+'px'};inp.onblur=function(){const nv=this.value,ov=this.dataset.orig;this.style.width=b.width+'px';if(nv!==ov){saveState();edits[k]={pageNum:currentPage,originalText:ov,newText:nv,originalX:b.originalX,originalY:b.originalY,originalWidth:b.originalWidth,originalHeight:b.originalHeight,originalFontSize:b.originalFontSize};this.classList.add('edited');showToast('Saved')}else if(edits[k]){saveState();delete edits[k];this.classList.remove('edited')}};inp.onkeydown=function(e){if(e.key==='Enter')this.blur()};l.appendChild(inp)});(addedTexts[currentPage]||[]).forEach((t,i)=>createAddedText(t,i));(addedImages[currentPage]||[]).forEach((m,i)=>createAddedImage(m,i));(addedShapes[currentPage]||[]).forEach((s,i)=>createAddedShape(s,i));let shapeStart=null;l.onclick=e=>{if(e.target===l&&currentTool==='text'){saveState();if(!addedTexts[currentPage])addedTexts[currentPage]=[];const r=l.getBoundingClientRect();addedTexts[currentPage].push({x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel,text:'Text',fontFamily:documentStyle?.defaultFontFamily||'Arial',fontSize:documentStyle?.defaultSize||14,fontWeight:'normal',fontStyle:'normal',color:'#000000'});renderPage(currentPage);document.querySelector('.tool-btn[data-tool="select"]').click()}};l.onmousedown=e=>{if(currentTool==='shape'&&e.target===l){const r=l.getBoundingClientRect();shapeStart={x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel}}};l.onmouseup=e=>{if(shapeStart&&currentTool==='shape'){const r=l.getBoundingClientRect(),ex=(e.clientX-r.left)/zoomLevel,ey=(e.clientY-r.top)/zoomLevel,w=Math.abs(ex-shapeStart.x),h=Math.abs(ey-shapeStart.y);if(w>10||h>10){saveState();if(!addedShapes[currentPage])addedShapes[currentPage]=[];addedShapes[currentPage].push({x:Math.min(shapeStart.x,ex),y:Math.min(shapeStart.y,ey),width:w,height:h,type:currentShape,stroke:$('shape-stroke').value,fill:$('shape-no-fill').checked?'transparent':$('shape-fill').value});renderPage(currentPage);showToast('Shape added')}shapeStart=null}}}
 
 function createAddedText(t,i){const e=document.createElement('div');e.className='added-el added-text';e.contentEditable=true;e.innerText=t.text;e.dataset.idx=i;e.dataset.type='text';e.style.cssText=`left:${t.x}px;top:${t.y}px;font-family:${t.fontFamily};font-size:${t.fontSize}px;font-weight:${t.fontWeight||'normal'};font-style:${t.fontStyle||'normal'};color:${t.color||'#000'};`;e.innerHTML+=`<div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedTexts[currentPage]?.[i]){addedTexts[currentPage][i].x=parseFloat(e.style.left);addedTexts[currentPage][i].y=parseFloat(e.style.top)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};e.onblur=()=>{if(addedTexts[currentPage]?.[i])addedTexts[currentPage][i].text=e.innerText.replace(/<[^>]*>/g,'')};$('text-layer').appendChild(e)}
 
@@ -1589,35 +498,7 @@ function applySignature(){const d=$('sig-canvas').toDataURL();saveState();if(!ad
 
 $('merge-input').onchange=e=>{Array.from(e.target.files).forEach(f=>{if(mergeFiles.length<20)mergeFiles.push(f)});renderMergeFiles()};
 function renderMergeFiles(){$('merge-files').innerHTML='';mergeFiles.forEach((f,i)=>{$('merge-files').innerHTML+=`<div class="file-item"><div class="file-icon"><i class="fas fa-file-pdf"></i></div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div><button class="file-btn danger" onclick="mergeFiles.splice(${i},1);renderMergeFiles()"><i class="fas fa-times"></i></button></div>`});$('merge-actions').style.display=mergeFiles.length>=2?'flex':'none'}
-async function doMerge(){
-    if(mergeFiles.length<2) return showToast('Need 2+ files','error');
-    showLoading(true, 'Merging your PDFs...', 'merge');
-    
-    const fd = new FormData();
-    mergeFiles.forEach(f => fd.append('files', f));
-    
-    try {
-        const r = await fetch('/merge-pdfs', {method: 'POST', body: fd});
-        pdfData = await r.json();
-        pdfId = pdfData.pdfId;
-        mergeFiles = [];
-        renderMergeFiles();
-        switchView('edit');
-        setupFormatBar({fonts:[], fontFamilies:[], sizes:[], colors:['#000'], defaultSize:12, pageFormat:{}});
-        $('page-container').classList.add('show');
-        $('sidebar').classList.add('show');
-        $('toolbar').classList.add('show');
-        $('format-bar').classList.add('show');
-        renderPageList();
-        renderPage(1);
-        updateBtns();
-        showLoading(false);
-        showToast(`Merged! ${pdfData.pageCount} pages`);
-    } catch(e) {
-        showLoading(false);
-        showToast('Error merging files', 'error');
-    }
-}
+async function doMerge(){if(mergeFiles.length<2)return showToast('Need 2+ files','error');showLoading(true,'Merging...');const fd=new FormData();mergeFiles.forEach(f=>fd.append('files',f));try{const r=await fetch('/merge-pdfs',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;mergeFiles=[];renderMergeFiles();switchView('edit');setupFormatBar({fonts:[],fontFamilies:[],sizes:[],colors:['#000'],defaultSize:12,pageFormat:{}});$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Merged! ${pdfData.pageCount} pages`)}catch(e){showToast('Error','error')}showLoading(false)}
 
 $('split-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Loading...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();splitPages=[];$('split-pages').innerHTML='';d.pages.forEach((p,i)=>{$('split-pages').innerHTML+=`<div class="preview-item" data-page="${i+1}" onclick="toggleSplit(${i+1})"><img src="${p.image}"><div class="preview-item-label">Page ${i+1}</div></div>`});$('split-preview').style.display='block';pdfId=d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
 function toggleSplit(n){const i=splitPages.indexOf(n);if(i>=0)splitPages.splice(i,1);else splitPages.push(n);document.querySelectorAll('#split-pages .preview-item').forEach(e=>e.classList.toggle('selected',splitPages.includes(parseInt(e.dataset.page))))}
@@ -1645,251 +526,104 @@ async function applyPageNumbers(){showLoading(true,'Adding...');const fd=new For
 
 $('rotate-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Rotating...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();const fd2=new FormData();fd2.append('pdf_id',d.pdfId);fd2.append('angle','90');await fetch('/rotate-all',{method:'POST',body:fd2});showToast('Rotated!');location.href='/download-direct/'+d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
 
-// ===== STRIPE PAYMENT SYSTEM =====
-let stripe = null;
-let elements = null;
-let paymentElement = null;
-let clientSecret = null;
-let paymentIntentId = null;
-let downloadToken = null;
-let currentPricing = null;
-
-// ===== DEVICE & BROWSER DETECTION =====
-function getDeviceInfo() {
-    const ua = navigator.userAgent.toLowerCase();
-    const platform = navigator.platform?.toLowerCase() || '';
-    
-    // OS Detection
-    const isIOS = /iphone|ipad|ipod/.test(ua) || (platform === 'macintel' && navigator.maxTouchPoints > 1);
-    const isMacOS = /macintosh|mac os x/.test(ua) && !isIOS;
-    const isAndroid = /android/.test(ua);
-    const isWindows = /windows/.test(ua);
-    const isLinux = /linux/.test(ua) && !isAndroid;
-    
-    // Browser Detection
-    const isSafari = /safari/.test(ua) && !/chrome|chromium|edg|opera|opr/.test(ua);
-    const isChrome = /chrome|chromium/.test(ua) && !/edg|opera|opr/.test(ua);
-    const isFirefox = /firefox/.test(ua);
-    const isEdge = /edg/.test(ua);
-    const isOpera = /opera|opr/.test(ua);
-    const isSamsungBrowser = /samsungbrowser/.test(ua);
-    
-    // Device Type
-    const isMobile = isIOS || isAndroid || /mobile/.test(ua);
-    const isTablet = /ipad|tablet/.test(ua) || (isAndroid && !/mobile/.test(ua));
-    const isDesktop = !isMobile && !isTablet;
-    
-    // Can use Apple Pay? (Safari on Apple devices OR iOS any browser)
-    const canApplePay = isIOS || (isMacOS && isSafari);
-    
-    // Can use Google Pay? (Chrome/Android browsers, not Safari)
-    const canGooglePay = isChrome || isAndroid || isEdge || isOpera || isSamsungBrowser;
-    
-    // Premium device detection (for pricing)
-    const isPremiumDevice = isIOS || isMacOS || 
-        /samsung\s*(galaxy\s*)?(s2[0-9]|z\s*fold|z\s*flip)/i.test(ua) ||
-        /pixel\s*[7-9]/i.test(ua);
-    
-    return {
-        // OS
-        isIOS,
-        isMacOS,
-        isAndroid,
-        isWindows,
-        isLinux,
-        os: isIOS ? 'ios' : isMacOS ? 'macos' : isAndroid ? 'android' : isWindows ? 'windows' : isLinux ? 'linux' : 'unknown',
-        
-        // Browser
-        isSafari,
-        isChrome,
-        isFirefox,
-        isEdge,
-        browser: isSafari ? 'safari' : isChrome ? 'chrome' : isFirefox ? 'firefox' : isEdge ? 'edge' : isOpera ? 'opera' : 'other',
-        
-        // Device
-        isMobile,
-        isTablet,
-        isDesktop,
-        deviceType: isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop',
-        
-        // Payment capabilities
-        canApplePay,
-        canGooglePay,
-        
-        // Premium indicator
-        isPremiumDevice,
-        
-        // Raw UA for backend
-        userAgent: navigator.userAgent
-    };
+async function handleDownload(){
+    if(!pdfData)return showToast('No PDF loaded','error');
+    showLoading(true,'Preparing download...');
+    const fd=new FormData();
+    fd.append('pdf_id',pdfId);
+    fd.append('edits',JSON.stringify(Object.values(edits)));
+    try{
+        const r=await fetch('/save-and-download',{method:'POST',body:fd});
+        const blob=await r.blob();
+        const url=window.URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='luleit-edited.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('Downloaded successfully!');
+    }catch(e){showToast('Download failed','error')}
+    showLoading(false);
 }
 
-// Filter payment methods based on device
-function getAvailablePaymentMethods(serverMethods) {
-    const device = getDeviceInfo();
-    const available = [];
-    
-    for (const method of serverMethods) {
-        if (method === 'apple_pay' && !device.canApplePay) continue;
-        if (method === 'google_pay' && !device.canGooglePay) continue;
-        available.push(method);
-    }
-    
-    // Always ensure card is available
-    if (!available.includes('card')) {
-        available.unshift('card');
-    }
-    
-    return available;
-}
+document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}if(e.key==='Delete'&&selectedEl)deleteEl(selectedEl);if(e.key==='Escape')deselectEl()};
+document.onclick=e=>{if(!e.target.closest('.added-el,.format-bar,.shape-bar'))deselectEl()};
+document.ondragover=e=>e.preventDefault();
+document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')loadPDF(f)};
 
-// ===== ENGAGEMENT TRACKING =====
-let sessionStartTime = Date.now();
-let interactionCount = 0;
+// Free version - no pricing needed
+console.log('Luleit PDF Editor - Free Version');
+</script>
+</body>
+</html>
+ fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();const fd2=new FormData();fd2.append('pdf_id',d.pdfId);fd2.append('angle','90');await fetch('/rotate-all',{method:'POST',body:fd2});showToast('Rotated!');location.href='/download-direct/'+d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
 
-// Track interactions
-document.addEventListener('click', () => interactionCount++);
-document.addEventListener('keydown', () => interactionCount++);
-
-function getEngagementData() {
-    const timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000);
-    const editCount = Object.keys(edits).length;
-    const pageCount = pdfData?.pageCount || 1;
-    const hasImages = Object.values(addedImages).some(arr => arr && arr.length > 0);
-    const hasSignature = Object.values(addedImages).some(arr => 
-        arr && arr.some(img => img.src && img.src.includes('data:image'))
-    );
-    const hasDrawings = Object.keys(drawings).length > 0;
-    const device = getDeviceInfo();
-    
-    return {
-        edit_count: editCount,
-        page_count: pageCount,
-        time_spent_seconds: timeSpent,
-        interaction_count: interactionCount,
-        has_added_images: hasImages,
-        has_signature: hasSignature,
-        has_drawings: hasDrawings,
-        // Device info for pricing
-        device_type: device.deviceType,
-        os: device.os,
-        browser: device.browser,
-        is_premium_device: device.isPremiumDevice,
-        can_apple_pay: device.canApplePay,
-        can_google_pay: device.canGooglePay
-    };
-}
-
-// Initialize Stripe - key injected from server
-let stripePublishableKey = null;
-let stripeReady = false;
-
+// ===== STRIPE PAYMENT =====
 async function initStripe() {
-    if (stripeReady && stripe) return true;
-    
     try {
-        // Get publishable key from server
-        if (!stripePublishableKey) {
-            const r = await fetch('/api/stripe-config');
-            const config = await r.json();
-            stripePublishableKey = config.publishable_key;
-            
-            if (!config.enabled || !stripePublishableKey) {
-                console.error('Stripe not configured');
-                return false;
-            }
+        const r = await fetch('/api/stripe-config');
+        const config = await r.json();
+        if (config.publishable_key && config.enabled) {
+            stripe = Stripe(config.publishable_key);
+            return true;
         }
-        
-        if (stripePublishableKey && !stripe) {
-            stripe = Stripe(stripePublishableKey);
-            stripeReady = true;
-        }
-        
-        return stripeReady;
+        return false;
     } catch(e) {
         console.error('Stripe init error:', e);
         return false;
     }
 }
 
-// Get localized pricing
-async function getPricing() {
-    try {
-        const r = await fetch('/api/pricing');
-        currentPricing = await r.json();
-        return currentPricing;
-    } catch(e) {
-        return { display_price: '$2.99', currency: 'usd', amount: 299 };
-    }
-}
-
-// Show payment modal
 async function handleDownload() {
     if (!pdfData) return showToast('No PDF loaded', 'error');
     
-    showLoading(true, 'Preparing checkout...');
+    showLoading(true, 'Preparing...');
     
     try {
-        // Initialize Stripe first
-        const stripeOk = await initStripe();
-        if (!stripeOk) {
-            throw new Error('Payment system not available. Please try again.');
+        // Check if Stripe is configured
+        const configR = await fetch('/api/stripe-config');
+        const config = await configR.json();
+        
+        if (!config.enabled) {
+            // Stripe not configured - do free download
+            await doFreeDownload();
+            return;
         }
         
-        // Get preview pricing first
-        const pricing = await getPricing();
+        // Get pricing
+        const priceR = await fetch('/api/pricing');
+        const pricing = await priceR.json();
         $('payment-price').textContent = pricing.display_price;
         $('payment-btn-price').textContent = pricing.display_price;
         
-        // Get engagement data (includes device info)
-        const engagement = getEngagementData();
-        
-        // Create payment intent with engagement + device data
+        // Create payment intent
         const fd = new FormData();
         fd.append('pdf_id', pdfId);
-        fd.append('edit_count', engagement.edit_count);
-        fd.append('page_count', engagement.page_count);
-        fd.append('time_spent_seconds', engagement.time_spent_seconds);
-        fd.append('interaction_count', engagement.interaction_count);
-        fd.append('has_added_images', engagement.has_added_images);
-        fd.append('has_signature', engagement.has_signature);
-        fd.append('has_drawings', engagement.has_drawings);
-        // Device info
-        fd.append('device_type', engagement.device_type);
-        fd.append('os', engagement.os);
-        fd.append('browser', engagement.browser);
-        fd.append('is_premium_device', engagement.is_premium_device);
-        fd.append('can_apple_pay', engagement.can_apple_pay);
-        fd.append('can_google_pay', engagement.can_google_pay);
+        const intentR = await fetch('/api/create-payment', { method: 'POST', body: fd });
         
-        const r = await fetch('/api/create-payment', { method: 'POST', body: fd });
-        
-        if (!r.ok) {
-            const errData = await r.json().catch(() => ({}));
-            throw new Error(errData.detail || 'Failed to create payment');
+        if (!intentR.ok) {
+            // If payment creation fails, offer free download
+            await doFreeDownload();
+            return;
         }
         
-        const data = await r.json();
+        const intentData = await intentR.json();
         
-        if (!data.clientSecret) {
-            throw new Error('Invalid payment response - missing client secret');
+        if (!intentData.clientSecret) {
+            await doFreeDownload();
+            return;
         }
         
-        // Update price display with final calculated price
-        $('payment-price').textContent = data.display_price;
-        $('payment-btn-price').textContent = data.display_price;
+        clientSecret = intentData.clientSecret;
         
-        clientSecret = data.clientSecret;
-        paymentIntentId = data.paymentIntentId;
+        // Initialize Stripe
+        if (!stripe) {
+            stripe = Stripe(config.publishable_key);
+        }
         
-        // Filter payment methods based on device capabilities
-        const device = getDeviceInfo();
-        const availableMethods = getAvailablePaymentMethods(data.payment_methods || ['card']);
-        
-        // Clear previous payment element
-        $('payment-element').innerHTML = '';
-        
-        // Create new Elements instance with the client secret
+        // Create Elements
         elements = stripe.elements({
             clientSecret: clientSecret,
             appearance: {
@@ -1905,33 +639,45 @@ async function handleDownload() {
             }
         });
         
-        // Configure wallets based on device
-        const walletConfig = {
-            applePay: device.canApplePay ? 'auto' : 'never',
-            googlePay: device.canGooglePay ? 'auto' : 'never'
-        };
-        
-        paymentElement = elements.create('payment', {
-            layout: 'tabs',
-            wallets: walletConfig,
-            defaultValues: {
-                billingDetails: {}
-            }
-        });
-        
+        // Clear and mount payment element
+        $('payment-element').innerHTML = '';
+        paymentElement = elements.create('payment', { layout: 'tabs' });
         paymentElement.mount('#payment-element');
         
         showLoading(false);
         $('payment-modal').classList.add('show');
         
     } catch(e) {
-        showLoading(false);
-        console.error('Payment error:', e);
-        showToast('Error: ' + e.message, 'error');
+        console.error('Payment setup error:', e);
+        // Fallback to free download
+        await doFreeDownload();
     }
 }
 
-// Submit payment
+async function doFreeDownload() {
+    showLoading(true, 'Preparing download...');
+    const fd = new FormData();
+    fd.append('pdf_id', pdfId);
+    fd.append('edits', JSON.stringify(Object.values(edits)));
+    try {
+        const r = await fetch('/save-and-download', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('Download failed');
+        const blob = await r.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'luleit-edited.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('Downloaded successfully!');
+    } catch(e) {
+        showToast('Download failed: ' + e.message, 'error');
+    }
+    showLoading(false);
+}
+
 async function submitPayment() {
     if (!stripe || !elements) return;
     
@@ -1943,9 +689,7 @@ async function submitPayment() {
     try {
         const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
-            confirmParams: {
-                return_url: window.location.href // Not used, we handle inline
-            },
+            confirmParams: { return_url: window.location.href },
             redirect: 'if_required'
         });
         
@@ -1958,7 +702,195 @@ async function submitPayment() {
         }
         
         if (paymentIntent && paymentIntent.status === 'succeeded') {
-            // Verify payment and get download token
+            // Verify and download
+            const fd = new FormData();
+            fd.append('payment_intent_id', paymentIntent.id);
+            const vr = await fetch('/api/verify-payment', { method: 'POST', body: fd });
+            const vd = await vr.json();
+            
+            if (vd.success) {
+                downloadToken = vd.download_token;
+                closeModal('payment-modal');
+                
+                // Do the actual download
+                showLoading(true, 'Downloading...');
+                const fd2 = new FormData();
+                fd2.append('pdf_id', pdfId);
+                fd2.append('edits', JSON.stringify(Object.values(edits)));
+                fd2.append('token', downloadToken);
+                
+                const r = await fetch('/save-and-download', { method: 'POST', body: fd2 });
+                const blob = await r.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'luleit-edited.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                
+                showLoading(false);
+                showToast('Downloaded successfully!');
+            } else {
+                throw new Error('Payment verification failed');
+            }
+        }
+    } catch(e) {
+        $('payment-error').textContent = e.message || 'Payment failed';
+        $('payment-error').classList.add('show');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-lock"></i> Pay ' + $('payment-btn-price').textContent;
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.onkeydown = e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleDownload(); }
+    if (e.key === 'Delete' && selectedEl) deleteEl(selectedEl);
+    if (e.key === 'Escape') deselectEl();
+};
+
+document.onclick = e => { if (!e.target.closest('.added-el,.format-bar,.shape-bar')) deselectEl() };
+document.ondragover = e => e.preventDefault();
+document.ondrop = e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type === 'application/pdf') loadPDF(f) };
+
+console.log('Luleit PDF Editor loaded');
+</script>
+</body>
+</html>
+ fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();const fd2=new FormData();fd2.append('pdf_id',d.pdfId);fd2.append('angle','90');await fetch('/rotate-all',{method:'POST',body:fd2});showToast('Rotated!');location.href='/download-direct/'+d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
+
+// ===== STRIPE PAYMENT =====
+async function initStripe() {
+    try {
+        const r = await fetch('/api/stripe-config');
+        const config = await r.json();
+        if (config.publishable_key && config.enabled) {
+            stripe = Stripe(config.publishable_key);
+            return true;
+        }
+        return false;
+    } catch(e) {
+        console.error('Stripe init error:', e);
+        return false;
+    }
+}
+
+async function handleDownload() {
+    if (!pdfData) return showToast('No PDF loaded', 'error');
+    
+    showLoading(true, 'Preparing...');
+    
+    try {
+        // Check if Stripe is configured
+        const configR = await fetch('/api/stripe-config');
+        const config = await configR.json();
+        
+        if (!config.enabled) {
+            // Stripe not configured - do free download
+            await doFreeDownload();
+            return;
+        }
+        
+        // Initialize Stripe if needed
+        if (!stripe) {
+            stripe = Stripe(config.publishable_key);
+        }
+        
+        // Get pricing
+        const pricingR = await fetch('/api/pricing');
+        const pricing = await pricingR.json();
+        $('payment-price').textContent = pricing.display_price;
+        $('payment-btn-price').textContent = pricing.display_price;
+        
+        // Create payment intent
+        const fd = new FormData();
+        fd.append('pdf_id', pdfId);
+        fd.append('edit_count', Object.keys(edits).length);
+        fd.append('page_count', pdfData?.pageCount || 1);
+        fd.append('time_spent_seconds', Math.floor((Date.now() - sessionStart) / 1000));
+        
+        const intentR = await fetch('/api/create-payment', { method: 'POST', body: fd });
+        
+        if (!intentR.ok) {
+            const err = await intentR.json().catch(() => ({}));
+            throw new Error(err.detail || 'Payment setup failed');
+        }
+        
+        const intentData = await intentR.json();
+        
+        if (!intentData.clientSecret) {
+            throw new Error('Invalid payment response');
+        }
+        
+        clientSecret = intentData.clientSecret;
+        
+        // Update displayed price from actual calculation
+        $('payment-price').textContent = intentData.display_price;
+        $('payment-btn-price').textContent = intentData.display_price;
+        
+        // Create Elements
+        $('payment-element').innerHTML = '';
+        elements = stripe.elements({
+            clientSecret: clientSecret,
+            appearance: {
+                theme: 'night',
+                variables: {
+                    colorPrimary: '#6366f1',
+                    colorBackground: '#1e293b',
+                    colorText: '#ffffff',
+                    colorDanger: '#ef4444',
+                    fontFamily: 'Inter, sans-serif',
+                    borderRadius: '8px'
+                }
+            }
+        });
+        
+        paymentElement = elements.create('payment', { layout: 'tabs' });
+        paymentElement.mount('#payment-element');
+        
+        showLoading(false);
+        $('payment-modal').classList.add('show');
+        
+    } catch(e) {
+        showLoading(false);
+        console.error('Payment error:', e);
+        // Fall back to free download on any error
+        if (confirm('Payment system unavailable. Download anyway?')) {
+            await doFreeDownload();
+        }
+    }
+}
+
+async function submitPayment() {
+    if (!stripe || !elements) return;
+    
+    const btn = $('payment-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    $('payment-error').classList.remove('show');
+    
+    try {
+        const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            confirmParams: { return_url: window.location.href },
+            redirect: 'if_required'
+        });
+        
+        if (error) {
+            $('payment-error').textContent = error.message;
+            $('payment-error').classList.add('show');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay ' + $('payment-btn-price').textContent;
+            return;
+        }
+        
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+            // Verify and get download token
             const fd = new FormData();
             fd.append('payment_intent_id', paymentIntent.id);
             const r = await fetch('/api/verify-payment', { method: 'POST', body: fd });
@@ -1967,13 +899,13 @@ async function submitPayment() {
             if (data.success) {
                 downloadToken = data.download_token;
                 closeModal('payment-modal');
-                await performDownload();
+                await doDownloadWithToken();
             } else {
-                throw new Error('Payment verification failed');
+                throw new Error('Verification failed');
             }
         }
     } catch(e) {
-        $('payment-error').textContent = e.message || 'Payment failed. Please try again.';
+        $('payment-error').textContent = e.message || 'Payment failed';
         $('payment-error').classList.add('show');
     }
     
@@ -1981,12 +913,8 @@ async function submitPayment() {
     btn.innerHTML = '<i class="fas fa-lock"></i> Pay ' + $('payment-btn-price').textContent;
 }
 
-// Perform actual download after payment
-async function performDownload() {
-    if (!downloadToken) return showToast('Payment required', 'error');
-    
-    showLoading(true, 'Preparing your PDF...');
-    
+async function doDownloadWithToken() {
+    showLoading(true, 'Preparing download...');
     const fd = new FormData();
     fd.append('pdf_id', pdfId);
     fd.append('edits', JSON.stringify(Object.values(edits)));
@@ -1994,7 +922,6 @@ async function performDownload() {
     
     try {
         const r = await fetch('/save-and-download', { method: 'POST', body: fd });
-        
         if (!r.ok) throw new Error('Download failed');
         
         const blob = await r.blob();
@@ -2006,346 +933,55 @@ async function performDownload() {
         a.click();
         window.URL.revokeObjectURL(url);
         a.remove();
-        
-        showToast('Downloaded successfully!');
-        
-        // Track conversion
-        gtag('event', 'purchase', {
-            currency: currentPricing?.currency || 'USD',
-            value: (currentPricing?.amount || 299) / 100
-        });
+        showToast('Downloaded!');
     } catch(e) {
-        showToast('Download failed: ' + e.message, 'error');
+        showToast('Download failed', 'error');
     }
-    
     showLoading(false);
 }
 
-// Initialize Stripe on page load
-initStripe();
+async function doFreeDownload() {
+    showLoading(true, 'Preparing download...');
+    const fd = new FormData();
+    fd.append('pdf_id', pdfId);
+    fd.append('edits', JSON.stringify(Object.values(edits)));
+    
+    try {
+        const r = await fetch('/save-and-download', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('Download failed');
+        
+        const blob = await r.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'luleit-edited.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('Downloaded!');
+    } catch(e) {
+        showToast('Download failed: ' + e.message, 'error');
+    }
+    showLoading(false);
+}
 
-document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}if(e.key==='Delete'&&selectedEl)deleteEl(selectedEl);if(e.key==='Escape')deselectEl()};
+// Session tracking
+const sessionStart = Date.now();
+
+// ===== KEYBOARD SHORTCUTS =====
+document.onkeydown=e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}
+    if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo()}
+    if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}
+    if(e.key==='Delete'&&selectedEl)deleteEl(selectedEl);
+    if(e.key==='Escape')deselectEl();
+};
 document.onclick=e=>{if(!e.target.closest('.added-el,.format-bar,.shape-bar'))deselectEl()};
 document.ondragover=e=>e.preventDefault();
 document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')loadPDF(f)};
 
-// Luleit PDF Editor with localized pricing
-console.log('Luleit PDF Editor - Powered by Stripe');
-
-// ===== MOBILE TOUCH SUPPORT =====
-// Touch events for drawing canvas
-$('draw-canvas').ontouchstart=e=>{
-    if(!['draw','highlight'].includes(currentTool))return;
-    e.preventDefault();
-    saveState();
-    isDrawing=true;
-    const touch=e.touches[0];
-    const r=$('draw-canvas').getBoundingClientRect();
-    lastX=(touch.clientX-r.left)*($('draw-canvas').width/r.width);
-    lastY=(touch.clientY-r.top)*($('draw-canvas').height/r.height);
-};
-$('draw-canvas').ontouchmove=e=>{
-    if(!isDrawing)return;
-    e.preventDefault();
-    const touch=e.touches[0];
-    const r=$('draw-canvas').getBoundingClientRect();
-    const x=(touch.clientX-r.left)*($('draw-canvas').width/r.width);
-    const y=(touch.clientY-r.top)*($('draw-canvas').height/r.height);
-    ctx.beginPath();
-    ctx.moveTo(lastX,lastY);
-    ctx.lineTo(x,y);
-    ctx.lineCap='round';
-    ctx.strokeStyle=currentTool==='highlight'?'rgba(255,255,0,.4)':drawColor;
-    ctx.lineWidth=currentTool==='highlight'?20:3;
-    ctx.stroke();
-    lastX=x;lastY=y;
-};
-$('draw-canvas').ontouchend=()=>{
-    if(isDrawing){isDrawing=false;drawings[currentPage]=$('draw-canvas').toDataURL()}
-};
-
-// Touch events for signature canvas
-$('sig-canvas').ontouchstart=e=>{
-    e.preventDefault();
-    sigDrawing=true;
-    const touch=e.touches[0];
-    const r=$('sig-canvas').getBoundingClientRect();
-    sigCtx.beginPath();
-    sigCtx.moveTo(touch.clientX-r.left,touch.clientY-r.top);
-};
-$('sig-canvas').ontouchmove=e=>{
-    if(!sigDrawing)return;
-    e.preventDefault();
-    const touch=e.touches[0];
-    const r=$('sig-canvas').getBoundingClientRect();
-    sigCtx.lineTo(touch.clientX-r.left,touch.clientY-r.top);
-    sigCtx.stroke();
-};
-$('sig-canvas').ontouchend=()=>{sigDrawing=false};
-
-// Touch drag for added elements
-function makeTouchDrag(el,cb){
-    let startX,startY,origX,origY;
-    el.ontouchstart=e=>{
-        if(el.contentEditable==='true'&&document.activeElement===el)return;
-        const touch=e.touches[0];
-        startX=touch.clientX;
-        startY=touch.clientY;
-        origX=parseFloat(el.style.left)||0;
-        origY=parseFloat(el.style.top)||0;
-    };
-    el.ontouchmove=e=>{
-        e.preventDefault();
-        const touch=e.touches[0];
-        el.style.left=(origX+(touch.clientX-startX)/zoomLevel)+'px';
-        el.style.top=(origY+(touch.clientY-startY)/zoomLevel)+'px';
-    };
-    el.ontouchend=()=>{cb?.()};
-}
-
-// Override createAddedText and createAddedImage to include touch support
-const origCreateAddedText=createAddedText;
-createAddedText=function(t,i){
-    origCreateAddedText(t,i);
-    const el=document.querySelector(`.added-text[data-idx="${i}"]`);
-    if(el)makeTouchDrag(el,()=>{
-        if(addedTexts[currentPage]?.[i]){
-            addedTexts[currentPage][i].x=parseFloat(el.style.left);
-            addedTexts[currentPage][i].y=parseFloat(el.style.top);
-        }
-    });
-};
-
-const origCreateAddedImage=createAddedImage;
-createAddedImage=function(m,i){
-    origCreateAddedImage(m,i);
-    const el=document.querySelector(`.added-image[data-idx="${i}"]`);
-    if(el)makeTouchDrag(el,()=>{
-        if(addedImages[currentPage]?.[i]){
-            addedImages[currentPage][i].x=parseFloat(el.style.left);
-            addedImages[currentPage][i].y=parseFloat(el.style.top);
-        }
-    });
-};
-
-// Prevent zoom on double tap
-document.addEventListener('touchstart',e=>{
-    if(e.touches.length>1)e.preventDefault();
-},{passive:false});
-
-let lastTap=0;
-document.addEventListener('touchend',e=>{
-    const now=Date.now();
-    if(now-lastTap<300&&e.target.closest('.page-container')){
-        e.preventDefault();
-    }
-    lastTap=now;
-},{passive:false});
-
-// Pinch to zoom on page container
-let initialDistance=0;
-let initialZoom=1;
-$('page-container')?.addEventListener('touchstart',e=>{
-    if(e.touches.length===2){
-        initialDistance=Math.hypot(
-            e.touches[0].clientX-e.touches[1].clientX,
-            e.touches[0].clientY-e.touches[1].clientY
-        );
-        initialZoom=zoomLevel;
-    }
-},{passive:true});
-
-$('page-container')?.addEventListener('touchmove',e=>{
-    if(e.touches.length===2){
-        e.preventDefault();
-        const dist=Math.hypot(
-            e.touches[0].clientX-e.touches[1].clientX,
-            e.touches[0].clientY-e.touches[1].clientY
-        );
-        const scale=dist/initialDistance;
-        zoomLevel=Math.min(Math.max(initialZoom*scale,0.5),3);
-        $('page-container').style.transform=`scale(${zoomLevel})`;
-        $('zoom-level').textContent=Math.round(zoomLevel*100)+'%';
-    }
-},{passive:false});
-
-// ===== MOBILE FUNCTIONS =====
-function isMobile(){return window.innerWidth<=768}
-
-// Toggle mobile navigation drawer
-function toggleMobileNav(){
-    const drawer=$('mobile-nav-drawer');
-    const btn=$('mobile-menu-btn');
-    drawer.classList.toggle('show');
-    btn.innerHTML=drawer.classList.contains('show')?'<i class="fas fa-times"></i>':'<i class="fas fa-bars"></i>';
-}
-
-// Navigate via mobile nav
-function mobileNavTo(view){
-    switchView(view);
-    toggleMobileNav();
-    document.querySelectorAll('.mobile-nav-item').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
-}
-
-// Set mobile tool
-function setMobileTool(tool){
-    currentTool=tool;
-    document.querySelectorAll('.mobile-tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
-    document.querySelectorAll('.toolbar .tool-btn[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
-    $('draw-canvas').classList.toggle('active',['draw','highlight'].includes(tool));
-    if(tool==='text')showToast('Tap on PDF to add text');
-}
-
-// Mobile page navigation
-function mobilePrevPage(){
-    if(currentPage>1){renderPage(currentPage-1);updateMobilePageInfo()}
-}
-function mobileNextPage(){
-    if(pdfData&&currentPage<pdfData.pageCount){renderPage(currentPage+1);updateMobilePageInfo()}
-}
-function updateMobilePageInfo(){
-    if(pdfData)$('mobile-page-info').textContent=currentPage+' / '+pdfData.pageCount;
-}
-
-// Mobile zoom
-function mobileZoomIn(){
-    zoomLevel=Math.min(zoomLevel+0.25,3);
-    $('page-container').style.transform='scale('+zoomLevel+')';
-    $('mobile-zoom-level').textContent=Math.round(zoomLevel*100)+'%';
-    $('zoom-level').textContent=Math.round(zoomLevel*100)+'%';
-}
-function mobileZoomOut(){
-    zoomLevel=Math.max(zoomLevel-0.25,0.5);
-    $('page-container').style.transform='scale('+zoomLevel+')';
-    $('mobile-zoom-level').textContent=Math.round(zoomLevel*100)+'%';
-    $('zoom-level').textContent=Math.round(zoomLevel*100)+'%';
-}
-
-// Mobile rotate page
-function mobileRotatePage(){
-    if(pdfData)rotatePage(currentPage);
-}
-
-// Show/hide mobile UI based on view
-function updateMobileUI(){
-    const isEditing=pdfData&&document.querySelector('.page-container.show');
-    if(isMobile()){
-        $('mobile-left-toolbar').classList.toggle('show',isEditing);
-        $('mobile-bottom-bar').classList.toggle('show',isEditing);
-        $('editor').classList.toggle('mobile-edit-mode',isEditing);
-        if(isEditing)updateMobilePageInfo();
-    }else{
-        $('mobile-left-toolbar').classList.remove('show');
-        $('mobile-bottom-bar').classList.remove('show');
-        $('editor').classList.remove('mobile-edit-mode');
-        $('mobile-nav-drawer').classList.remove('show');
-    }
-}
-
-// Override switchView to handle mobile UI
-const origSwitchView=switchView;
-switchView=function(v){
-    origSwitchView(v);
-    setTimeout(updateMobileUI,100);
-    // Close nav drawer if open
-    $('mobile-nav-drawer').classList.remove('show');
-    $('mobile-menu-btn').innerHTML='<i class="fas fa-bars"></i>';
-};
-
-// Touch drawing support
-let touchDrawing=false;
-$('draw-canvas')?.addEventListener('touchstart',e=>{
-    if(!['draw','highlight'].includes(currentTool))return;
-    e.preventDefault();
-    touchDrawing=true;
-    saveState();
-    const touch=e.touches[0];
-    const rect=$('draw-canvas').getBoundingClientRect();
-    lastX=(touch.clientX-rect.left)*($('draw-canvas').width/rect.width);
-    lastY=(touch.clientY-rect.top)*($('draw-canvas').height/rect.height);
-},{passive:false});
-
-$('draw-canvas')?.addEventListener('touchmove',e=>{
-    if(!touchDrawing)return;
-    e.preventDefault();
-    const touch=e.touches[0];
-    const rect=$('draw-canvas').getBoundingClientRect();
-    const x=(touch.clientX-rect.left)*($('draw-canvas').width/rect.width);
-    const y=(touch.clientY-rect.top)*($('draw-canvas').height/rect.height);
-    ctx.beginPath();
-    ctx.moveTo(lastX,lastY);
-    ctx.lineTo(x,y);
-    ctx.lineCap='round';
-    ctx.strokeStyle=currentTool==='highlight'?'rgba(255,255,0,.4)':drawColor;
-    ctx.lineWidth=currentTool==='highlight'?20:3;
-    ctx.stroke();
-    lastX=x;lastY=y;
-},{passive:false});
-
-$('draw-canvas')?.addEventListener('touchend',()=>{
-    if(touchDrawing){
-        touchDrawing=false;
-        drawings[currentPage]=$('draw-canvas').toDataURL();
-    }
-});
-
-// Touch support for text layer (tap to add text)
-$('text-layer')?.addEventListener('touchend',e=>{
-    if(currentTool!=='text'||e.target!==$('text-layer'))return;
-    e.preventDefault();
-    const touch=e.changedTouches[0];
-    const rect=$('text-layer').getBoundingClientRect();
-    saveState();
-    if(!addedTexts[currentPage])addedTexts[currentPage]=[];
-    addedTexts[currentPage].push({
-        x:(touch.clientX-rect.left)/zoomLevel,
-        y:(touch.clientY-rect.top)/zoomLevel,
-        text:'Text',
-        fontFamily:'Arial',
-        fontSize:16,
-        color:'#000000'
-    });
-    renderPage(currentPage);
-    setMobileTool('select');
-    showToast('Text added - tap to edit');
-});
-
-// Touch signature canvas
-$('sig-canvas')?.addEventListener('touchstart',e=>{
-    e.preventDefault();
-    sigDrawing=true;
-    const touch=e.touches[0];
-    const rect=$('sig-canvas').getBoundingClientRect();
-    sigCtx.beginPath();
-    sigCtx.moveTo(touch.clientX-rect.left,touch.clientY-rect.top);
-},{passive:false});
-
-$('sig-canvas')?.addEventListener('touchmove',e=>{
-    if(!sigDrawing)return;
-    e.preventDefault();
-    const touch=e.touches[0];
-    const rect=$('sig-canvas').getBoundingClientRect();
-    sigCtx.lineTo(touch.clientX-rect.left,touch.clientY-rect.top);
-    sigCtx.stroke();
-},{passive:false});
-
-$('sig-canvas')?.addEventListener('touchend',()=>{sigDrawing=false});
-
-// Handle window resize
-window.addEventListener('resize',updateMobileUI);
-
-// Close nav drawer on outside tap
-document.addEventListener('click',e=>{
-    if($('mobile-nav-drawer').classList.contains('show')&&
-       !e.target.closest('#mobile-nav-drawer')&&
-       !e.target.closest('#mobile-menu-btn')){
-        $('mobile-nav-drawer').classList.remove('show');
-        $('mobile-menu-btn').innerHTML='<i class="fas fa-bars"></i>';
-    }
-});
-
-// Initialize mobile UI on load
-setTimeout(updateMobileUI,100);
+console.log('Luleit PDF Editor loaded');
 </script>
 </body>
 </html>

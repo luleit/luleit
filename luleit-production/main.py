@@ -1725,49 +1725,98 @@ async def save_and_download(
     request: Request, 
     pdf_id: str = Form(...), 
     edits: str = Form("[]"),
-    token: str = Form(...)
+    token: str = Form(None)
 ):
-    """Save edits and download - requires valid payment token"""
+    """Save edits and download - token required only if Stripe is enabled"""
     if pdf_id not in pdf_storage:
         raise HTTPException(404, "PDF not found")
     
-    # Verify payment token
-    try:
-        decoded = base64.b64decode(token).decode()
-        token_pdf_id, payment_id = decoded.split(":")
-        if token_pdf_id != pdf_id:
-            raise HTTPException(403, "Invalid token")
-    except:
+    # Verify payment token only if Stripe is enabled
+    if STRIPE_ENABLED and token:
+        try:
+            decoded = base64.b64decode(token).decode()
+            token_pdf_id, payment_id = decoded.split(":")
+            if token_pdf_id != pdf_id:
+                raise HTTPException(403, "Invalid token")
+        except Exception as e:
+            if STRIPE_ENABLED:
+                raise HTTPException(403, "Payment required")
+    elif STRIPE_ENABLED and not token:
+        # Stripe enabled but no token - check if we should allow free download
+        # For now, require token if Stripe is enabled
         raise HTTPException(403, "Payment required")
     
     content = pdf_storage[pdf_id]["content"]
     edit_list = json.loads(edits) if edits else []
     
     if edit_list:
-        doc = fitz.open(stream=content, filetype="pdf")
-        for e in edit_list:
-            try:
-                page = doc[e["pageNum"] - 1]
-                rect = fitz.Rect(e["originalX"] - 1, e["originalY"] - 1, 
-                                e["originalX"] + e["originalWidth"] + 5, 
-                                e["originalY"] + e["originalHeight"] + 1)
-                page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
-                if e.get("newText"):
-                    page.insert_text(fitz.Point(e["originalX"], e["originalY"] + e["originalHeight"] - 2), 
-                                    e["newText"], fontsize=e["originalFontSize"])
-            except: pass
-        
-        output = io.BytesIO()
-        doc.save(output)
-        doc.close()
-        content = output.getvalue()
-        analytics["total_edits"] += len(edit_list)
+        try:
+            doc = fitz.open(stream=content, filetype="pdf")
+            for e in edit_list:
+                try:
+                    page_num = e.get("pageNum", 1) - 1
+                    if page_num < 0 or page_num >= len(doc):
+                        continue
+                    page = doc[page_num]
+                    
+                    # Get coordinates
+                    x = float(e.get("originalX", 0))
+                    y = float(e.get("originalY", 0))
+                    w = float(e.get("originalWidth", 100))
+                    h = float(e.get("originalHeight", 20))
+                    font_size = float(e.get("originalFontSize", 12))
+                    
+                    # Create rect with small padding
+                    rect = fitz.Rect(x - 1, y - 1, x + w + 2, y + h + 2)
+                    
+                    # Draw white rectangle to cover original text
+                    page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
+                    
+                    # Insert new text if provided
+                    new_text = e.get("newText", "")
+                    if new_text:
+                        # Calculate text position (baseline)
+                        text_y = y + h - 2
+                        page.insert_text(
+                            fitz.Point(x, text_y),
+                            new_text,
+                            fontsize=font_size,
+                            color=(0, 0, 0)
+                        )
+                except Exception as edit_err:
+                    print(f"Edit error: {edit_err}")
+                    continue
+            
+            # Save with proper parameters to avoid corruption
+            output = io.BytesIO()
+            doc.save(
+                output,
+                garbage=4,  # Maximum garbage collection
+                deflate=True,  # Compress streams
+                clean=True,  # Clean up content streams
+                linear=False  # Don't linearize (can cause issues)
+            )
+            doc.close()
+            content = output.getvalue()
+            analytics["total_edits"] += len(edit_list)
+        except Exception as save_err:
+            print(f"PDF save error: {save_err}")
+            # Return original if editing fails
+            content = pdf_storage[pdf_id]["content"]
     
     analytics["total_downloads"] += 1
     track_action(request, "Download", f"With {len(edit_list)} edits")
     
-    return StreamingResponse(io.BytesIO(content), media_type="application/pdf",
-                            headers={"Content-Disposition": "attachment; filename=luleit-edited.pdf"})
+    # Return with proper headers
+    return StreamingResponse(
+        io.BytesIO(content), 
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": "attachment; filename=luleit-edited.pdf",
+            "Content-Type": "application/pdf",
+            "Cache-Control": "no-cache"
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
