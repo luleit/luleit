@@ -15,8 +15,8 @@ except:
 
 try:
     import stripe
-    stripe.api_key = os.getenv("STRIPE_KEY", "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")
-    STRIPE_ENABLED = True
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+    STRIPE_ENABLED = bool(stripe.api_key)
 except:
     STRIPE_ENABLED = False
 
@@ -1531,6 +1531,12 @@ async def rotate_all(request: Request, pdf_id: str = Form(...), angle: int = For
     return {"success": True, "pages": generate_preview(content)}
 
 # ============ PRICING & PAYMENTS ============
+@app.get("/api/stripe-config")
+async def get_stripe_config():
+    """Return Stripe publishable key (safe to expose)"""
+    pk = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+    return {"publishable_key": pk, "enabled": STRIPE_ENABLED and bool(pk)}
+
 @app.get("/api/pricing")
 async def get_pricing(request: Request):
     """Get localized pricing for the user based on country AND city (preview price)"""

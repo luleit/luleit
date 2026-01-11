@@ -87,10 +87,10 @@
         .page-container.show{display:block}
         .page-container img{display:block;user-select:none;-webkit-user-drag:none}
         .text-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-        .text-box{position:absolute;background:transparent;border:2px solid transparent;padding:1px 3px;cursor:pointer;outline:none;color:transparent;font-family:inherit;pointer-events:auto;border-radius:2px;transition:background .15s,border-color .15s}
-        .text-box:hover{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.5)}
-        .text-box.edited{border-color:var(--success);background:rgba(16,185,129,.1)}
-        .text-box.editing{background:#fff !important;color:#000 !important;border-color:var(--accent) !important;box-shadow:0 4px 20px rgba(99,102,241,.4);z-index:1000;pointer-events:auto}
+        .text-box{position:absolute;background:transparent;border:2px solid transparent;padding:2px 4px;cursor:pointer;outline:none;color:transparent;font-family:inherit;pointer-events:auto;border-radius:2px;transition:background .15s,border-color .15s;white-space:pre-wrap;word-break:break-word;overflow:hidden;box-sizing:border-box}
+        .text-box:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.4)}
+        .text-box.edited{border-color:var(--success);background:rgba(16,185,129,.08);color:#000}
+        .text-box.editing{background:#fff !important;color:#000 !important;border-color:var(--accent) !important;box-shadow:0 4px 20px rgba(99,102,241,.4);z-index:1000;pointer-events:auto;overflow:visible;min-width:100px}
         
         /* Mobile text edit popup - appears when tapping text on mobile */
         .text-edit-popup{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:2px solid var(--accent);padding:16px;z-index:2000;display:none;flex-direction:column;gap:12px;box-shadow:0 -10px 40px rgba(0,0,0,.5);border-radius:16px 16px 0 0;max-height:50vh}
@@ -1149,18 +1149,46 @@ function renderTextLayer(p){
     const l = $('text-layer');
     l.innerHTML = '';
     
+    // Scale factor for positioning (PDF coords to rendered image coords)
+    const scaleX = p.width / p.originalWidth;
+    const scaleY = p.height / p.originalHeight;
+    
     p.textBlocks.forEach((b, i) => {
         const k = `${currentPage}-${i}`;
         const e = edits[k];
+        const displayText = e ? e.newText : b.text;
+        
+        // Skip empty text
+        if (!displayText || displayText.trim() === '') return;
         
         const box = document.createElement('div');
         box.className = 'text-box' + (e ? ' edited' : '');
-        box.textContent = e ? e.newText : b.text;
-        box.style.cssText = `left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};line-height:${b.height}px;`;
+        box.textContent = displayText;
+        
+        // Calculate scaled position
+        const scaledX = b.originalX * scaleX;
+        const scaledY = b.originalY * scaleY;
+        const scaledWidth = b.originalWidth * scaleX;
+        const scaledHeight = b.originalHeight * scaleY;
+        const scaledFontSize = b.originalFontSize * scaleY;
+        
+        box.style.cssText = `
+            left: ${scaledX}px;
+            top: ${scaledY}px;
+            width: ${Math.max(scaledWidth, 20)}px;
+            min-height: ${scaledHeight}px;
+            font-size: ${scaledFontSize}px;
+            font-family: ${b.fontFamily || 'Arial, sans-serif'};
+            line-height: 1.2;
+        `;
+        
         box.dataset.key = k;
         box.dataset.orig = b.text;
         box.dataset.block = JSON.stringify(b);
+        box.dataset.scalex = scaleX;
+        box.dataset.scaley = scaleY;
         
+        // Click handler
         box.onclick = function(evt) {
             evt.preventDefault();
             evt.stopPropagation();
@@ -1174,17 +1202,23 @@ function renderTextLayer(p){
         l.appendChild(box);
     });
     
+    // Render added elements
     (addedTexts[currentPage] || []).forEach((t, i) => createAddedText(t, i));
     (addedImages[currentPage] || []).forEach((m, i) => createAddedImage(m, i));
     (addedShapes[currentPage] || []).forEach((s, i) => createAddedShape(s, i));
     
-    // Shape drawing
+    // Shape drawing handlers
+    setupShapeDrawing(l);
+}
+
+function setupShapeDrawing(layer) {
     let shapeStart = null;
-    l.onclick = e => {
-        if (e.target === l && currentTool === 'text') {
+    
+    layer.onclick = e => {
+        if (e.target === layer && currentTool === 'text') {
             saveState();
             if (!addedTexts[currentPage]) addedTexts[currentPage] = [];
-            const r = l.getBoundingClientRect();
+            const r = layer.getBoundingClientRect();
             addedTexts[currentPage].push({
                 x: (e.clientX - r.left) / zoomLevel,
                 y: (e.clientY - r.top) / zoomLevel,
@@ -1197,16 +1231,16 @@ function renderTextLayer(p){
         }
     };
     
-    l.onmousedown = e => {
-        if (currentTool === 'shape' && e.target === l) {
-            const r = l.getBoundingClientRect();
+    layer.onmousedown = e => {
+        if (currentTool === 'shape' && e.target === layer) {
+            const r = layer.getBoundingClientRect();
             shapeStart = { x: (e.clientX - r.left) / zoomLevel, y: (e.clientY - r.top) / zoomLevel };
         }
     };
     
-    l.onmouseup = e => {
+    layer.onmouseup = e => {
         if (shapeStart && currentTool === 'shape') {
-            const r = l.getBoundingClientRect();
+            const r = layer.getBoundingClientRect();
             const ex = (e.clientX - r.left) / zoomLevel, ey = (e.clientY - r.top) / zoomLevel;
             const w = Math.abs(ex - shapeStart.x), h = Math.abs(ey - shapeStart.y);
             if (w > 10 || h > 10) {
@@ -1225,50 +1259,118 @@ function renderTextLayer(p){
     };
 }
 
-// Desktop inline edit
+// Desktop inline edit - FIXED version
+let currentlyEditing = null;
+
 function openInlineEdit(box, key, block) {
-    document.querySelectorAll('.text-box.editing').forEach(b => b.classList.remove('editing'));
+    // Close any existing edit first
+    if (currentlyEditing && currentlyEditing !== box) {
+        finishEditing(currentlyEditing);
+    }
     
+    currentlyEditing = box;
+    const originalText = box.dataset.orig;
+    const currentText = edits[key] ? edits[key].newText : originalText;
+    
+    // Store current state
+    box.dataset.currentText = currentText;
+    
+    // Setup editing mode
     box.classList.add('editing');
-    box.contentEditable = true;
-    box.style.width = Math.max(parseFloat(box.style.width), 200) + 'px';
+    box.contentEditable = 'true';
+    box.textContent = currentText;
+    
+    // Expand width for editing
+    const minWidth = Math.max(parseFloat(box.style.width) || 100, 150);
+    box.style.minWidth = minWidth + 'px';
+    box.style.width = 'auto';
+    
+    // Focus and select all
     box.focus();
     
-    const range = document.createRange();
-    range.selectNodeContents(box);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+    try {
+        const range = document.createRange();
+        range.selectNodeContents(box);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } catch(e) {}
     
-    box.onblur = function() {
-        const newText = this.textContent.trim();
-        const origText = this.dataset.orig;
-        
-        this.classList.remove('editing');
-        this.contentEditable = false;
-        this.style.width = block.width + 'px';
-        
-        if (newText !== origText) {
-            saveState();
-            edits[key] = {
-                pageNum: currentPage, originalText: origText, newText: newText,
-                originalX: block.originalX, originalY: block.originalY,
-                originalWidth: block.originalWidth, originalHeight: block.originalHeight,
-                originalFontSize: block.originalFontSize
-            };
-            this.classList.add('edited');
-            this.textContent = newText;
-            showToast('Text saved');
-        } else if (edits[key] && newText === origText) {
-            delete edits[key];
-            this.classList.remove('edited');
+    // Event handlers
+    box.onblur = () => finishEditing(box);
+    
+    box.onkeydown = function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            box.blur();
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            // Restore original and close
+            box.textContent = box.dataset.currentText;
+            box.blur();
         }
     };
     
-    box.onkeydown = function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
-        if (e.key === 'Escape') { this.textContent = this.dataset.orig; this.blur(); }
+    // Prevent click from bubbling and re-triggering
+    box.onclick = e => e.stopPropagation();
+}
+
+function finishEditing(box) {
+    if (!box || !box.classList.contains('editing')) return;
+    
+    const key = box.dataset.key;
+    const block = JSON.parse(box.dataset.block);
+    const originalText = box.dataset.orig;
+    const newText = box.textContent.trim();
+    
+    // Remove editing state
+    box.classList.remove('editing');
+    box.contentEditable = 'false';
+    box.style.minWidth = '';
+    box.style.width = (block.originalWidth * parseFloat(box.dataset.scalex || 1)) + 'px';
+    box.onblur = null;
+    box.onkeydown = null;
+    
+    // Restore click handler
+    box.onclick = function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        if (isMobile()) {
+            openTextEditPopup(this, key, block);
+        } else {
+            openInlineEdit(this, key, block);
+        }
     };
+    
+    // Handle text change
+    if (newText !== originalText) {
+        // Text was changed
+        saveState();
+        edits[key] = {
+            pageNum: currentPage,
+            originalText: originalText,
+            newText: newText,
+            originalX: block.originalX,
+            originalY: block.originalY,
+            originalWidth: block.originalWidth,
+            originalHeight: block.originalHeight,
+            originalFontSize: block.originalFontSize
+        };
+        box.classList.add('edited');
+        box.textContent = newText;
+        showToast('Text saved');
+    } else if (edits[key] && newText === originalText) {
+        // Text was reverted to original
+        delete edits[key];
+        box.classList.remove('edited');
+        box.textContent = originalText;
+    } else {
+        // No change, restore display
+        box.textContent = edits[key] ? edits[key].newText : originalText;
+    }
+    
+    currentlyEditing = null;
 }
 
 // Mobile popup edit
@@ -1284,21 +1386,28 @@ function openTextEditPopup(box, key, block) {
     $('text-edit-textarea').value = currentText;
     $('text-edit-popup').classList.add('show');
     
-    setTimeout(() => $('text-edit-textarea').focus(), 100);
+    setTimeout(() => {
+        $('text-edit-textarea').focus();
+        $('text-edit-textarea').select();
+    }, 100);
     
-    document.querySelectorAll('.text-box').forEach(b => b.style.opacity = '0.3');
+    // Dim other boxes
+    document.querySelectorAll('.text-box').forEach(b => {
+        if (b !== box) b.style.opacity = '0.3';
+    });
     box.style.opacity = '1';
-    box.style.background = 'rgba(99,102,241,.3)';
-    box.style.borderColor = 'var(--accent)';
+    box.classList.add('editing');
 }
 
 function closeTextEditPopup() {
     $('text-edit-popup').classList.remove('show');
+    
+    // Restore all boxes
     document.querySelectorAll('.text-box').forEach(b => {
         b.style.opacity = '1';
-        b.style.background = '';
-        b.style.borderColor = '';
+        b.classList.remove('editing');
     });
+    
     currentEditingTextBox = null;
     currentEditingKey = null;
     currentEditingBlock = null;
@@ -1313,15 +1422,20 @@ function saveTextEdit() {
     if (newText !== origText) {
         saveState();
         edits[currentEditingKey] = {
-            pageNum: currentPage, originalText: origText, newText: newText,
-            originalX: currentEditingBlock.originalX, originalY: currentEditingBlock.originalY,
-            originalWidth: currentEditingBlock.originalWidth, originalHeight: currentEditingBlock.originalHeight,
+            pageNum: currentPage,
+            originalText: origText,
+            newText: newText,
+            originalX: currentEditingBlock.originalX,
+            originalY: currentEditingBlock.originalY,
+            originalWidth: currentEditingBlock.originalWidth,
+            originalHeight: currentEditingBlock.originalHeight,
             originalFontSize: currentEditingBlock.originalFontSize
         };
         currentEditingTextBox.textContent = newText;
         currentEditingTextBox.classList.add('edited');
         showToast('Text saved!');
     } else if (edits[currentEditingKey]) {
+        // Reverted to original
         delete edits[currentEditingKey];
         currentEditingTextBox.classList.remove('edited');
         currentEditingTextBox.textContent = origText;
@@ -1666,10 +1780,20 @@ function getEngagementData() {
     };
 }
 
-// Initialize Stripe
+// Initialize Stripe - key injected from server
+let stripePublishableKey = null;
+
 async function initStripe() {
     try {
-        stripe = Stripe('pk_live_51QujYkBOcFc238AXTZC2LKzMwYbc3lAbVk7r19FsjmA9AI13BstHtTwc0ktvFAAtA22H7yRw8U3IrucmQSNkLxPn00p1ckcvJg');
+        // Get publishable key from server
+        if (!stripePublishableKey) {
+            const r = await fetch('/api/stripe-config');
+            const config = await r.json();
+            stripePublishableKey = config.publishable_key;
+        }
+        if (stripePublishableKey) {
+            stripe = Stripe(stripePublishableKey);
+        }
     } catch(e) {
         console.error('Stripe init error:', e);
     }
