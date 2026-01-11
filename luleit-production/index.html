@@ -368,21 +368,7 @@
             <div class="page-container" id="page-container"><img id="page-image" draggable="false"><canvas class="draw-canvas" id="draw-canvas"></canvas><div class="text-layer" id="text-layer"></div></div>
         </div>
     </main>
-    <!-- MODALS -->
-    <div class="modal-overlay" id="payment-modal">
-        <div class="modal">
-            <div class="modal-header"><button class="modal-close" onclick="closeModal('payment-modal')"><i class="fas fa-times"></i></button><i class="fas fa-download"></i><h2>Download Your PDF</h2></div>
-            <div class="modal-body">
-                <div class="badge"><i class="fas fa-bolt"></i> 80% OFF</div>
-                <div class="price"><div class="price-old">$9.99</div><div class="price-new" id="current-price">$1.99</div><div class="price-savings" id="savings-text">You save $8.00!</div></div>
-                <div class="feature-item"><i class="fas fa-check"></i> All edits preserved</div>
-                <div class="feature-item"><i class="fas fa-check"></i> No watermarks</div>
-                <div class="feature-item"><i class="fas fa-check"></i> Instant download</div>
-                <button class="btn btn-success modal-btn" onclick="processPayment()" id="pay-btn"><i class="fas fa-lock"></i> Pay & Download</button>
-                <button class="btn btn-ghost modal-btn" onclick="closeModal('payment-modal')">Continue Editing</button>
-            </div>
-        </div>
-    </div>
+    <!-- Download is free! No payment modal needed -->
     <div class="modal-overlay" id="sign-modal">
         <div class="modal" style="max-width:450px">
             <div class="modal-header"><button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button><i class="fas fa-signature"></i><h2>Draw Signature</h2></div>
@@ -540,15 +526,35 @@ async function applyPageNumbers(){showLoading(true,'Adding...');const fd=new For
 
 $('rotate-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Rotating...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();const fd2=new FormData();fd2.append('pdf_id',d.pdfId);fd2.append('angle','90');await fetch('/rotate-all',{method:'POST',body:fd2});showToast('Rotated!');location.href='/download-direct/'+d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
 
-function handleDownload(){if(!pdfData)return showToast('No PDF','error');$('payment-modal').classList.add('show')}
-async function processPayment(){closeModal('payment-modal');showLoading(true);const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('edits',JSON.stringify(Object.values(edits)));fd.append('price',currentPrice);try{const r=await fetch('/create-checkout-session',{method:'POST',body:fd});const d=await r.json();location.href=d.checkoutUrl}catch(e){showToast('Error','error');showLoading(false)}}
+async function handleDownload(){
+    if(!pdfData)return showToast('No PDF loaded','error');
+    showLoading(true,'Preparing download...');
+    const fd=new FormData();
+    fd.append('pdf_id',pdfId);
+    fd.append('edits',JSON.stringify(Object.values(edits)));
+    try{
+        const r=await fetch('/save-and-download',{method:'POST',body:fd});
+        const blob=await r.blob();
+        const url=window.URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='luleit-edited.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('Downloaded successfully!');
+    }catch(e){showToast('Download failed','error')}
+    showLoading(false);
+}
 
 document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}if(e.key==='Delete'&&selectedEl)deleteEl(selectedEl);if(e.key==='Escape')deselectEl()};
 document.onclick=e=>{if(!e.target.closest('.added-el,.format-bar,.shape-bar'))deselectEl()};
 document.ondragover=e=>e.preventDefault();
 document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')loadPDF(f)};
 
-(async()=>{try{const r=await fetch('/get-price?cores='+(navigator.hardwareConcurrency||4));if(r.ok){const d=await r.json();currentPrice=d.price;$('current-price').textContent=d.display_price;$('pay-btn').innerHTML=`<i class="fas fa-lock"></i> Pay ${d.display_price}`;$('savings-text').textContent=`You save $${((d.original_price-d.price)/100).toFixed(2)}!`}}catch(e){}})();
+// Free version - no pricing needed
+console.log('Luleit PDF Editor - Free Version');
 </script>
 </body>
 </html>
