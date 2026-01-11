@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luleit - Free PDF Editor | All-in-One PDF Tools</title>
+    <title>Luleit - PDF Editor | All-in-One PDF Tools</title>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XLD83G2Q6"></script>
     <script>
@@ -12,6 +12,8 @@
         gtag('js', new Date());
         gtag('config', 'G-7XLD83G2Q6');
     </script>
+    <!-- Stripe -->
+    <script src="https://js.stripe.com/v3/"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -203,6 +205,25 @@
         .feature-item i{color:var(--success)}
         .modal-btn{width:100%;padding:11px;margin-top:6px;justify-content:center;font-size:13px}
         .badge{background:linear-gradient(135deg,#f59e0b,#ef4444);padding:5px 10px;border-radius:16px;font-size:10px;font-weight:600;display:inline-block;margin-bottom:10px}
+        
+        /* Payment Modal Styles */
+        .payment-modal{max-width:420px}
+        .payment-modal .modal-header{background:linear-gradient(135deg,#10b981,#059669)}
+        .payment-price{text-align:center;padding:16px;background:var(--bg);border-radius:10px;margin-bottom:16px}
+        .payment-price-amount{font-size:36px;font-weight:800;color:var(--text)}
+        .payment-price-note{font-size:11px;color:var(--muted);margin-top:4px}
+        .payment-features{margin-bottom:16px}
+        .payment-feature{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;border-bottom:1px solid var(--border)}
+        .payment-feature:last-child{border-bottom:none}
+        .payment-feature i{color:var(--success);width:20px}
+        #payment-element{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px}
+        .payment-error{color:var(--danger);font-size:12px;text-align:center;margin-top:8px;display:none}
+        .payment-error.show{display:block}
+        .payment-secure{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--muted);margin-top:12px}
+        .payment-secure i{color:var(--success)}
+        .payment-methods{display:flex;justify-content:center;gap:8px;margin-top:12px}
+        .payment-methods img{height:24px;opacity:0.7}
+        
         .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.98);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
         .loading.show{display:flex}
         .loading-content{text-align:center;max-width:320px;padding:20px}
@@ -851,6 +872,41 @@
             </div>
         </div>
     </div>
+    
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal payment-modal">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal('payment-modal')"><i class="fas fa-times"></i></button>
+                <i class="fas fa-download"></i>
+                <h2>Download Your PDF</h2>
+            </div>
+            <div class="modal-body">
+                <div class="payment-price">
+                    <div class="payment-price-amount" id="payment-price">$2.99</div>
+                    <div class="payment-price-note">One-time payment • Instant download</div>
+                </div>
+                
+                <div class="payment-features">
+                    <div class="payment-feature"><i class="fas fa-check"></i> High-quality PDF with all your edits</div>
+                    <div class="payment-feature"><i class="fas fa-check"></i> No watermarks or limitations</div>
+                    <div class="payment-feature"><i class="fas fa-check"></i> Instant secure download</div>
+                </div>
+                
+                <div id="payment-element"></div>
+                <div class="payment-error" id="payment-error"></div>
+                
+                <button class="btn btn-success modal-btn" id="payment-submit" onclick="submitPayment()">
+                    <i class="fas fa-lock"></i> Pay <span id="payment-btn-price">$2.99</span>
+                </button>
+                
+                <div class="payment-secure">
+                    <i class="fas fa-shield-alt"></i> Secured by Stripe • 256-bit encryption
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="loading" id="loading">
         <div class="loading-content">
             <div class="loading-icon">
@@ -1389,44 +1445,6 @@ function applySignature() {
     applyDrawnSignature();
 }
 
-let currentEditingTextBox = null;
-let currentEditingKey = null;
-let currentEditingBlock = null;
-
-function renderTextLayer(p){
-    const l = $('text-layer');
-    l.innerHTML = '';
-    
-    p.textBlocks.forEach((b, i) => {
-        const k = `${currentPage}-${i}`;
-        const e = edits[k];
-        
-        const box = document.createElement('div');
-        box.className = 'text-box' + (e ? ' edited' : '');
-        box.textContent = e ? e.newText : b.text;
-        box.style.cssText = `left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};line-height:${b.height}px;`;
-        box.dataset.key = k;
-        box.dataset.orig = b.text;
-        box.dataset.block = JSON.stringify(b);
-        
-        box.onclick = function(evt) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            
-            if (isMobile()) {
-                openTextEditPopup(this, k, b);
-            } else {
-                openInlineEdit(this, k, b);
-            }
-        };
-        
-        l.appendChild(box);
-    });
-    
-    (addedTexts[currentPage] || []).forEach((t, i) => createAddedText(t, i));
-    (addedImages[currentPage] || []).forEach((m, i) => createAddedImage(m, i));
-    (addedShapes[currentPage] || []).forEach((s, i) => createAddedShape(s, i));
-}
 
 
 function createAddedText(t,i){const e=document.createElement('div');e.className='added-el added-text';e.contentEditable=true;e.innerText=t.text;e.dataset.idx=i;e.dataset.type='text';e.style.cssText=`left:${t.x}px;top:${t.y}px;font-family:${t.fontFamily};font-size:${t.fontSize}px;font-weight:${t.fontWeight||'normal'};font-style:${t.fontStyle||'normal'};color:${t.color||'#000'};`;e.innerHTML+=`<div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedTexts[currentPage]?.[i]){addedTexts[currentPage][i].x=parseFloat(e.style.left);addedTexts[currentPage][i].y=parseFloat(e.style.top)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};e.onblur=()=>{if(addedTexts[currentPage]?.[i])addedTexts[currentPage][i].text=e.innerText.replace(/<[^>]*>/g,'')};$('text-layer').appendChild(e)}
@@ -1513,35 +1531,357 @@ async function applyPageNumbers(){showLoading(true,'Adding...');const fd=new For
 
 $('rotate-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Rotating...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();const fd2=new FormData();fd2.append('pdf_id',d.pdfId);fd2.append('angle','90');await fetch('/rotate-all',{method:'POST',body:fd2});showToast('Rotated!');location.href='/download-direct/'+d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
 
-async function handleDownload(){
-    if(!pdfData)return showToast('No PDF loaded','error');
-    showLoading(true,'Preparing download...');
-    const fd=new FormData();
-    fd.append('pdf_id',pdfId);
-    fd.append('edits',JSON.stringify(Object.values(edits)));
-    try{
-        const r=await fetch('/save-and-download',{method:'POST',body:fd});
-        const blob=await r.blob();
-        const url=window.URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;
-        a.download='luleit-edited.pdf';
+// ===== STRIPE PAYMENT SYSTEM =====
+let stripe = null;
+let elements = null;
+let paymentElement = null;
+let clientSecret = null;
+let paymentIntentId = null;
+let downloadToken = null;
+let currentPricing = null;
+
+// ===== DEVICE & BROWSER DETECTION =====
+function getDeviceInfo() {
+    const ua = navigator.userAgent.toLowerCase();
+    const platform = navigator.platform?.toLowerCase() || '';
+    
+    // OS Detection
+    const isIOS = /iphone|ipad|ipod/.test(ua) || (platform === 'macintel' && navigator.maxTouchPoints > 1);
+    const isMacOS = /macintosh|mac os x/.test(ua) && !isIOS;
+    const isAndroid = /android/.test(ua);
+    const isWindows = /windows/.test(ua);
+    const isLinux = /linux/.test(ua) && !isAndroid;
+    
+    // Browser Detection
+    const isSafari = /safari/.test(ua) && !/chrome|chromium|edg|opera|opr/.test(ua);
+    const isChrome = /chrome|chromium/.test(ua) && !/edg|opera|opr/.test(ua);
+    const isFirefox = /firefox/.test(ua);
+    const isEdge = /edg/.test(ua);
+    const isOpera = /opera|opr/.test(ua);
+    const isSamsungBrowser = /samsungbrowser/.test(ua);
+    
+    // Device Type
+    const isMobile = isIOS || isAndroid || /mobile/.test(ua);
+    const isTablet = /ipad|tablet/.test(ua) || (isAndroid && !/mobile/.test(ua));
+    const isDesktop = !isMobile && !isTablet;
+    
+    // Can use Apple Pay? (Safari on Apple devices OR iOS any browser)
+    const canApplePay = isIOS || (isMacOS && isSafari);
+    
+    // Can use Google Pay? (Chrome/Android browsers, not Safari)
+    const canGooglePay = isChrome || isAndroid || isEdge || isOpera || isSamsungBrowser;
+    
+    // Premium device detection (for pricing)
+    const isPremiumDevice = isIOS || isMacOS || 
+        /samsung\s*(galaxy\s*)?(s2[0-9]|z\s*fold|z\s*flip)/i.test(ua) ||
+        /pixel\s*[7-9]/i.test(ua);
+    
+    return {
+        // OS
+        isIOS,
+        isMacOS,
+        isAndroid,
+        isWindows,
+        isLinux,
+        os: isIOS ? 'ios' : isMacOS ? 'macos' : isAndroid ? 'android' : isWindows ? 'windows' : isLinux ? 'linux' : 'unknown',
+        
+        // Browser
+        isSafari,
+        isChrome,
+        isFirefox,
+        isEdge,
+        browser: isSafari ? 'safari' : isChrome ? 'chrome' : isFirefox ? 'firefox' : isEdge ? 'edge' : isOpera ? 'opera' : 'other',
+        
+        // Device
+        isMobile,
+        isTablet,
+        isDesktop,
+        deviceType: isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop',
+        
+        // Payment capabilities
+        canApplePay,
+        canGooglePay,
+        
+        // Premium indicator
+        isPremiumDevice,
+        
+        // Raw UA for backend
+        userAgent: navigator.userAgent
+    };
+}
+
+// Filter payment methods based on device
+function getAvailablePaymentMethods(serverMethods) {
+    const device = getDeviceInfo();
+    const available = [];
+    
+    for (const method of serverMethods) {
+        if (method === 'apple_pay' && !device.canApplePay) continue;
+        if (method === 'google_pay' && !device.canGooglePay) continue;
+        available.push(method);
+    }
+    
+    // Always ensure card is available
+    if (!available.includes('card')) {
+        available.unshift('card');
+    }
+    
+    return available;
+}
+
+// ===== ENGAGEMENT TRACKING =====
+let sessionStartTime = Date.now();
+let interactionCount = 0;
+
+// Track interactions
+document.addEventListener('click', () => interactionCount++);
+document.addEventListener('keydown', () => interactionCount++);
+
+function getEngagementData() {
+    const timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000);
+    const editCount = Object.keys(edits).length;
+    const pageCount = pdfData?.pageCount || 1;
+    const hasImages = Object.values(addedImages).some(arr => arr && arr.length > 0);
+    const hasSignature = Object.values(addedImages).some(arr => 
+        arr && arr.some(img => img.src && img.src.includes('data:image'))
+    );
+    const hasDrawings = Object.keys(drawings).length > 0;
+    const device = getDeviceInfo();
+    
+    return {
+        edit_count: editCount,
+        page_count: pageCount,
+        time_spent_seconds: timeSpent,
+        interaction_count: interactionCount,
+        has_added_images: hasImages,
+        has_signature: hasSignature,
+        has_drawings: hasDrawings,
+        // Device info for pricing
+        device_type: device.deviceType,
+        os: device.os,
+        browser: device.browser,
+        is_premium_device: device.isPremiumDevice,
+        can_apple_pay: device.canApplePay,
+        can_google_pay: device.canGooglePay
+    };
+}
+
+// Initialize Stripe
+async function initStripe() {
+    try {
+        stripe = Stripe('pk_live_51QujYkBOcFc238AXTZC2LKzMwYbc3lAbVk7r19FsjmA9AI13BstHtTwc0ktvFAAtA22H7yRw8U3IrucmQSNkLxPn00p1ckcvJg');
+    } catch(e) {
+        console.error('Stripe init error:', e);
+    }
+}
+
+// Get localized pricing
+async function getPricing() {
+    try {
+        const r = await fetch('/api/pricing');
+        currentPricing = await r.json();
+        return currentPricing;
+    } catch(e) {
+        return { display_price: '$2.99', currency: 'usd', amount: 299 };
+    }
+}
+
+// Show payment modal
+async function handleDownload() {
+    if (!pdfData) return showToast('No PDF loaded', 'error');
+    
+    showLoading(true, 'Preparing checkout...');
+    
+    try {
+        // Get preview pricing first
+        const pricing = await getPricing();
+        $('payment-price').textContent = pricing.display_price;
+        $('payment-btn-price').textContent = pricing.display_price;
+        
+        // Get engagement data (includes device info)
+        const engagement = getEngagementData();
+        
+        // Create payment intent with engagement + device data
+        const fd = new FormData();
+        fd.append('pdf_id', pdfId);
+        fd.append('edit_count', engagement.edit_count);
+        fd.append('page_count', engagement.page_count);
+        fd.append('time_spent_seconds', engagement.time_spent_seconds);
+        fd.append('interaction_count', engagement.interaction_count);
+        fd.append('has_added_images', engagement.has_added_images);
+        fd.append('has_signature', engagement.has_signature);
+        fd.append('has_drawings', engagement.has_drawings);
+        // Device info
+        fd.append('device_type', engagement.device_type);
+        fd.append('os', engagement.os);
+        fd.append('browser', engagement.browser);
+        fd.append('is_premium_device', engagement.is_premium_device);
+        fd.append('can_apple_pay', engagement.can_apple_pay);
+        fd.append('can_google_pay', engagement.can_google_pay);
+        
+        const r = await fetch('/api/create-payment', { method: 'POST', body: fd });
+        const data = await r.json();
+        
+        if (data.error) throw new Error(data.error);
+        
+        // Update price display with final calculated price
+        $('payment-price').textContent = data.display_price;
+        $('payment-btn-price').textContent = data.display_price;
+        
+        clientSecret = data.clientSecret;
+        paymentIntentId = data.paymentIntentId;
+        
+        // Filter payment methods based on device capabilities
+        const device = getDeviceInfo();
+        const availableMethods = getAvailablePaymentMethods(data.payment_methods || ['card']);
+        
+        // Initialize Stripe Elements
+        if (!stripe) await initStripe();
+        
+        elements = stripe.elements({
+            clientSecret: clientSecret,
+            appearance: {
+                theme: 'night',
+                variables: {
+                    colorPrimary: '#6366f1',
+                    colorBackground: '#1e293b',
+                    colorText: '#ffffff',
+                    colorDanger: '#ef4444',
+                    fontFamily: 'Inter, sans-serif',
+                    borderRadius: '8px'
+                }
+            }
+        });
+        
+        // Clear previous payment element
+        $('payment-element').innerHTML = '';
+        
+        // Configure wallets based on device
+        const walletConfig = {
+            applePay: device.canApplePay ? 'auto' : 'never',
+            googlePay: device.canGooglePay ? 'auto' : 'never'
+        };
+        
+        paymentElement = elements.create('payment', {
+            layout: 'tabs',
+            wallets: walletConfig,
+            defaultValues: {
+                billingDetails: {
+                    // Can pre-fill if we have data
+                }
+            }
+        });
+        paymentElement.mount('#payment-element');
+        
+        showLoading(false);
+        $('payment-modal').classList.add('show');
+        
+    } catch(e) {
+        showLoading(false);
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+// Submit payment
+async function submitPayment() {
+    if (!stripe || !elements) return;
+    
+    const btn = $('payment-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    $('payment-error').classList.remove('show');
+    
+    try {
+        const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                return_url: window.location.href // Not used, we handle inline
+            },
+            redirect: 'if_required'
+        });
+        
+        if (error) {
+            $('payment-error').textContent = error.message;
+            $('payment-error').classList.add('show');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay ' + $('payment-btn-price').textContent;
+            return;
+        }
+        
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+            // Verify payment and get download token
+            const fd = new FormData();
+            fd.append('payment_intent_id', paymentIntent.id);
+            const r = await fetch('/api/verify-payment', { method: 'POST', body: fd });
+            const data = await r.json();
+            
+            if (data.success) {
+                downloadToken = data.download_token;
+                closeModal('payment-modal');
+                await performDownload();
+            } else {
+                throw new Error('Payment verification failed');
+            }
+        }
+    } catch(e) {
+        $('payment-error').textContent = e.message || 'Payment failed. Please try again.';
+        $('payment-error').classList.add('show');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-lock"></i> Pay ' + $('payment-btn-price').textContent;
+}
+
+// Perform actual download after payment
+async function performDownload() {
+    if (!downloadToken) return showToast('Payment required', 'error');
+    
+    showLoading(true, 'Preparing your PDF...');
+    
+    const fd = new FormData();
+    fd.append('pdf_id', pdfId);
+    fd.append('edits', JSON.stringify(Object.values(edits)));
+    fd.append('token', downloadToken);
+    
+    try {
+        const r = await fetch('/save-and-download', { method: 'POST', body: fd });
+        
+        if (!r.ok) throw new Error('Download failed');
+        
+        const blob = await r.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'luleit-edited.pdf';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         a.remove();
+        
         showToast('Downloaded successfully!');
-    }catch(e){showToast('Download failed','error')}
+        
+        // Track conversion
+        gtag('event', 'purchase', {
+            currency: currentPricing?.currency || 'USD',
+            value: (currentPricing?.amount || 299) / 100
+        });
+    } catch(e) {
+        showToast('Download failed: ' + e.message, 'error');
+    }
+    
     showLoading(false);
 }
+
+// Initialize Stripe on page load
+initStripe();
 
 document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}if(e.key==='Delete'&&selectedEl)deleteEl(selectedEl);if(e.key==='Escape')deselectEl()};
 document.onclick=e=>{if(!e.target.closest('.added-el,.format-bar,.shape-bar'))deselectEl()};
 document.ondragover=e=>e.preventDefault();
 document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')loadPDF(f)};
 
-// Free version - no pricing needed
-console.log('Luleit PDF Editor - Free Version');
+// Luleit PDF Editor with localized pricing
+console.log('Luleit PDF Editor - Powered by Stripe');
 
 // ===== MOBILE TOUCH SUPPORT =====
 // Touch events for drawing canvas

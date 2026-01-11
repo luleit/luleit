@@ -3,9 +3,9 @@ from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Streamin
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import fitz  # PyMuPDF
-import os, json, base64, uuid, io, math, secrets
+import os, json, base64, uuid, io, math, secrets, httpx
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from collections import defaultdict
 
 try:
@@ -13,9 +13,687 @@ try:
 except:
     Image = None
 
+try:
+    import stripe
+    stripe.api_key = os.getenv("STRIPE_KEY", "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")
+    STRIPE_ENABLED = True
+except:
+    STRIPE_ENABLED = False
+
 # ============ CONFIG ============
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "luleit2024")
+
+# ============ PRICING CONFIG (PPP-adjusted with city intelligence + sunk cost) ============
+# Base price in USD cents (500 = $5.00, 50 = $0.50)
+BASE_PRICE_USD_CENTS = 299  # $2.99 base
+
+# HIGH-VALUE CITIES - These get premium pricing regardless of country
+# Format: "city_lowercase": multiplier_boost (added to country multiplier)
+HIGH_VALUE_CITIES = {
+    # ========== UAE - DETAILED ZONING ==========
+    # Dubai - Premium Areas
+    "dubai": 0.4,
+    "downtown dubai": 0.7, "downtown": 0.6,
+    "dubai marina": 0.7, "marina": 0.6,
+    "palm jumeirah": 0.8, "palm": 0.7,
+    "jumeirah beach residence": 0.7, "jbr": 0.7,
+    "difc": 0.8, "dubai international financial centre": 0.8,
+    "business bay": 0.65,
+    "jumeirah": 0.6, "jumeirah 1": 0.65, "jumeirah 2": 0.6, "jumeirah 3": 0.6,
+    "emirates hills": 0.8, "emirates living": 0.7,
+    "arabian ranches": 0.65,
+    "dubai hills": 0.7, "dubai hills estate": 0.7,
+    "city walk": 0.65,
+    "bluewaters": 0.7, "bluewaters island": 0.7,
+    "al barsha": 0.5,
+    "tecom": 0.55, "barsha heights": 0.55,
+    "internet city": 0.6, "dubai internet city": 0.6,
+    "media city": 0.6, "dubai media city": 0.6,
+    "knowledge park": 0.55, "knowledge village": 0.55,
+    "jlt": 0.55, "jumeirah lake towers": 0.55,
+    "dubai silicon oasis": 0.5, "silicon oasis": 0.5,
+    "deira": 0.35, "bur dubai": 0.35,
+    "al quoz": 0.4,
+    "motor city": 0.45, "sports city": 0.45,
+    "mirdif": 0.45,
+    "dubai south": 0.4, "expo city": 0.5,
+    
+    # Abu Dhabi - Premium Areas  
+    "abu dhabi": 0.45,
+    "al reem island": 0.7, "reem island": 0.7,
+    "saadiyat island": 0.75, "saadiyat": 0.75,
+    "yas island": 0.6, "yas": 0.55,
+    "al maryah island": 0.7, "maryah island": 0.7,
+    "corniche": 0.6, "al corniche": 0.6,
+    "khalifa city": 0.5, "khalifa city a": 0.55,
+    "al raha": 0.55, "al raha beach": 0.6,
+    "al bateen": 0.6,
+    "tourist club area": 0.5,
+    "adgm": 0.75, "abu dhabi global market": 0.75,
+    "masdar city": 0.6,
+    "al ain": 0.35,
+    
+    # Sharjah (lower income than Dubai/Abu Dhabi)
+    "sharjah": 0.25,
+    "al majaz": 0.35,
+    "al nahda": 0.3,
+    "al khan": 0.35,
+    
+    # Other UAE
+    "ajman": 0.2,
+    "ras al khaimah": 0.3, "rak": 0.3,
+    "fujairah": 0.25,
+    
+    # ========== SAUDI ARABIA - DETAILED ZONING ==========
+    # Riyadh - Premium Areas
+    "riyadh": 0.4,
+    "olaya": 0.65, "al olaya": 0.65,
+    "king abdullah financial district": 0.75, "kafd": 0.75,
+    "diplomatic quarter": 0.7, "dq": 0.7,
+    "hittin": 0.65, "al hittin": 0.65,
+    "al nakheel": 0.6, "nakheel": 0.6,
+    "al sahafa": 0.55,
+    "al malqa": 0.6, "malqa": 0.6,
+    "al yasmin": 0.55, "yasmin": 0.55,
+    "al narjis": 0.5,
+    "al rabwah": 0.55,
+    "sulaimaniya": 0.5, "al sulaimaniya": 0.5,
+    "al wurud": 0.5,
+    "al mohammadiyah": 0.45,
+    "exit 5": 0.4, "exit 10": 0.45, "exit 15": 0.5,
+    "al diriyah": 0.6, "diriyah": 0.6,
+    
+    # Jeddah - Premium Areas
+    "jeddah": 0.35,
+    "al hamra": 0.55, "hamra": 0.55,
+    "al rawdah": 0.55, "rawdah": 0.55,
+    "al shati": 0.6, "shati": 0.6,
+    "obhur": 0.5, "abhur": 0.5,
+    "al andalus": 0.5,
+    "al zahra": 0.5,
+    "al salamah": 0.5,
+    "al muhammadiyah": 0.45,
+    "al khalidiyah": 0.45,
+    "al corniche": 0.5,
+    "downtown jeddah": 0.4,
+    "al balad": 0.35,  # Historic area, mixed income
+    
+    # Dammam/Eastern Province
+    "dammam": 0.35,
+    "al khobar": 0.5, "khobar": 0.5,
+    "dhahran": 0.55,  # Aramco HQ
+    "jubail": 0.45,
+    "half moon bay": 0.5,
+    
+    # Other Saudi
+    "mecca": 0.35, "makkah": 0.35,
+    "medina": 0.35, "madinah": 0.35,
+    "neom": 0.7,  # New mega city project
+    "yanbu": 0.4,
+    "tabuk": 0.3,
+    "abha": 0.3,
+    "khamis mushait": 0.25,
+    
+    # ========== OTHER GCC ==========
+    # Qatar
+    "doha": 0.5,
+    "the pearl": 0.75, "pearl qatar": 0.75,
+    "west bay": 0.7,
+    "lusail": 0.65,
+    "al sadd": 0.5,
+    "qatar financial centre": 0.7, "qfc": 0.7,
+    
+    # Kuwait
+    "kuwait city": 0.45,
+    "salmiya": 0.5,
+    "hawally": 0.4,
+    "al kuwait": 0.5,
+    "sharq": 0.55,
+    
+    # Bahrain
+    "manama": 0.45,
+    "bahrain financial harbour": 0.65,
+    "seef": 0.55,
+    "amwaj islands": 0.6,
+    
+    # Oman
+    "muscat": 0.4,
+    "al mouj": 0.55,
+    "qurum": 0.5,
+    "shatti al qurum": 0.55,
+    
+    # ========== INDIA - TECH HUBS ==========
+    "bangalore": 0.6, "bengaluru": 0.6,
+    "hyderabad": 0.5, "gurugram": 0.6, "gurgaon": 0.6,
+    "noida": 0.5, "pune": 0.45, "mumbai": 0.5,
+    "chennai": 0.4, "delhi": 0.4, "new delhi": 0.4,
+    
+    # India - Affluent neighborhoods
+    "koramangala": 0.7, "indiranagar": 0.7, "hsr layout": 0.65,
+    "whitefield": 0.6, "electronic city": 0.55,
+    "bandra": 0.6, "powai": 0.55, "andheri": 0.45,
+    "gachibowli": 0.55, "hitec city": 0.55, "hitech city": 0.55,
+    "cyber city": 0.6, "dlf": 0.6,
+    "jubilee hills": 0.6, "banjara hills": 0.6,
+    "defence colony": 0.55, "greater kailash": 0.55, "gk": 0.5,
+    "vasant kunj": 0.5, "vasant vihar": 0.55,
+    "golf links": 0.7, "jor bagh": 0.65,
+    "south mumbai": 0.65, "colaba": 0.6, "cuffe parade": 0.65,
+    "worli": 0.6, "lower parel": 0.55,
+    "juhu": 0.6, "lokhandwala": 0.5,
+    "boat club": 0.6, "adyar": 0.5, "nungambakkam": 0.55,  # Chennai
+    "koregaon park": 0.55, "kalyani nagar": 0.5,  # Pune
+    "sector 17": 0.5, "sector 29": 0.5, "sector 43": 0.55,  # Gurgaon
+    
+    # ========== BRAZIL ==========
+    "são paulo": 0.4, "sao paulo": 0.4,
+    "jardins": 0.6, "itaim bibi": 0.6, "pinheiros": 0.5,
+    "vila olimpia": 0.55, "moema": 0.55, "brooklin": 0.5,
+    "rio de janeiro": 0.35, "leblon": 0.6, "ipanema": 0.55,
+    "copacabana": 0.45, "barra da tijuca": 0.5,
+    "brasilia": 0.4, "florianopolis": 0.35,
+    
+    # ========== MEXICO ==========
+    "mexico city": 0.35, "polanco": 0.6, "santa fe": 0.55,
+    "condesa": 0.5, "roma norte": 0.5, "roma": 0.45,
+    "lomas de chapultepec": 0.6,
+    "monterrey": 0.4, "san pedro garza garcia": 0.6,
+    "guadalajara": 0.3, "zapopan": 0.4,
+    "cancun": 0.35, "playa del carmen": 0.4,
+    
+    # ========== SOUTHEAST ASIA ==========
+    "singapore": 0.3,
+    "orchard": 0.5, "marina bay": 0.55, "sentosa": 0.5,
+    "hong kong": 0.25,
+    "central": 0.5, "the peak": 0.6, "mid levels": 0.5,
+    "jakarta": 0.4, "jakarta selatan": 0.5,
+    "scbd": 0.55, "sudirman": 0.5, "kuningan": 0.45,
+    "menteng": 0.5, "kemang": 0.5,
+    "kuala lumpur": 0.35, "bangsar": 0.5, "mont kiara": 0.5,
+    "klcc": 0.5, "bukit bintang": 0.45,
+    "bangkok": 0.35, "sukhumvit": 0.5, "silom": 0.45,
+    "thonglor": 0.55, "ekkamai": 0.5, "sathorn": 0.5,
+    "ho chi minh": 0.35, "district 1": 0.5, "district 2": 0.5, "district 7": 0.5,
+    "manila": 0.35, "makati": 0.5, "bgc": 0.55, "bonifacio global city": 0.55,
+    "rockwell": 0.55, "alabang": 0.45,
+    
+    # ========== CHINA ==========
+    "shanghai": 0.5, "pudong": 0.6, "lujiazui": 0.7,
+    "jing'an": 0.6, "xuhui": 0.55, "french concession": 0.6,
+    "beijing": 0.5, "chaoyang": 0.55, "zhongguancun": 0.6,
+    "wangfujing": 0.55, "sanlitun": 0.55,
+    "shenzhen": 0.55, "nanshan": 0.6, "futian": 0.55,
+    "guangzhou": 0.4, "tianhe": 0.5,
+    "hangzhou": 0.45,
+    
+    # ========== AFRICA ==========
+    "lagos": 0.4, "victoria island": 0.6, "ikoyi": 0.6, "lekki": 0.55,
+    "banana island": 0.7,
+    "nairobi": 0.35, "westlands": 0.5, "karen": 0.55,
+    "gigiri": 0.55, "lavington": 0.5,
+    "johannesburg": 0.4, "sandton": 0.6, "rosebank": 0.5,
+    "hyde park": 0.55, "fourways": 0.45,
+    "cape town": 0.4, "camps bay": 0.6, "constantia": 0.6,
+    "clifton": 0.65, "waterfront": 0.55,
+    "cairo": 0.35, "zamalek": 0.5, "maadi": 0.45,
+    "new cairo": 0.5, "5th settlement": 0.5, "sheikh zayed": 0.45,
+    
+    # ========== EASTERN EUROPE ==========
+    "warsaw": 0.35, "krakow": 0.3,
+    "prague": 0.35,
+    "bucharest": 0.3,
+    "budapest": 0.3,
+    "kyiv": 0.3, "kiev": 0.3,
+    "tallinn": 0.4,
+    
+    # ========== LATIN AMERICA ==========
+    "buenos aires": 0.35, "palermo": 0.5, "recoleta": 0.5,
+    "puerto madero": 0.55,
+    "santiago": 0.4, "las condes": 0.55, "vitacura": 0.6,
+    "providencia": 0.5,
+    "bogota": 0.35, "chapinero": 0.45, "usaquen": 0.5,
+    "lima": 0.3, "miraflores": 0.5, "san isidro": 0.55,
+    
+    # ========== TURKEY ==========
+    "istanbul": 0.35, "besiktas": 0.5, "sisli": 0.45, "kadikoy": 0.4,
+    "nisantasi": 0.55, "bebek": 0.55, "etiler": 0.5,
+    "levent": 0.5, "maslak": 0.5,
+    
+    # ========== RUSSIA ==========
+    "moscow": 0.45, "saint petersburg": 0.35,
+}
+
+# ========== SUNK COST MULTIPLIERS ==========
+# Users who have invested more time/effort are more likely to pay
+# This is applied as a multiplier to the final price (1.0 = no change)
+
+def calculate_sunk_cost_multiplier(engagement_data: dict) -> float:
+    """
+    Calculate price adjustment based on user's sunk cost / engagement + device.
+    Higher engagement = user is more invested = higher willingness to pay
+    Premium device = higher willingness to pay
+    
+    Returns multiplier between 0.8 (low engagement) and 1.4 (high engagement + premium device)
+    """
+    edits = engagement_data.get("edit_count", 0)
+    pages = engagement_data.get("page_count", 1)
+    time_spent = engagement_data.get("time_spent_seconds", 0)
+    interactions = engagement_data.get("interaction_count", 0)
+    has_added_images = engagement_data.get("has_added_images", False)
+    has_signature = engagement_data.get("has_signature", False)
+    has_drawings = engagement_data.get("has_drawings", False)
+    
+    # Device info
+    is_premium_device = engagement_data.get("is_premium_device", False)
+    device_type = engagement_data.get("device_type", "desktop")
+    os = engagement_data.get("os", "unknown")
+    browser = engagement_data.get("browser", "unknown")
+    
+    multiplier = 1.0
+    
+    # Edit count contribution (0 to +0.15)
+    if edits >= 10:
+        multiplier += 0.15
+    elif edits >= 5:
+        multiplier += 0.10
+    elif edits >= 2:
+        multiplier += 0.05
+    
+    # Page count contribution - more pages = more work (0 to +0.10)
+    if pages >= 20:
+        multiplier += 0.10
+    elif pages >= 10:
+        multiplier += 0.07
+    elif pages >= 5:
+        multiplier += 0.05
+    
+    # Time spent contribution (0 to +0.15)
+    minutes = time_spent / 60
+    if minutes >= 10:
+        multiplier += 0.15
+    elif minutes >= 5:
+        multiplier += 0.10
+    elif minutes >= 2:
+        multiplier += 0.05
+    
+    # Rich content additions (each +0.05)
+    if has_added_images:
+        multiplier += 0.05
+    if has_signature:
+        multiplier += 0.05
+    if has_drawings:
+        multiplier += 0.05
+    
+    # Interaction count - tool switches, format changes, etc. (0 to +0.10)
+    if interactions >= 30:
+        multiplier += 0.10
+    elif interactions >= 15:
+        multiplier += 0.07
+    elif interactions >= 5:
+        multiplier += 0.03
+    
+    # ===== DEVICE-BASED ADJUSTMENTS =====
+    # Premium device boost (iOS, macOS, flagship Android)
+    if is_premium_device:
+        multiplier += 0.10
+    
+    # OS-based adjustments
+    if os == "ios":
+        multiplier += 0.05  # iOS users have higher conversion rates
+    elif os == "macos":
+        multiplier += 0.05  # Mac users typically higher value
+    
+    # Browser-based adjustments (Safari users on Apple = premium)
+    if browser == "safari" and os in ["ios", "macos"]:
+        multiplier += 0.03
+    
+    # Low engagement discount (encourage conversion)
+    if edits == 0 and time_spent < 60:
+        multiplier = 0.85  # 15% discount for quick users
+    elif edits <= 1 and time_spent < 120:
+        multiplier = 0.9   # 10% discount for light users
+    
+    # Cap the multiplier
+    return max(0.8, min(1.4, multiplier))
+
+# Country pricing data: currency, multiplier (PPP-adjusted), rounded price, stripe currency code
+# Multiplier: 1.0 = full price (~$3), 0.1 = lowest price (~$0.50)
+COUNTRY_PRICING = {
+    # High income - full price
+    "US": {"currency": "usd", "symbol": "$", "multiplier": 1.0, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "GB": {"currency": "gbp", "symbol": "£", "multiplier": 0.85, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "DE": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "FR": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "AU": {"currency": "aud", "symbol": "A$", "multiplier": 1.1, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "CA": {"currency": "cad", "symbol": "C$", "multiplier": 1.0, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "JP": {"currency": "jpy", "symbol": "¥", "multiplier": 0.9, "round_to": 0, "min_price": 300, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "CH": {"currency": "chf", "symbol": "CHF", "multiplier": 1.1, "round_to": 90, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "SG": {"currency": "sgd", "symbol": "S$", "multiplier": 0.95, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "NL": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "SE": {"currency": "sek", "symbol": "kr", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "NO": {"currency": "nok", "symbol": "kr", "multiplier": 0.95, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "DK": {"currency": "dkk", "symbol": "kr", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "NZ": {"currency": "nzd", "symbol": "NZ$", "multiplier": 0.95, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "IE": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "HK": {"currency": "hkd", "symbol": "HK$", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    
+    # GCC - Premium markets (UAE, Saudi, Qatar, Kuwait, Bahrain, Oman)
+    "AE": {"currency": "aed", "symbol": "د.إ", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "SA": {"currency": "sar", "symbol": "ر.س", "multiplier": 0.75, "round_to": 0, "payment_methods": ["card", "apple_pay", "mada"]},
+    "QA": {"currency": "qar", "symbol": "ر.ق", "multiplier": 0.9, "round_to": 0, "payment_methods": ["card", "apple_pay"]},
+    "KW": {"currency": "kwd", "symbol": "د.ك", "multiplier": 0.95, "round_to": 0, "payment_methods": ["card"]},
+    "BH": {"currency": "bhd", "symbol": ".د.ب", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card"]},
+    "OM": {"currency": "omr", "symbol": "ر.ع.", "multiplier": 0.8, "round_to": 0, "payment_methods": ["card"]},
+    
+    # Medium income - moderate prices
+    "ES": {"currency": "eur", "symbol": "€", "multiplier": 0.7, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "IT": {"currency": "eur", "symbol": "€", "multiplier": 0.7, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "PT": {"currency": "eur", "symbol": "€", "multiplier": 0.6, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "KR": {"currency": "krw", "symbol": "₩", "multiplier": 0.7, "round_to": 0, "min_price": 2000, "payment_methods": ["card"]},
+    "PL": {"currency": "pln", "symbol": "zł", "multiplier": 0.5, "round_to": 99, "payment_methods": ["card"]},
+    "CZ": {"currency": "czk", "symbol": "Kč", "multiplier": 0.5, "round_to": 0, "payment_methods": ["card"]},
+    "GR": {"currency": "eur", "symbol": "€", "multiplier": 0.55, "round_to": 99, "payment_methods": ["card"]},
+    "IL": {"currency": "ils", "symbol": "₪", "multiplier": 0.75, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "TW": {"currency": "twd", "symbol": "NT$", "multiplier": 0.6, "round_to": 0, "payment_methods": ["card"]},
+    "CL": {"currency": "clp", "symbol": "$", "multiplier": 0.45, "round_to": 0, "min_price": 1000, "payment_methods": ["card"]},
+    "CN": {"currency": "cny", "symbol": "¥", "multiplier": 0.5, "round_to": 0, "payment_methods": ["card"]},
+    
+    # Lower-middle income - lower prices
+    "MX": {"currency": "mxn", "symbol": "$", "multiplier": 0.35, "round_to": 0, "payment_methods": ["card"]},
+    "BR": {"currency": "brl", "symbol": "R$", "multiplier": 0.3, "round_to": 99, "payment_methods": ["card"]},
+    "AR": {"currency": "ars", "symbol": "$", "multiplier": 0.2, "round_to": 0, "payment_methods": ["card"]},
+    "CO": {"currency": "cop", "symbol": "$", "multiplier": 0.25, "round_to": 0, "min_price": 5000, "payment_methods": ["card"]},
+    "TR": {"currency": "try", "symbol": "₺", "multiplier": 0.25, "round_to": 99, "payment_methods": ["card"]},
+    "TH": {"currency": "thb", "symbol": "฿", "multiplier": 0.3, "round_to": 0, "payment_methods": ["card"]},
+    "MY": {"currency": "myr", "symbol": "RM", "multiplier": 0.35, "round_to": 99, "payment_methods": ["card", "grabpay"]},
+    "ZA": {"currency": "zar", "symbol": "R", "multiplier": 0.3, "round_to": 99, "payment_methods": ["card"]},
+    "RO": {"currency": "ron", "symbol": "lei", "multiplier": 0.4, "round_to": 99, "payment_methods": ["card"]},
+    "HU": {"currency": "huf", "symbol": "Ft", "multiplier": 0.4, "round_to": 0, "min_price": 500, "payment_methods": ["card"]},
+    "PE": {"currency": "pen", "symbol": "S/", "multiplier": 0.3, "round_to": 99, "payment_methods": ["card"]},
+    "RU": {"currency": "rub", "symbol": "₽", "multiplier": 0.3, "round_to": 0, "payment_methods": ["card"]},
+    
+    # Lower income - lowest prices for maximum accessibility
+    "IN": {"currency": "inr", "symbol": "₹", "multiplier": 0.15, "round_to": 0, "min_price": 49, "payment_methods": ["card", "upi"]},
+    "ID": {"currency": "idr", "symbol": "Rp", "multiplier": 0.15, "round_to": 0, "min_price": 15000, "payment_methods": ["card"]},
+    "PH": {"currency": "php", "symbol": "₱", "multiplier": 0.2, "round_to": 0, "payment_methods": ["card", "grabpay"]},
+    "VN": {"currency": "vnd", "symbol": "₫", "multiplier": 0.12, "round_to": 0, "min_price": 25000, "payment_methods": ["card"]},
+    "PK": {"currency": "pkr", "symbol": "Rs", "multiplier": 0.1, "round_to": 0, "min_price": 200, "payment_methods": ["card"]},
+    "BD": {"currency": "bdt", "symbol": "৳", "multiplier": 0.1, "round_to": 0, "min_price": 99, "payment_methods": ["card"]},
+    "NG": {"currency": "ngn", "symbol": "₦", "multiplier": 0.1, "round_to": 0, "min_price": 500, "payment_methods": ["card"]},
+    "EG": {"currency": "egp", "symbol": "E£", "multiplier": 0.15, "round_to": 0, "payment_methods": ["card"]},
+    "KE": {"currency": "kes", "symbol": "KSh", "multiplier": 0.12, "round_to": 0, "payment_methods": ["card"]},
+    "UA": {"currency": "uah", "symbol": "₴", "multiplier": 0.15, "round_to": 0, "payment_methods": ["card"]},
+    "LK": {"currency": "lkr", "symbol": "Rs", "multiplier": 0.12, "round_to": 0, "min_price": 300, "payment_methods": ["card"]},
+    "NP": {"currency": "npr", "symbol": "Rs", "multiplier": 0.1, "round_to": 0, "min_price": 150, "payment_methods": ["card"]},
+    "GH": {"currency": "ghs", "symbol": "GH₵", "multiplier": 0.12, "round_to": 99, "payment_methods": ["card"]},
+    "MA": {"currency": "mad", "symbol": "DH", "multiplier": 0.2, "round_to": 0, "payment_methods": ["card"]},
+}
+
+# Default for unknown countries
+DEFAULT_PRICING = {"currency": "usd", "symbol": "$", "multiplier": 0.7, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]}
+
+# Approximate exchange rates (updated periodically)
+EXCHANGE_RATES = {
+    "usd": 1.0, "eur": 0.92, "gbp": 0.79, "jpy": 149.5, "aud": 1.53, "cad": 1.36,
+    "chf": 0.88, "cny": 7.24, "inr": 83.1, "mxn": 17.15, "brl": 4.97, "krw": 1320,
+    "sgd": 1.34, "hkd": 7.82, "sek": 10.42, "nok": 10.58, "dkk": 6.87, "nzd": 1.63,
+    "zar": 18.65, "rub": 91.5, "try": 30.2, "pln": 3.98, "thb": 35.5, "idr": 15650,
+    "myr": 4.72, "php": 55.8, "vnd": 24500, "aed": 3.67, "sar": 3.75, "egp": 30.9,
+    "pkr": 278, "bdt": 110, "ngn": 1250, "kes": 153, "cop": 3950, "clp": 878,
+    "pen": 3.72, "ars": 815, "uah": 37.5, "ron": 4.57, "huf": 355, "czk": 22.7,
+    "ils": 3.65, "qar": 3.64, "kwd": 0.31, "twd": 31.5, "lkr": 325, "npr": 133,
+    "ghs": 12.3, "mad": 10.1, "bhd": 0.376, "omr": 0.385
+}
+
+# Country pricing data: currency, multiplier (PPP-adjusted), rounded price, stripe currency code
+# Multiplier: 1.0 = full price (~$3), 0.1 = lowest price (~$0.50)
+COUNTRY_PRICING = {
+    # High income - full price
+    "US": {"currency": "usd", "symbol": "$", "multiplier": 1.0, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "GB": {"currency": "gbp", "symbol": "£", "multiplier": 0.85, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "DE": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "FR": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "AU": {"currency": "aud", "symbol": "A$", "multiplier": 1.1, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "CA": {"currency": "cad", "symbol": "C$", "multiplier": 1.0, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "JP": {"currency": "jpy", "symbol": "¥", "multiplier": 0.9, "round_to": 0, "min_price": 300, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "CH": {"currency": "chf", "symbol": "CHF", "multiplier": 1.1, "round_to": 90, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "SG": {"currency": "sgd", "symbol": "S$", "multiplier": 0.95, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "AE": {"currency": "aed", "symbol": "د.إ", "multiplier": 0.9, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "NL": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "SE": {"currency": "sek", "symbol": "kr", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "NO": {"currency": "nok", "symbol": "kr", "multiplier": 0.95, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "DK": {"currency": "dkk", "symbol": "kr", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "NZ": {"currency": "nzd", "symbol": "NZ$", "multiplier": 0.95, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "IE": {"currency": "eur", "symbol": "€", "multiplier": 0.9, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "HK": {"currency": "hkd", "symbol": "HK$", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    
+    # Medium income - moderate prices
+    "ES": {"currency": "eur", "symbol": "€", "multiplier": 0.7, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "IT": {"currency": "eur", "symbol": "€", "multiplier": 0.7, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "PT": {"currency": "eur", "symbol": "€", "multiplier": 0.6, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "KR": {"currency": "krw", "symbol": "₩", "multiplier": 0.7, "round_to": 0, "min_price": 2000, "payment_methods": ["card"]},
+    "PL": {"currency": "pln", "symbol": "zł", "multiplier": 0.5, "round_to": 99, "payment_methods": ["card"]},
+    "CZ": {"currency": "czk", "symbol": "Kč", "multiplier": 0.5, "round_to": 0, "payment_methods": ["card"]},
+    "GR": {"currency": "eur", "symbol": "€", "multiplier": 0.55, "round_to": 99, "payment_methods": ["card"]},
+    "IL": {"currency": "ils", "symbol": "₪", "multiplier": 0.75, "round_to": 0, "payment_methods": ["card", "apple_pay", "google_pay"]},
+    "SA": {"currency": "sar", "symbol": "ر.س", "multiplier": 0.7, "round_to": 0, "payment_methods": ["card", "apple_pay"]},
+    "QA": {"currency": "qar", "symbol": "ر.ق", "multiplier": 0.85, "round_to": 0, "payment_methods": ["card"]},
+    "KW": {"currency": "kwd", "symbol": "د.ك", "multiplier": 0.9, "round_to": 0, "payment_methods": ["card"]},
+    "TW": {"currency": "twd", "symbol": "NT$", "multiplier": 0.6, "round_to": 0, "payment_methods": ["card"]},
+    "CL": {"currency": "clp", "symbol": "$", "multiplier": 0.45, "round_to": 0, "min_price": 1000, "payment_methods": ["card"]},
+    "CN": {"currency": "cny", "symbol": "¥", "multiplier": 0.5, "round_to": 0, "payment_methods": ["card"]},
+    
+    # Lower-middle income - lower prices
+    "MX": {"currency": "mxn", "symbol": "$", "multiplier": 0.35, "round_to": 0, "payment_methods": ["card"]},
+    "BR": {"currency": "brl", "symbol": "R$", "multiplier": 0.3, "round_to": 99, "payment_methods": ["card"]},
+    "AR": {"currency": "ars", "symbol": "$", "multiplier": 0.2, "round_to": 0, "payment_methods": ["card"]},
+    "CO": {"currency": "cop", "symbol": "$", "multiplier": 0.25, "round_to": 0, "min_price": 5000, "payment_methods": ["card"]},
+    "TR": {"currency": "try", "symbol": "₺", "multiplier": 0.25, "round_to": 99, "payment_methods": ["card"]},
+    "TH": {"currency": "thb", "symbol": "฿", "multiplier": 0.3, "round_to": 0, "payment_methods": ["card"]},
+    "MY": {"currency": "myr", "symbol": "RM", "multiplier": 0.35, "round_to": 99, "payment_methods": ["card", "grabpay"]},
+    "ZA": {"currency": "zar", "symbol": "R", "multiplier": 0.3, "round_to": 99, "payment_methods": ["card"]},
+    "RO": {"currency": "ron", "symbol": "lei", "multiplier": 0.4, "round_to": 99, "payment_methods": ["card"]},
+    "HU": {"currency": "huf", "symbol": "Ft", "multiplier": 0.4, "round_to": 0, "min_price": 500, "payment_methods": ["card"]},
+    "PE": {"currency": "pen", "symbol": "S/", "multiplier": 0.3, "round_to": 99, "payment_methods": ["card"]},
+    "RU": {"currency": "rub", "symbol": "₽", "multiplier": 0.3, "round_to": 0, "payment_methods": ["card"]},
+    
+    # Lower income - lowest prices for maximum accessibility
+    "IN": {"currency": "inr", "symbol": "₹", "multiplier": 0.15, "round_to": 0, "min_price": 49, "payment_methods": ["card", "upi"]},
+    "ID": {"currency": "idr", "symbol": "Rp", "multiplier": 0.15, "round_to": 0, "min_price": 15000, "payment_methods": ["card"]},
+    "PH": {"currency": "php", "symbol": "₱", "multiplier": 0.2, "round_to": 0, "payment_methods": ["card", "grabpay"]},
+    "VN": {"currency": "vnd", "symbol": "₫", "multiplier": 0.12, "round_to": 0, "min_price": 25000, "payment_methods": ["card"]},
+    "PK": {"currency": "pkr", "symbol": "Rs", "multiplier": 0.1, "round_to": 0, "min_price": 200, "payment_methods": ["card"]},
+    "BD": {"currency": "bdt", "symbol": "৳", "multiplier": 0.1, "round_to": 0, "min_price": 99, "payment_methods": ["card"]},
+    "NG": {"currency": "ngn", "symbol": "₦", "multiplier": 0.1, "round_to": 0, "min_price": 500, "payment_methods": ["card"]},
+    "EG": {"currency": "egp", "symbol": "E£", "multiplier": 0.15, "round_to": 0, "payment_methods": ["card"]},
+    "KE": {"currency": "kes", "symbol": "KSh", "multiplier": 0.12, "round_to": 0, "payment_methods": ["card"]},
+    "UA": {"currency": "uah", "symbol": "₴", "multiplier": 0.15, "round_to": 0, "payment_methods": ["card"]},
+    "LK": {"currency": "lkr", "symbol": "Rs", "multiplier": 0.12, "round_to": 0, "min_price": 300, "payment_methods": ["card"]},
+    "NP": {"currency": "npr", "symbol": "Rs", "multiplier": 0.1, "round_to": 0, "min_price": 150, "payment_methods": ["card"]},
+    "GH": {"currency": "ghs", "symbol": "GH₵", "multiplier": 0.12, "round_to": 99, "payment_methods": ["card"]},
+    "MA": {"currency": "mad", "symbol": "DH", "multiplier": 0.2, "round_to": 0, "payment_methods": ["card"]},
+}
+
+# Default for unknown countries
+DEFAULT_PRICING = {"currency": "usd", "symbol": "$", "multiplier": 0.7, "round_to": 99, "payment_methods": ["card", "apple_pay", "google_pay"]}
+
+# Approximate exchange rates (updated periodically)
+EXCHANGE_RATES = {
+    "usd": 1.0, "eur": 0.92, "gbp": 0.79, "jpy": 149.5, "aud": 1.53, "cad": 1.36,
+    "chf": 0.88, "cny": 7.24, "inr": 83.1, "mxn": 17.15, "brl": 4.97, "krw": 1320,
+    "sgd": 1.34, "hkd": 7.82, "sek": 10.42, "nok": 10.58, "dkk": 6.87, "nzd": 1.63,
+    "zar": 18.65, "rub": 91.5, "try": 30.2, "pln": 3.98, "thb": 35.5, "idr": 15650,
+    "myr": 4.72, "php": 55.8, "vnd": 24500, "aed": 3.67, "sar": 3.75, "egp": 30.9,
+    "pkr": 278, "bdt": 110, "ngn": 1250, "kes": 153, "cop": 3950, "clp": 878,
+    "pen": 3.72, "ars": 815, "uah": 37.5, "ron": 4.57, "huf": 355, "czk": 22.7,
+    "ils": 3.65, "qar": 3.64, "kwd": 0.31, "twd": 31.5, "lkr": 325, "npr": 133,
+    "ghs": 12.3, "mad": 10.1
+}
+
+def get_geo_from_ip(ip: str) -> dict:
+    """Get geolocation from IP using free API - includes city-level data"""
+    try:
+        # Try ip-api.com (free, no key needed, returns city data)
+        response = httpx.get(
+            f"http://ip-api.com/json/{ip}?fields=status,country,countryCode,region,regionName,city,district,zip,lat,lon,isp,org",
+            timeout=3.0
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "success":
+                return {
+                    "country": data.get("country", "Unknown"),
+                    "country_code": data.get("countryCode", "US"),
+                    "region": data.get("regionName", ""),
+                    "city": data.get("city", ""),
+                    "district": data.get("district", ""),  # Neighborhood level
+                    "zip": data.get("zip", ""),
+                    "isp": data.get("isp", ""),
+                    "org": data.get("org", ""),  # Often shows company name
+                    "lat": data.get("lat", 0),
+                    "lon": data.get("lon", 0)
+                }
+    except:
+        pass
+    return {"country": "Unknown", "country_code": "US", "region": "", "city": "", "district": "", "zip": "", "isp": "", "org": ""}
+
+def get_city_boost(geo_info: dict) -> float:
+    """
+    Calculate price multiplier boost based on city/neighborhood.
+    Returns a boost value to ADD to the country multiplier.
+    """
+    city = geo_info.get("city", "").lower().strip()
+    district = geo_info.get("district", "").lower().strip()
+    region = geo_info.get("region", "").lower().strip()
+    org = geo_info.get("org", "").lower().strip()
+    
+    boost = 0.0
+    
+    # Check district first (most specific - e.g., Koramangala, Indiranagar)
+    if district:
+        for loc, loc_boost in HIGH_VALUE_CITIES.items():
+            if loc in district:
+                boost = max(boost, loc_boost)
+    
+    # Check city
+    if city:
+        for loc, loc_boost in HIGH_VALUE_CITIES.items():
+            if loc in city or city in loc:
+                boost = max(boost, loc_boost)
+    
+    # Check region (for places like "Karnataka" which contains Bangalore)
+    if region and boost == 0:
+        # Only use region if no city match, and be more conservative
+        for loc, loc_boost in HIGH_VALUE_CITIES.items():
+            if loc in region:
+                boost = max(boost, loc_boost * 0.5)  # Half boost for region-only match
+    
+    # Additional boost for tech company networks (detected via org/ISP)
+    tech_indicators = [
+        "google", "microsoft", "amazon", "meta", "facebook", "apple", 
+        "infosys", "wipro", "tcs", "cognizant", "accenture",
+        "flipkart", "swiggy", "zomato", "ola", "paytm", "razorpay",
+        "grab", "gojek", "sea limited", "shopee",
+        "reliance jio", "jio",
+    ]
+    
+    if org:
+        for tech in tech_indicators:
+            if tech in org:
+                boost = max(boost, 0.3)  # Minimum 0.3 boost for tech company employees
+                break
+    
+    # Cap the boost so we don't go too crazy
+    return min(boost, 0.7)
+
+def calculate_price(country_code: str, geo_info: dict = None, engagement_data: dict = None) -> dict:
+    """Calculate localized price based on country, city/neighborhood, AND user engagement"""
+    pricing = COUNTRY_PRICING.get(country_code.upper(), DEFAULT_PRICING)
+    
+    # Layer 1: Base multiplier from country
+    base_multiplier = pricing["multiplier"]
+    
+    # Layer 2: City-level boost if available
+    city_boost = 0.0
+    if geo_info:
+        city_boost = get_city_boost(geo_info)
+    
+    # Layer 3: Sunk cost multiplier based on engagement
+    sunk_cost_mult = 1.0
+    if engagement_data:
+        sunk_cost_mult = calculate_sunk_cost_multiplier(engagement_data)
+    
+    # Combine: (country + city boost) * sunk cost, capped at 1.0 for base, then sunk cost can push up to 1.3
+    geo_multiplier = min(base_multiplier + city_boost, 1.0)
+    final_multiplier = geo_multiplier * sunk_cost_mult
+    
+    # Calculate base price in local currency
+    currency = pricing["currency"]
+    exchange_rate = EXCHANGE_RATES.get(currency, 1.0)
+    
+    # Base calculation: USD cents * multiplier * exchange rate
+    base_amount = BASE_PRICE_USD_CENTS * final_multiplier * exchange_rate / 100
+    
+    # Apply minimum price if set
+    min_price = pricing.get("min_price", 0)
+    if min_price > 0:
+        base_amount = max(base_amount, min_price / 100)
+    
+    # Round to local convention
+    round_to = pricing["round_to"]
+    if round_to == 0:
+        # Round to whole number
+        if currency in ["jpy", "krw", "vnd", "idr", "cop", "clp", "huf"]:
+            # Round to nearest 100 or 1000 for these currencies
+            if base_amount > 1000:
+                final_amount = round(base_amount / 100) * 100
+            else:
+                final_amount = round(base_amount / 10) * 10
+        else:
+            final_amount = round(base_amount)
+    elif round_to == 99:
+        # Round to .99
+        final_amount = math.floor(base_amount) + 0.99
+        if final_amount < 1:
+            final_amount = 0.99
+    elif round_to == 90:
+        # Round to .90
+        final_amount = math.floor(base_amount) + 0.90
+    else:
+        final_amount = round(base_amount, 2)
+    
+    # Ensure minimum $0.50 equivalent
+    min_usd_equivalent = 0.50
+    min_local = min_usd_equivalent * exchange_rate
+    if final_amount < min_local:
+        final_amount = min_local
+    
+    # Convert to cents/smallest unit for Stripe
+    if currency in ["jpy", "krw", "vnd", "idr"]:
+        stripe_amount = int(final_amount)  # These don't have decimals
+    else:
+        stripe_amount = int(final_amount * 100)
+    
+    # Format display price
+    if currency in ["jpy", "krw", "vnd", "idr", "cop", "clp", "huf"]:
+        display_price = f"{pricing['symbol']}{int(final_amount):,}"
+    elif currency in ["eur", "chf", "pln", "czk", "ron", "sek", "nok", "dkk"]:
+        display_price = f"{final_amount:.2f} {pricing['symbol']}"
+    else:
+        display_price = f"{pricing['symbol']}{final_amount:.2f}"
+    
+    return {
+        "amount": stripe_amount,
+        "currency": currency,
+        "display_price": display_price,
+        "symbol": pricing["symbol"],
+        "payment_methods": pricing["payment_methods"],
+        "country_code": country_code.upper(),
+        "city_boost_applied": city_boost > 0,
+        "sunk_cost_multiplier": sunk_cost_mult,
+        "final_multiplier": final_multiplier
+    }
 
 app = FastAPI(title="Luleit PDF Editor")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -852,27 +1530,209 @@ async def rotate_all(request: Request, pdf_id: str = Form(...), angle: int = For
     
     return {"success": True, "pages": generate_preview(content)}
 
-# ============ FREE DOWNLOADS ============
-@app.get("/download/{pdf_id}")
-async def download_pdf(request: Request, pdf_id: str):
+# ============ PRICING & PAYMENTS ============
+@app.get("/api/pricing")
+async def get_pricing(request: Request):
+    """Get localized pricing for the user based on country AND city (preview price)"""
+    ip = request.client.host if request.client else "0.0.0.0"
+    
+    # Try to get country from headers first (CDN/proxy)
+    country_code = (
+        request.headers.get("cf-ipcountry") or 
+        request.headers.get("x-vercel-ip-country") or
+        request.headers.get("x-country-code") or
+        None
+    )
+    
+    # Always do IP lookup for city-level data
+    geo_info = get_geo_from_ip(ip)
+    
+    if not country_code or country_code == "XX":
+        country_code = geo_info.get("country_code", "US")
+    
+    # Calculate preview price (no engagement data yet - just geo)
+    pricing = calculate_price(country_code, geo_info, None)
+    pricing["geo"] = {
+        "country": geo_info.get("country", "Unknown"),
+        "city": geo_info.get("city", ""),
+        "region": geo_info.get("region", "")
+    }
+    
+    return pricing
+
+@app.post("/api/create-payment")
+async def create_payment(
+    request: Request, 
+    pdf_id: str = Form(...),
+    edit_count: int = Form(0),
+    page_count: int = Form(1),
+    time_spent_seconds: int = Form(0),
+    interaction_count: int = Form(0),
+    has_added_images: bool = Form(False),
+    has_signature: bool = Form(False),
+    has_drawings: bool = Form(False),
+    # Device info
+    device_type: str = Form("desktop"),
+    os: str = Form("unknown"),
+    browser: str = Form("unknown"),
+    is_premium_device: bool = Form(False),
+    can_apple_pay: bool = Form(False),
+    can_google_pay: bool = Form(True)
+):
+    """Create a Stripe Payment Intent with city-aware + sunk cost + device pricing"""
+    if not STRIPE_ENABLED:
+        raise HTTPException(500, "Payments not configured")
+    
     if pdf_id not in pdf_storage:
         raise HTTPException(404, "PDF not found")
     
-    s = pdf_storage[pdf_id]
-    analytics["total_downloads"] += 1
-    track_action(request, "Download", s["filename"])
+    ip = request.client.host if request.client else "0.0.0.0"
     
-    return StreamingResponse(io.BytesIO(s["content"]), media_type="application/pdf", 
-                            headers={"Content-Disposition": f"attachment; filename={s['filename']}"})
+    # Get full geo info for city-level pricing
+    geo_info = get_geo_from_ip(ip)
+    country_code = (
+        request.headers.get("cf-ipcountry") or 
+        request.headers.get("x-vercel-ip-country") or
+        geo_info.get("country_code", "US")
+    )
+    
+    # Build engagement data for sunk cost calculation (includes device info)
+    engagement_data = {
+        "edit_count": edit_count,
+        "page_count": page_count,
+        "time_spent_seconds": time_spent_seconds,
+        "interaction_count": interaction_count,
+        "has_added_images": has_added_images,
+        "has_signature": has_signature,
+        "has_drawings": has_drawings,
+        # Device info
+        "device_type": device_type,
+        "os": os,
+        "browser": browser,
+        "is_premium_device": is_premium_device
+    }
+    
+    # Calculate price with all layers: country + city + sunk cost + device
+    pricing = calculate_price(country_code, geo_info, engagement_data)
+    
+    # Filter payment methods based on device capabilities
+    available_methods = []
+    for method in pricing["payment_methods"]:
+        if method == "apple_pay" and not can_apple_pay:
+            continue
+        if method == "google_pay" and not can_google_pay:
+            continue
+        available_methods.append(method)
+    
+    # Ensure card is always available
+    if "card" not in available_methods:
+        available_methods.insert(0, "card")
+    
+    try:
+        # Create Payment Intent
+        intent = stripe.PaymentIntent.create(
+            amount=pricing["amount"],
+            currency=pricing["currency"],
+            metadata={
+                "pdf_id": pdf_id,
+                "country": country_code,
+                "city": geo_info.get("city", ""),
+                "ip": ip,
+                "city_boost": str(pricing.get("city_boost_applied", False)),
+                "sunk_cost_mult": str(pricing.get("sunk_cost_multiplier", 1.0)),
+                "edits": str(edit_count),
+                "time_spent": str(time_spent_seconds),
+                "device": device_type,
+                "os": os,
+                "browser": browser,
+                "premium_device": str(is_premium_device)
+            },
+            automatic_payment_methods={"enabled": True}
+        )
+        
+        return {
+            "clientSecret": intent.client_secret,
+            "paymentIntentId": intent.id,
+            "amount": pricing["amount"],
+            "currency": pricing["currency"],
+            "display_price": pricing["display_price"],
+            "payment_methods": available_methods
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Payment error: {str(e)}")
+
+@app.post("/api/verify-payment")
+async def verify_payment(request: Request, payment_intent_id: str = Form(...)):
+    """Verify a payment was successful"""
+    if not STRIPE_ENABLED:
+        raise HTTPException(500, "Payments not configured")
+    
+    try:
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        
+        if intent.status == "succeeded":
+            pdf_id = intent.metadata.get("pdf_id")
+            
+            # Track the sale
+            track_action(request, "Purchase", f"${intent.amount/100:.2f} {intent.currency.upper()}")
+            
+            return {
+                "success": True,
+                "pdf_id": pdf_id,
+                "download_token": base64.b64encode(f"{pdf_id}:{payment_intent_id}".encode()).decode()
+            }
+        else:
+            return {"success": False, "status": intent.status}
+    except Exception as e:
+        raise HTTPException(500, f"Verification error: {str(e)}")
+
+@app.get("/download/{pdf_id}")
+async def download_pdf(request: Request, pdf_id: str, token: Optional[str] = None):
+    """Download PDF - requires valid payment token"""
+    if pdf_id not in pdf_storage:
+        raise HTTPException(404, "PDF not found")
+    
+    # Verify payment token
+    if token:
+        try:
+            decoded = base64.b64decode(token).decode()
+            token_pdf_id, payment_id = decoded.split(":")
+            if token_pdf_id == pdf_id:
+                # Valid token - allow download
+                s = pdf_storage[pdf_id]
+                analytics["total_downloads"] += 1
+                track_action(request, "Download", s["filename"])
+                
+                return StreamingResponse(io.BytesIO(s["content"]), media_type="application/pdf", 
+                                        headers={"Content-Disposition": f"attachment; filename={s['filename']}"})
+        except:
+            pass
+    
+    raise HTTPException(403, "Payment required")
 
 @app.get("/download-direct/{pdf_id}")
-async def download_direct(request: Request, pdf_id: str):
-    return await download_pdf(request, pdf_id)
+async def download_direct(request: Request, pdf_id: str, token: Optional[str] = None):
+    return await download_pdf(request, pdf_id, token)
 
 @app.post("/save-and-download")
-async def save_and_download(request: Request, pdf_id: str = Form(...), edits: str = Form("[]")):
+async def save_and_download(
+    request: Request, 
+    pdf_id: str = Form(...), 
+    edits: str = Form("[]"),
+    token: str = Form(...)
+):
+    """Save edits and download - requires valid payment token"""
     if pdf_id not in pdf_storage:
         raise HTTPException(404, "PDF not found")
+    
+    # Verify payment token
+    try:
+        decoded = base64.b64decode(token).decode()
+        token_pdf_id, payment_id = decoded.split(":")
+        if token_pdf_id != pdf_id:
+            raise HTTPException(403, "Invalid token")
+    except:
+        raise HTTPException(403, "Payment required")
     
     content = pdf_storage[pdf_id]["content"]
     edit_list = json.loads(edits) if edits else []
