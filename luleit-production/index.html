@@ -3,814 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luleit - Free PDF Editor</title>
+    <title>Luleit - Free PDF Editor | All-in-One PDF Tools</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #fff; min-height: 100vh; }
-        
-        .header { background: #1e293b; padding: 8px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        .toolbar { display: none; align-items: center; gap: 2px; background: #334155; padding: 4px 8px; border-radius: 8px; }
-        .toolbar.show { display: flex; }
-        .toolbar-divider { width: 1px; height: 24px; background: #475569; margin: 0 4px; }
-        
-        .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 8px; background: transparent; border: none; border-radius: 4px; color: #94a3b8; cursor: pointer; font-size: 9px; font-family: inherit; transition: all 0.15s; }
-        .tool-btn:hover { background: #475569; color: #fff; }
-        .tool-btn.active { background: #6366f1; color: #fff; }
-        .tool-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .tool-btn i { font-size: 14px; }
-        
-        /* Text Format Toolbar */
-        .format-toolbar { display: none; align-items: center; gap: 6px; background: #fff; padding: 8px 12px; border-radius: 8px; position: fixed; top: 60px; left: 50%; transform: translateX(-50%); box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 200; }
-        .format-toolbar.show { display: flex; }
-        .format-toolbar select, .format-toolbar input { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; background: #fff; color: #1e293b; }
-        .format-toolbar select { min-width: 120px; cursor: pointer; }
-        .format-toolbar input[type="number"] { width: 60px; }
-        .format-toolbar input[type="color"] { width: 32px; height: 32px; padding: 2px; cursor: pointer; }
-        .format-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s; }
-        .format-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
-        .format-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
-        .format-divider { width: 1px; height: 24px; background: #e2e8f0; }
-        
-        .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-        .autosave { display: none; align-items: center; gap: 4px; background: rgba(16,185,129,0.2); border: 1px solid #10b981; padding: 4px 10px; border-radius: 16px; font-size: 10px; color: #10b981; }
-        .autosave.show { display: flex; }
-        .edit-count { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; display: none; }
-        
-        .btn { padding: 6px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: inherit; transition: all 0.15s; }
-        .btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #475569; }
-        .btn-ghost:hover { background: #334155; color: #fff; }
-        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-        #file-input { display: none; }
-        
-        .main { display: flex; height: calc(100vh - 52px); }
-        .sidebar { width: 140px; background: #1e293b; padding: 10px; overflow-y: auto; display: none; flex-direction: column; border-right: 1px solid #334155; }
-        .sidebar.show { display: flex; }
-        .sidebar h3 { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .page-thumb { background: #0f172a; border-radius: 4px; margin-bottom: 6px; cursor: pointer; border: 2px solid transparent; overflow: hidden; }
-        .page-thumb:hover, .page-thumb.active { border-color: #6366f1; }
-        .page-thumb img { width: 100%; display: block; }
-        .page-thumb-label { padding: 3px; text-align: center; font-size: 9px; color: #94a3b8; background: #1e293b; }
-        .zoom-controls { display: flex; align-items: center; gap: 2px; background: #0f172a; padding: 4px; border-radius: 6px; margin-top: auto; }
-        .zoom-btn { width: 24px; height: 24px; background: #334155; border: none; border-radius: 4px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-        .zoom-btn:hover { background: #475569; color: #fff; }
-        .zoom-level { font-size: 10px; color: #fff; min-width: 36px; text-align: center; }
-        
-        .editor { flex: 1; overflow: auto; padding: 20px; background: #020617; display: flex; justify-content: center; align-items: flex-start; }
-        .upload-area { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 24px; }
-        .upload-box { text-align: center; padding: 40px 60px; border: 2px dashed #334155; border-radius: 16px; cursor: pointer; background: rgba(30,41,59,0.5); transition: all 0.3s; }
-        .upload-box:hover { border-color: #6366f1; background: rgba(99,102,241,0.1); }
-        .upload-icon { width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; }
-        .upload-box h2 { margin-bottom: 6px; font-size: 20px; }
-        .upload-box p { color: #64748b; margin-bottom: 16px; font-size: 13px; }
-        .social-proof { display: flex; gap: 16px; color: #64748b; font-size: 12px; }
-        .social-proof i { color: #6366f1; margin-right: 4px; }
-        
-        .page-container { position: relative; background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.5); display: none; transform-origin: top center; }
-        .page-container.show { display: block; }
-        .page-container img { display: block; }
-        .text-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        
-        .text-box { position: absolute; background: transparent; border: 1px solid transparent; padding: 2px 4px; cursor: text; outline: none; color: transparent; caret-color: black; }
-        .text-box:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); }
-        .text-box:focus { background: #fff; color: #000; border-color: #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,0.4); z-index: 100; }
-        .text-box.edited { border: 2px solid #10b981; background: #fff; color: #000; }
-        
-        .added-text { position: absolute; background: #fff; border: 2px solid #6366f1; padding: 6px 10px; color: #000; outline: none; min-width: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: move; user-select: none; }
-        .added-text:focus { cursor: text; user-select: auto; }
-        .added-text.selected { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.3); }
-        .added-text .resize-handle { position: absolute; bottom: -4px; right: -4px; width: 8px; height: 8px; background: #6366f1; border-radius: 2px; cursor: se-resize; }
-        .added-text .delete-btn { position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; background: #ef4444; border: none; border-radius: 50%; color: #fff; cursor: pointer; font-size: 10px; display: none; align-items: center; justify-content: center; }
-        .added-text:hover .delete-btn, .added-text.selected .delete-btn { display: flex; }
-        
-        .draw-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .draw-canvas.active { pointer-events: auto; cursor: crosshair; }
-        
-        .color-picker { display: none; position: absolute; top: 100%; left: 0; margin-top: 6px; background: #1e293b; padding: 6px; border-radius: 6px; gap: 4px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .color-picker.show { display: flex; }
-        .color-option { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
-        .color-option:hover { transform: scale(1.1); }
-        .color-option.active { border-color: #fff; }
-        
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-overlay.show { display: flex; }
-        .modal { background: #1e293b; border-radius: 16px; width: 100%; max-width: 380px; overflow: hidden; }
-        .modal-header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 20px; text-align: center; position: relative; }
-        .modal-header.warning { background: linear-gradient(135deg, #f59e0b, #ef4444); }
-        .modal-close { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.2); border: none; color: #fff; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; }
-        .modal-header i { font-size: 28px; margin-bottom: 8px; }
-        .modal-header h2 { font-size: 16px; }
-        .modal-body { padding: 20px; }
-        .limited-offer { background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 6px; border-radius: 6px; text-align: center; font-size: 11px; font-weight: 600; margin-bottom: 12px; }
-        .price { text-align: center; margin-bottom: 12px; }
-        .price-old { color: #64748b; text-decoration: line-through; font-size: 14px; }
-        .price-new { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .feature-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #334155; font-size: 12px; }
-        .feature-item i { color: #10b981; }
-        .modal-btn { width: 100%; padding: 10px; margin-top: 8px; justify-content: center; font-size: 13px; }
-        
-        .loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 2000; }
-        .loading.show { display: flex; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading p { margin-top: 12px; color: #94a3b8; font-size: 13px; }
-        
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; padding: 10px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; border: 1px solid #334155; z-index: 3000; transition: transform 0.3s; font-size: 12px; }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        .toast.success { border-color: #10b981; }
-        .toast.success i { color: #10b981; }
-        .toast.error { border-color: #ef4444; }
-        .toast.error i { color: #ef4444; }
-        
-        .hint { position: fixed; bottom: 20px; right: 20px; background: #1e293b; padding: 8px 12px; border-radius: 6px; font-size: 10px; color: #64748b; border: 1px solid #334155; display: none; }
-        .hint.show { display: block; }
-        .hint kbd { background: #334155; padding: 2px 4px; border-radius: 3px; color: #fff; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--text:#fff;--text2:#94a3b8;--muted:#64748b;--accent:#6366f1;--success:#10b981;--warn:#f59e0b;--danger:#ef4444;--border:#475569}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .header{background:var(--bg2);padding:10px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+        .logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer}
+        .nav-tabs{display:flex;gap:4px;background:var(--bg3);border-radius:8px;padding:4px}
+        .nav-tab{padding:8px 14px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;font-size:12px;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap}
+        .nav-tab:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+        .nav-tab.active{background:var(--accent);color:#fff}
+        .toolbar{display:none;align-items:center;gap:4px;background:var(--bg3);padding:4px 8px;border-radius:8px;margin-left:auto}
+        .toolbar.show{display:flex}
+        .tool-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 8px;background:transparent;border:none;border-radius:6px;color:var(--text2);cursor:pointer;font-size:9px;font-family:inherit}
+        .tool-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+        .tool-btn.active{background:var(--accent);color:#fff}
+        .tool-btn i{font-size:14px}
+        .tool-divider{width:1px;height:24px;background:var(--border);margin:0 4px}
+        .header-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+        .btn{padding:7px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;transition:all .15s}
+        .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+        .btn-ghost:hover{background:var(--bg3);color:var(--text)}
+        .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+        .btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+        .main{display:flex;height:calc(100vh - 57px)}
+        .sidebar{width:160px;background:var(--bg2);padding:12px;overflow-y:auto;display:none;flex-direction:column;border-right:1px solid var(--border)}
+        .sidebar.show{display:flex}
+        .sidebar-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}
+        .page-list{display:flex;flex-direction:column;gap:6px}
+        .page-thumb{background:var(--bg);border-radius:4px;cursor:pointer;border:2px solid transparent;overflow:hidden;position:relative}
+        .page-thumb:hover{border-color:var(--accent)}
+        .page-thumb.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,0.3)}
+        .page-thumb img{width:100%;display:block}
+        .page-thumb-label{padding:3px;text-align:center;font-size:9px;color:var(--text2);background:var(--bg2)}
+        .page-actions{display:none;position:absolute;top:2px;right:2px;gap:2px}
+        .page-thumb:hover .page-actions{display:flex}
+        .page-action{width:20px;height:20px;border-radius:3px;border:none;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;font-size:9px}
+        .page-action:hover{background:var(--accent)}
+        .page-action.danger:hover{background:var(--danger)}
+        .zoom-controls{display:flex;align-items:center;gap:3px;background:var(--bg);padding:4px;border-radius:4px;margin-top:auto}
+        .zoom-btn{width:24px;height:24px;background:var(--bg3);border:none;border-radius:3px;color:var(--text2);cursor:pointer;font-size:11px}
+        .zoom-btn:hover{background:var(--accent);color:#fff}
+        .zoom-level{font-size:11px;color:var(--text);min-width:40px;text-align:center}
+        .editor{flex:1;overflow:auto;padding:20px;background:#020617;display:flex;justify-content:center;align-items:flex-start}
+        .home-container{width:100%;max-width:1100px;padding:20px}
+        .home-header{text-align:center;margin-bottom:40px}
+        .home-header h1{font-size:36px;margin-bottom:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .home-header p{color:var(--text2);font-size:16px}
+        .upload-hero{text-align:center;padding:50px;border:2px dashed var(--border);border-radius:16px;cursor:pointer;background:rgba(30,41,59,0.5);margin-bottom:40px;transition:all .2s}
+        .upload-hero:hover{border-color:var(--accent);background:rgba(99,102,241,0.1)}
+        .upload-icon{width:80px;height:80px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+        .tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+        .tool-card{background:var(--bg2);border-radius:10px;padding:16px;cursor:pointer;border:1px solid var(--border);text-align:center;transition:all .2s}
+        .tool-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+        .tool-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:18px}
+        .tool-icon.purple{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+        .tool-icon.green{background:linear-gradient(135deg,#10b981,#059669)}
+        .tool-icon.orange{background:linear-gradient(135deg,#f59e0b,#d97706)}
+        .tool-icon.pink{background:linear-gradient(135deg,#ec4899,#db2777)}
+        .tool-icon.blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+        .tool-icon.red{background:linear-gradient(135deg,#ef4444,#dc2626)}
+        .tool-icon.teal{background:linear-gradient(135deg,#14b8a6,#0d9488)}
+        .tool-icon.yellow{background:linear-gradient(135deg,#eab308,#ca8a04)}
+        .tool-card h3{font-size:13px;margin-bottom:3px}
+        .tool-card p{font-size:10px;color:var(--muted)}
+        .tool-section{margin-bottom:30px}
+        .tool-section h2{font-size:14px;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+        .tool-section h2 i{color:var(--accent)}
+        .page-container{position:relative;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5);display:none;transform-origin:top center}
+        .page-container.show{display:block}
+        .page-container img{display:block}
+        .text-layer{position:absolute;top:0;left:0;width:100%;height:100%}
+        .text-box{position:absolute;background:transparent;border:1px solid transparent;padding:2px 4px;cursor:text;outline:none;color:transparent;caret-color:#000;font-family:inherit}
+        .text-box:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4)}
+        .text-box:focus{background:#fff;color:#000;border-color:var(--accent);box-shadow:0 4px 20px rgba(99,102,241,.3);z-index:50}
+        .text-box.edited{border:2px solid var(--success);background:#fff;color:#000}
+        .added-el{position:absolute;cursor:move;border:2px solid transparent}
+        .added-el:hover,.added-el.selected{border-color:var(--accent)}
+        .added-el.selected{box-shadow:0 0 0 3px rgba(99,102,241,.3)}
+        .added-text{background:#fff;padding:6px 10px;color:#000;outline:none;min-width:60px;border-radius:2px}
+        .added-text:focus{cursor:text}
+        .added-image img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+        .resize-handle{position:absolute;width:10px;height:10px;background:var(--accent);border:2px solid #fff;border-radius:2px;bottom:-5px;right:-5px;cursor:se-resize}
+        .el-controls{position:absolute;top:-28px;left:50%;transform:translateX(-50%);display:none;background:var(--bg2);border-radius:5px;padding:3px;gap:3px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+        .added-el.selected .el-controls{display:flex}
+        .el-ctrl{width:24px;height:24px;border:none;border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px}
+        .el-ctrl:hover{background:var(--bg3);color:#fff}
+        .el-ctrl.danger:hover{background:var(--danger)}
+        .draw-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+        .draw-canvas.active{pointer-events:auto;cursor:crosshair}
+        .format-bar{display:none;align-items:center;gap:6px;background:var(--bg2);padding:8px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .format-bar.show{display:flex}
+        .format-bar label{font-size:11px;color:var(--muted)}
+        .format-bar select{padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;background:var(--bg3);color:var(--text);min-width:110px}
+        .format-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg3);color:var(--text2);cursor:pointer}
+        .format-btn:hover,.format-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+        .format-divider{width:1px;height:24px;background:var(--border);margin:0 6px}
+        .color-swatches{display:flex;gap:3px}
+        .color-swatch{width:24px;height:24px;border-radius:5px;border:2px solid transparent;cursor:pointer}
+        .color-swatch.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+        .shape-bar{display:none;align-items:center;gap:6px;background:var(--bg2);padding:8px 16px;border-bottom:1px solid var(--border)}
+        .shape-bar.show{display:flex}
+        .shape-btn{padding:6px 12px;border:1px solid var(--border);border-radius:5px;background:var(--bg3);color:var(--text2);cursor:pointer;font-size:11px;font-family:inherit}
+        .shape-btn:hover,.shape-btn.active{border-color:var(--accent);background:var(--accent);color:#fff}
+        .tool-view{width:100%;max-width:700px;display:none}
+        .tool-view.show{display:block}
+        .tool-view-header{text-align:center;margin-bottom:24px}
+        .tool-view-header h2{font-size:24px;margin-bottom:6px}
+        .tool-view-header p{color:var(--text2)}
+        .dropzone{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px}
+        .dropzone:hover{border-color:var(--accent);background:rgba(99,102,241,.1)}
+        .dropzone i{font-size:40px;color:var(--accent);margin-bottom:12px;display:block}
+        .file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;max-height:300px;overflow-y:auto}
+        .file-item{display:flex;align-items:center;gap:10px;background:var(--bg2);padding:10px 14px;border-radius:8px;border:1px solid var(--border)}
+        .file-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+        .file-info{flex:1;min-width:0}
+        .file-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .file-size{font-size:11px;color:var(--muted)}
+        .file-btn{width:28px;height:28px;border:none;border-radius:5px;background:var(--bg3);color:var(--text2);cursor:pointer}
+        .file-btn:hover{background:var(--accent);color:#fff}
+        .file-btn.danger:hover{background:var(--danger)}
+        .action-btns{display:flex;justify-content:center;gap:10px}
+        .options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+        .option-card{padding:14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .2s}
+        .option-card:hover,.option-card.active{border-color:var(--accent);background:rgba(99,102,241,.1)}
+        .option-card h4{font-size:13px;margin-bottom:2px}
+        .option-card p{font-size:10px;color:var(--muted)}
+        .result-box{background:var(--bg2);border-radius:12px;padding:24px;text-align:center;margin-top:20px}
+        .result-stats{display:flex;justify-content:center;gap:30px;margin:20px 0}
+        .result-stat{text-align:center}
+        .result-stat-value{font-size:28px;font-weight:700}
+        .result-stat-value.success{color:var(--success)}
+        .result-stat-label{font-size:11px;color:var(--muted)}
+        .input-group{margin-bottom:16px}
+        .input-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
+        .input-group input,.input-group select{width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit}
+        .checkbox-label{display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}
+        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:1000}
+        .modal-overlay.show{display:flex}
+        .modal{background:var(--bg2);border-radius:14px;width:100%;max-width:380px;overflow:hidden}
+        .modal-header{background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px;text-align:center;position:relative}
+        .modal-close{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.2);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer}
+        .modal-header i{font-size:28px;margin-bottom:10px}
+        .modal-header h2{font-size:16px}
+        .modal-body{padding:20px}
+        .price{text-align:center;margin:14px 0}
+        .price-old{color:var(--muted);text-decoration:line-through;font-size:16px}
+        .price-new{font-size:42px;font-weight:800;background:linear-gradient(135deg,#6366f1,#d946ef);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .price-savings{color:var(--success);font-size:12px;font-weight:600}
+        .feature-item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px}
+        .feature-item i{color:var(--success)}
+        .modal-btn{width:100%;padding:11px;margin-top:6px;justify-content:center;font-size:13px}
+        .badge{background:linear-gradient(135deg,#f59e0b,#ef4444);padding:5px 10px;border-radius:16px;font-size:10px;font-weight:600;display:inline-block;margin-bottom:10px}
+        .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
+        .loading.show{display:flex}
+        .spinner{width:44px;height:44px;border:3px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .loading p{margin-top:14px;color:var(--text2)}
+        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg2);padding:10px 18px;border-radius:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--border);z-index:3000;transition:transform .3s;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+        .toast.show{transform:translateX(-50%) translateY(0)}
+        .toast.success{border-color:var(--success)}
+        .toast.success i{color:var(--success)}
+        .toast.error{border-color:var(--danger)}
+        .toast.error i{color:var(--danger)}
+        .signature-pad{border:2px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair}
+        input[type="file"]{display:none}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+        .social-proof{display:flex;justify-content:center;gap:24px;color:var(--muted);font-size:12px;margin-top:30px}
+        .social-proof span{display:flex;align-items:center;gap:5px}
+        .social-proof i{color:var(--accent)}
+        .preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin:20px 0}
+        .preview-item{background:var(--bg);border-radius:6px;overflow:hidden;border:2px solid transparent;cursor:pointer}
+        .preview-item:hover{border-color:var(--accent)}
+        .preview-item.selected{border-color:var(--success)}
+        .preview-item img{width:100%;display:block}
+        .preview-item-label{padding:4px;text-align:center;font-size:10px;background:var(--bg2)}
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="logo"><i class="fas fa-file-pdf"></i> Luleit</div>
+        <div class="logo" onclick="location.reload()"><i class="fas fa-file-pdf"></i> Luleit</div>
+        <nav class="nav-tabs" id="nav-tabs">
+            <button class="nav-tab active" data-view="home"><i class="fas fa-home"></i> Home</button>
+            <button class="nav-tab" data-view="edit"><i class="fas fa-edit"></i> Edit</button>
+            <button class="nav-tab" data-view="merge"><i class="fas fa-layer-group"></i> Merge</button>
+            <button class="nav-tab" data-view="split"><i class="fas fa-cut"></i> Split</button>
+            <button class="nav-tab" data-view="compress"><i class="fas fa-compress"></i> Compress</button>
+            <button class="nav-tab" data-view="convert"><i class="fas fa-exchange-alt"></i> Convert</button>
+            <button class="nav-tab" data-view="secure"><i class="fas fa-lock"></i> Security</button>
+        </nav>
         <div class="toolbar" id="toolbar">
-            <button class="tool-btn" onclick="undo()" id="undo-btn" disabled title="Undo"><i class="fas fa-undo"></i><span>Undo</span></button>
-            <button class="tool-btn" onclick="redo()" id="redo-btn" disabled title="Redo"><i class="fas fa-redo"></i><span>Redo</span></button>
-            <div class="toolbar-divider"></div>
-            <button class="tool-btn active" data-tool="select" title="Select & Edit"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
-            <button class="tool-btn" data-tool="text" title="Add Text"><i class="fas fa-font"></i><span>Text</span></button>
-            <div class="toolbar-divider"></div>
-            <button class="tool-btn" data-tool="sign" title="Sign/Draw"><i class="fas fa-signature"></i><span>Sign</span></button>
-            <div style="position:relative">
-                <button class="tool-btn" data-tool="draw" title="Draw"><i class="fas fa-pen"></i><span>Draw</span></button>
-                <div class="color-picker" id="color-picker">
-                    <div class="color-option active" style="background:#000" data-color="#000"></div>
-                    <div class="color-option" style="background:#ef4444" data-color="#ef4444"></div>
-                    <div class="color-option" style="background:#3b82f6" data-color="#3b82f6"></div>
-                    <div class="color-option" style="background:#10b981" data-color="#10b981"></div>
-                </div>
-            </div>
-            <button class="tool-btn" data-tool="highlight" title="Highlight"><i class="fas fa-highlighter"></i><span>Highlight</span></button>
-            <button class="tool-btn" data-tool="erase" title="Erase"><i class="fas fa-eraser"></i><span>Erase</span></button>
-            <div class="toolbar-divider"></div>
-            <button class="tool-btn" onclick="clearAll()" title="Clear All"><i class="fas fa-trash-alt"></i><span>Clear</span></button>
+            <button class="tool-btn" onclick="undo()" id="undo-btn" disabled><i class="fas fa-undo"></i><span>Undo</span></button>
+            <button class="tool-btn" onclick="redo()" id="redo-btn" disabled><i class="fas fa-redo"></i><span>Redo</span></button>
+            <div class="tool-divider"></div>
+            <button class="tool-btn active" data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
+            <button class="tool-btn" data-tool="text"><i class="fas fa-font"></i><span>Text</span></button>
+            <button class="tool-btn" data-tool="image"><i class="fas fa-image"></i><span>Image</span></button>
+            <button class="tool-btn" data-tool="shape"><i class="fas fa-shapes"></i><span>Shape</span></button>
+            <button class="tool-btn" data-tool="sign"><i class="fas fa-signature"></i><span>Sign</span></button>
+            <div class="tool-divider"></div>
+            <button class="tool-btn" data-tool="draw"><i class="fas fa-pen"></i><span>Draw</span></button>
+            <button class="tool-btn" data-tool="highlight"><i class="fas fa-highlighter"></i><span>Highlight</span></button>
+            <button class="tool-btn" data-tool="erase"><i class="fas fa-eraser"></i><span>Erase</span></button>
         </div>
         <div class="header-right">
-            <div class="autosave" id="autosave"><i class="fas fa-check-circle"></i><span>Saved</span></div>
-            <div class="edit-count" id="edit-count">0 edits</div>
-            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i><span>Open</span></button>
-            <button class="btn btn-primary" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i><span>Download</span></button>
-            <input type="file" id="file-input" accept=".pdf">
+            <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()"><i class="fas fa-folder-open"></i> Open</button>
+            <button class="btn btn-primary" id="download-btn" disabled onclick="handleDownload()"><i class="fas fa-download"></i> Download</button>
         </div>
     </header>
-    
-    <!-- Text Format Toolbar -->
-    <div class="format-toolbar" id="format-toolbar">
-        <select id="font-family" title="Font">
-            <option value="Arial">Arial</option>
-            <option value="Helvetica">Helvetica</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Verdana">Verdana</option>
-        </select>
-        <input type="number" id="font-size" value="14" min="8" max="72" title="Font Size">
+    <div class="format-bar" id="format-bar">
+        <label>Font:</label><select id="font-family"></select>
+        <label>Size:</label><select id="font-size"></select>
         <div class="format-divider"></div>
-        <button class="format-btn" id="bold-btn" title="Bold (Ctrl+B)"><i class="fas fa-bold"></i></button>
-        <button class="format-btn" id="italic-btn" title="Italic (Ctrl+I)"><i class="fas fa-italic"></i></button>
-        <button class="format-btn" id="underline-btn" title="Underline (Ctrl+U)"><i class="fas fa-underline"></i></button>
+        <button class="format-btn" id="bold-btn"><i class="fas fa-bold"></i></button>
+        <button class="format-btn" id="italic-btn"><i class="fas fa-italic"></i></button>
+        <button class="format-btn" id="underline-btn"><i class="fas fa-underline"></i></button>
         <div class="format-divider"></div>
-        <input type="color" id="text-color" value="#000000" title="Text Color">
+        <label>Color:</label><div class="color-swatches" id="color-swatches"></div>
         <div class="format-divider"></div>
-        <button class="format-btn" id="delete-text-btn" title="Delete" style="color:#ef4444"><i class="fas fa-trash"></i></button>
+        <button class="format-btn" id="delete-btn" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
     </div>
-    
+    <div class="shape-bar" id="shape-bar">
+        <button class="shape-btn active" data-shape="rectangle"><i class="fas fa-square"></i> Rectangle</button>
+        <button class="shape-btn" data-shape="circle"><i class="fas fa-circle"></i> Circle</button>
+        <button class="shape-btn" data-shape="line"><i class="fas fa-minus"></i> Line</button>
+        <button class="shape-btn" data-shape="arrow"><i class="fas fa-arrow-right"></i> Arrow</button>
+        <div class="format-divider"></div>
+        <label>Stroke:</label><input type="color" id="shape-stroke" value="#000000" style="width:28px;height:28px;border:none;border-radius:5px;">
+        <label>Fill:</label><input type="color" id="shape-fill" value="#ffffff" style="width:28px;height:28px;border:none;border-radius:5px;">
+        <label class="checkbox-label"><input type="checkbox" id="shape-no-fill" checked> No fill</label>
+    </div>
     <main class="main">
         <aside class="sidebar" id="sidebar">
-            <h3>Pages</h3>
-            <div id="page-list"></div>
+            <div class="sidebar-title">Pages</div>
+            <div class="page-list" id="page-list"></div>
+            <div style="margin-top:12px;font-size:10px;color:var(--muted)" id="doc-info"></div>
             <div class="zoom-controls">
                 <button class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></button>
                 <span class="zoom-level" id="zoom-level">100%</span>
                 <button class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></button>
             </div>
         </aside>
-        <div class="editor">
-            <div class="upload-area" id="upload-area">
-                <div class="upload-box" onclick="document.getElementById('file-input').click()">
+        <div class="editor" id="editor">
+            <!-- HOME VIEW -->
+            <div class="home-container tab-content active" id="home-view">
+                <div class="home-header">
+                    <h1>All-in-One PDF Editor</h1>
+                    <p>Edit, merge, compress, convert & secure your PDFs - completely free</p>
+                </div>
+                <div class="upload-hero" onclick="document.getElementById('file-input').click()">
                     <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                    <h2>Edit Your PDF Free</h2>
-                    <p>Drop file or click to browse</p>
-                    <button class="btn btn-primary"><i class="fas fa-file-pdf"></i> Choose PDF</button>
+                    <h2>Edit PDF Free</h2>
+                    <p style="color:var(--muted);margin-bottom:16px">Drop your PDF here or click to browse</p>
+                    <button class="btn btn-primary"><i class="fas fa-file-pdf"></i> Select PDF</button>
+                </div>
+                <div class="tool-section">
+                    <h2><i class="fas fa-star"></i> Popular Tools</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card" onclick="switchView('merge')"><div class="tool-icon purple"><i class="fas fa-layer-group"></i></div><h3>Merge PDF</h3><p>Combine multiple PDFs</p></div>
+                        <div class="tool-card" onclick="switchView('split')"><div class="tool-icon orange"><i class="fas fa-cut"></i></div><h3>Split PDF</h3><p>Extract pages</p></div>
+                        <div class="tool-card" onclick="switchView('compress')"><div class="tool-icon green"><i class="fas fa-compress"></i></div><h3>Compress PDF</h3><p>Reduce file size</p></div>
+                        <div class="tool-card" onclick="document.getElementById('file-input').click()"><div class="tool-icon pink"><i class="fas fa-edit"></i></div><h3>Edit PDF</h3><p>Edit text & images</p></div>
+                        <div class="tool-card" onclick="switchView('convert')"><div class="tool-icon blue"><i class="fas fa-image"></i></div><h3>PDF to Image</h3><p>Convert to JPG/PNG</p></div>
+                        <div class="tool-card" onclick="switchView('convert');setTimeout(()=>switchConvertTab('img2pdf'),100)"><div class="tool-icon teal"><i class="fas fa-file-pdf"></i></div><h3>Image to PDF</h3><p>Create PDF from images</p></div>
+                        <div class="tool-card" onclick="switchView('secure')"><div class="tool-icon red"><i class="fas fa-lock"></i></div><h3>Protect PDF</h3><p>Add password</p></div>
+                        <div class="tool-card" onclick="switchView('secure');setTimeout(()=>switchSecureTab('unlock'),100)"><div class="tool-icon yellow"><i class="fas fa-unlock"></i></div><h3>Unlock PDF</h3><p>Remove password</p></div>
+                    </div>
+                </div>
+                <div class="tool-section">
+                    <h2><i class="fas fa-tools"></i> More Tools</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card" onclick="document.getElementById('file-input').click()"><div class="tool-icon purple"><i class="fas fa-signature"></i></div><h3>Sign PDF</h3><p>Add signature</p></div>
+                        <div class="tool-card" onclick="document.getElementById('watermark-input').click()"><div class="tool-icon green"><i class="fas fa-tint"></i></div><h3>Watermark</h3><p>Add watermark</p></div>
+                        <div class="tool-card" onclick="document.getElementById('pagenums-input').click()"><div class="tool-icon blue"><i class="fas fa-list-ol"></i></div><h3>Page Numbers</h3><p>Add page numbers</p></div>
+                        <div class="tool-card" onclick="document.getElementById('rotate-input').click()"><div class="tool-icon orange"><i class="fas fa-sync"></i></div><h3>Rotate PDF</h3><p>Rotate all pages</p></div>
+                    </div>
                 </div>
                 <div class="social-proof">
-                    <span><i class="fas fa-users"></i>50k+ users</span>
-                    <span><i class="fas fa-star"></i>4.9 rating</span>
-                    <span><i class="fas fa-shield-alt"></i>Secure</span>
+                    <span><i class="fas fa-users"></i> 100,000+ users</span>
+                    <span><i class="fas fa-star"></i> 4.9/5 rating</span>
+                    <span><i class="fas fa-shield-alt"></i> 100% Secure</span>
                 </div>
             </div>
-            <div class="page-container" id="page-container">
-                <img id="page-image">
-                <canvas class="draw-canvas" id="draw-canvas"></canvas>
-                <div class="text-layer" id="text-layer"></div>
+            <!-- MERGE VIEW -->
+            <div class="tool-view" id="merge-view">
+                <div class="tool-view-header"><h2><i class="fas fa-layer-group"></i> Merge PDFs</h2><p>Combine multiple PDF files into one</p></div>
+                <div class="dropzone" onclick="document.getElementById('merge-input').click()"><i class="fas fa-plus-circle"></i><h3>Add PDF Files</h3><p style="color:var(--muted)">Click or drag files here</p></div>
+                <div class="file-list" id="merge-files"></div>
+                <div class="action-btns" id="merge-actions" style="display:none"><button class="btn btn-ghost" onclick="mergeFiles=[];renderMergeFiles()"><i class="fas fa-trash"></i> Clear</button><button class="btn btn-primary" onclick="doMerge()"><i class="fas fa-magic"></i> Merge PDFs</button></div>
             </div>
+            <!-- SPLIT VIEW -->
+            <div class="tool-view" id="split-view">
+                <div class="tool-view-header"><h2><i class="fas fa-cut"></i> Split PDF</h2><p>Extract pages from your PDF</p></div>
+                <div class="dropzone" onclick="document.getElementById('split-input').click()"><i class="fas fa-file-pdf"></i><h3>Select PDF to Split</h3></div>
+                <div id="split-preview" style="display:none">
+                    <p style="margin-bottom:10px;color:var(--text2)">Click pages to select:</p>
+                    <div class="preview-grid" id="split-pages"></div>
+                    <div class="action-btns"><button class="btn btn-primary" onclick="doSplit()"><i class="fas fa-cut"></i> Extract Selected</button></div>
+                </div>
+                <div id="split-result"></div>
+            </div>
+            <!-- COMPRESS VIEW -->
+            <div class="tool-view" id="compress-view">
+                <div class="tool-view-header"><h2><i class="fas fa-compress"></i> Compress PDF</h2><p>Reduce file size</p></div>
+                <div class="dropzone" onclick="document.getElementById('compress-input').click()"><i class="fas fa-file-archive"></i><h3>Select PDF</h3></div>
+                <div class="options-grid">
+                    <div class="option-card" data-quality="high"><h4>High</h4><p>Best quality</p></div>
+                    <div class="option-card active" data-quality="medium"><h4>Medium</h4><p>Balanced</p></div>
+                    <div class="option-card" data-quality="low"><h4>Maximum</h4><p>Smallest</p></div>
+                </div>
+                <div id="compress-result"></div>
+            </div>
+            <!-- CONVERT VIEW -->
+            <div class="tool-view" id="convert-view">
+                <div class="tool-view-header"><h2><i class="fas fa-exchange-alt"></i> Convert</h2><p>Convert between formats</p></div>
+                <div class="nav-tabs" style="justify-content:center;margin-bottom:20px;background:transparent">
+                    <button class="nav-tab active" onclick="switchConvertTab('pdf2img')">PDF → Image</button>
+                    <button class="nav-tab" onclick="switchConvertTab('img2pdf')">Image → PDF</button>
+                </div>
+                <div id="pdf2img-tab" class="tab-content active">
+                    <div class="dropzone" onclick="document.getElementById('pdf2img-input').click()"><i class="fas fa-file-pdf"></i><h3>Select PDF</h3></div>
+                    <div class="options-grid" style="grid-template-columns:repeat(2,1fr)">
+                        <div class="option-card active" data-format="png"><h4>PNG</h4><p>Lossless</p></div>
+                        <div class="option-card" data-format="jpg"><h4>JPG</h4><p>Smaller</p></div>
+                    </div>
+                    <div id="pdf2img-result"></div>
+                </div>
+                <div id="img2pdf-tab" class="tab-content">
+                    <div class="dropzone" onclick="document.getElementById('img2pdf-input').click()"><i class="fas fa-images"></i><h3>Select Images</h3></div>
+                    <div class="file-list" id="img2pdf-files"></div>
+                    <div class="action-btns" id="img2pdf-actions" style="display:none"><button class="btn btn-primary" onclick="doImg2Pdf()"><i class="fas fa-file-pdf"></i> Create PDF</button></div>
+                </div>
+            </div>
+            <!-- SECURE VIEW -->
+            <div class="tool-view" id="secure-view">
+                <div class="tool-view-header"><h2><i class="fas fa-shield-alt"></i> PDF Security</h2><p>Protect or unlock PDFs</p></div>
+                <div class="nav-tabs" style="justify-content:center;margin-bottom:20px;background:transparent">
+                    <button class="nav-tab active" onclick="switchSecureTab('protect')"><i class="fas fa-lock"></i> Protect</button>
+                    <button class="nav-tab" onclick="switchSecureTab('unlock')"><i class="fas fa-unlock"></i> Unlock</button>
+                </div>
+                <div id="protect-tab" class="tab-content active">
+                    <div class="dropzone" onclick="document.getElementById('protect-input').click()"><i class="fas fa-file-pdf"></i><h3>Select PDF</h3></div>
+                    <div id="protect-form" style="display:none">
+                        <div class="input-group"><label>Password</label><input type="password" id="protect-password" placeholder="Enter password"></div>
+                        <div class="input-group"><label>Permissions</label><select id="protect-perms"><option value="all">Full access</option><option value="print">Print only</option><option value="none">View only</option></select></div>
+                        <div class="action-btns"><button class="btn btn-primary" onclick="doProtect()"><i class="fas fa-lock"></i> Protect</button></div>
+                    </div>
+                    <div id="protect-result"></div>
+                </div>
+                <div id="unlock-tab" class="tab-content">
+                    <div class="dropzone" onclick="document.getElementById('unlock-input').click()"><i class="fas fa-file-pdf"></i><h3>Select Protected PDF</h3></div>
+                    <div id="unlock-form" style="display:none">
+                        <div class="input-group"><label>Password</label><input type="password" id="unlock-password" placeholder="Enter password"></div>
+                        <div class="action-btns"><button class="btn btn-primary" onclick="doUnlock()"><i class="fas fa-unlock"></i> Unlock</button></div>
+                    </div>
+                    <div id="unlock-result"></div>
+                </div>
+            </div>
+            <!-- EDIT VIEW -->
+            <div class="page-container" id="page-container"><img id="page-image" draggable="false"><canvas class="draw-canvas" id="draw-canvas"></canvas><div class="text-layer" id="text-layer"></div></div>
         </div>
     </main>
-    
+    <!-- MODALS -->
     <div class="modal-overlay" id="payment-modal">
         <div class="modal">
-            <div class="modal-header">
-                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
-                <i class="fas fa-download"></i>
-                <h2>Download Edited PDF</h2>
-            </div>
+            <div class="modal-header"><button class="modal-close" onclick="closeModal('payment-modal')"><i class="fas fa-times"></i></button><i class="fas fa-download"></i><h2>Download Your PDF</h2></div>
             <div class="modal-body">
-                <div class="limited-offer"><i class="fas fa-bolt"></i> 90% OFF - Limited Time!</div>
-                <div class="price"><div class="price-old">$9.99</div><div class="price-new">$1.00</div></div>
-                <div class="feature-item"><i class="fas fa-check"></i><span>All edits preserved</span></div>
-                <div class="feature-item"><i class="fas fa-check"></i><span>No watermarks</span></div>
-                <div class="feature-item"><i class="fas fa-check"></i><span>Instant download</span></div>
-                <button class="btn btn-success modal-btn" onclick="processPayment()"><i class="fas fa-lock"></i> Pay $1 & Download</button>
-                <button class="btn btn-ghost modal-btn" onclick="closeModal()">Continue Editing</button>
+                <div class="badge"><i class="fas fa-bolt"></i> 80% OFF</div>
+                <div class="price"><div class="price-old">$9.99</div><div class="price-new" id="current-price">$1.99</div><div class="price-savings" id="savings-text">You save $8.00!</div></div>
+                <div class="feature-item"><i class="fas fa-check"></i> All edits preserved</div>
+                <div class="feature-item"><i class="fas fa-check"></i> No watermarks</div>
+                <div class="feature-item"><i class="fas fa-check"></i> Instant download</div>
+                <button class="btn btn-success modal-btn" onclick="processPayment()" id="pay-btn"><i class="fas fa-lock"></i> Pay & Download</button>
+                <button class="btn btn-ghost modal-btn" onclick="closeModal('payment-modal')">Continue Editing</button>
             </div>
         </div>
     </div>
-    
-    <div class="modal-overlay" id="exit-modal">
+    <div class="modal-overlay" id="sign-modal">
+        <div class="modal" style="max-width:450px">
+            <div class="modal-header"><button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button><i class="fas fa-signature"></i><h2>Draw Signature</h2></div>
+            <div class="modal-body">
+                <canvas id="sig-canvas" class="signature-pad" width="400" height="150"></canvas>
+                <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
+                    <button class="btn btn-ghost" onclick="sigCtx.clearRect(0,0,400,150)"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="btn btn-primary" onclick="applySignature()"><i class="fas fa-check"></i> Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="watermark-modal">
         <div class="modal">
-            <div class="modal-header warning">
-                <button class="modal-close" onclick="closeExitModal()"><i class="fas fa-times"></i></button>
-                <i class="fas fa-exclamation-triangle"></i>
-                <h2>Unsaved Edits!</h2>
-            </div>
+            <div class="modal-header" style="background:linear-gradient(135deg,#10b981,#059669)"><button class="modal-close" onclick="closeModal('watermark-modal')"><i class="fas fa-times"></i></button><i class="fas fa-tint"></i><h2>Add Watermark</h2></div>
             <div class="modal-body">
-                <p style="text-align:center;margin-bottom:16px;color:#94a3b8">Don't lose your work!</p>
-                <button class="btn btn-success modal-btn" onclick="closeExitModal();handleDownload()"><i class="fas fa-download"></i> Download Now</button>
-                <button class="btn btn-ghost modal-btn" onclick="closeExitModal()">Keep Editing</button>
+                <div class="input-group"><label>Watermark Text</label><input type="text" id="wm-text" placeholder="e.g., CONFIDENTIAL"></div>
+                <div class="input-group"><label>Position</label><select id="wm-position"><option value="center">Center</option><option value="top-left">Top Left</option><option value="bottom-right">Bottom Right</option></select></div>
+                <button class="btn btn-success modal-btn" onclick="applyWatermark()"><i class="fas fa-check"></i> Apply</button>
             </div>
         </div>
     </div>
-    
+    <div class="modal-overlay" id="pagenums-modal">
+        <div class="modal">
+            <div class="modal-header" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><button class="modal-close" onclick="closeModal('pagenums-modal')"><i class="fas fa-times"></i></button><i class="fas fa-list-ol"></i><h2>Add Page Numbers</h2></div>
+            <div class="modal-body">
+                <div class="input-group"><label>Position</label><select id="pn-position"><option value="bottom-center">Bottom Center</option><option value="bottom-right">Bottom Right</option><option value="top-center">Top Center</option></select></div>
+                <div class="input-group"><label>Format</label><select id="pn-format"><option value="Page {n} of {total}">Page 1 of 10</option><option value="{n}"">1</option><option value="{n} / {total}">1 / 10</option></select></div>
+                <button class="btn btn-success modal-btn" onclick="applyPageNumbers()"><i class="fas fa-check"></i> Apply</button>
+            </div>
+        </div>
+    </div>
     <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Processing...</p></div>
     <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-text"></span></div>
-    <div class="hint" id="hint"><kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo | <kbd>Ctrl</kbd>+<kbd>S</kbd> Save</div>
-    <script>
-        let pdfData = null, pdfId = null, currentPage = 1, edits = {}, addedTexts = {}, drawings = {};
-        let currentTool = 'select', drawColor = '#000', isDrawing = false, lastX = 0, lastY = 0, zoomLevel = 1;
-        let undoStack = [], redoStack = [], selectedText = null;
-        
-        const $ = id => document.getElementById(id);
-        const drawCanvas = $('draw-canvas'), ctx = drawCanvas.getContext('2d');
-        
-        // Toast
-        function showToast(msg, type='success') {
-            const t = $('toast');
-            $('toast-text').textContent = msg;
-            t.className = 'toast show ' + type;
-            t.querySelector('i').className = 'fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
-        
-        function showLoading(show, text='Processing...') {
-            $('loading').classList.toggle('show', show);
-            $('loading-text').textContent = text;
-        }
-        
-        // Undo/Redo
-        function saveState() {
-            undoStack.push({edits: JSON.parse(JSON.stringify(edits)), addedTexts: JSON.parse(JSON.stringify(addedTexts)), drawings: JSON.parse(JSON.stringify(drawings))});
-            if (undoStack.length > 30) undoStack.shift();
-            redoStack = [];
-            updateButtons();
-        }
-        
-        function undo() {
-            if (!undoStack.length) return;
-            redoStack.push({edits: JSON.parse(JSON.stringify(edits)), addedTexts: JSON.parse(JSON.stringify(addedTexts)), drawings: JSON.parse(JSON.stringify(drawings))});
-            const s = undoStack.pop();
-            edits = s.edits; addedTexts = s.addedTexts; drawings = s.drawings;
-            renderPage(currentPage); updateCount(); updateButtons();
-            showToast('Undone');
-        }
-        
-        function redo() {
-            if (!redoStack.length) return;
-            undoStack.push({edits: JSON.parse(JSON.stringify(edits)), addedTexts: JSON.parse(JSON.stringify(addedTexts)), drawings: JSON.parse(JSON.stringify(drawings))});
-            const s = redoStack.pop();
-            edits = s.edits; addedTexts = s.addedTexts; drawings = s.drawings;
-            renderPage(currentPage); updateCount(); updateButtons();
-            showToast('Redone');
-        }
-        
-        function updateButtons() {
-            $('undo-btn').disabled = !undoStack.length;
-            $('redo-btn').disabled = !redoStack.length;
-        }
-        
-        function updateCount() {
-            const n = Object.keys(edits).length + Object.values(addedTexts).flat().length + Object.keys(drawings).length;
-            $('edit-count').textContent = n + ' edit' + (n !== 1 ? 's' : '');
-            $('edit-count').style.display = n ? 'block' : 'none';
-            $('autosave').classList.toggle('show', n > 0);
-            $('download-btn').disabled = !pdfData;
-        }
-        
-        function clearAll() {
-            if (!Object.keys(edits).length && !Object.keys(addedTexts).length && !Object.keys(drawings).length) return showToast('Nothing to clear', 'error');
-            if (confirm('Clear all edits?')) {
-                saveState(); edits = {}; addedTexts = {}; drawings = {};
-                renderPage(currentPage); updateCount();
-                showToast('Cleared');
-            }
-        }
-        
-        // Zoom
-        function zoomIn() { zoomLevel = Math.min(zoomLevel + 0.25, 3); applyZoom(); }
-        function zoomOut() { zoomLevel = Math.max(zoomLevel - 0.25, 0.5); applyZoom(); }
-        function applyZoom() {
-            $('page-container').style.transform = 'scale(' + zoomLevel + ')';
-            $('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
-        }
-        
-        // Tool Selection
-        document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentTool = btn.dataset.tool;
-                $('color-picker').classList.toggle('show', currentTool === 'draw');
-                drawCanvas.classList.toggle('active', ['draw','highlight','erase','sign'].includes(currentTool));
-                $('text-layer').style.pointerEvents = ['draw','highlight','erase','sign'].includes(currentTool) ? 'none' : 'auto';
-                if (currentTool === 'text') showToast('Click anywhere to add text');
-                hideFormatToolbar();
-            };
-        });
-        
-        document.querySelectorAll('.color-option').forEach(opt => {
-            opt.onclick = () => {
-                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
-                opt.classList.add('active');
-                drawColor = opt.dataset.color;
-            };
-        });
-        
-        // Format Toolbar
-        function showFormatToolbar(el) {
-            selectedText = el;
-            $('format-toolbar').classList.add('show');
-            // Update toolbar state
-            $('font-family').value = el.style.fontFamily.replace(/['"]/g, '') || 'Arial';
-            $('font-size').value = parseInt(el.style.fontSize) || 14;
-            $('text-color').value = rgbToHex(el.style.color) || '#000000';
-            $('bold-btn').classList.toggle('active', el.style.fontWeight === 'bold');
-            $('italic-btn').classList.toggle('active', el.style.fontStyle === 'italic');
-            $('underline-btn').classList.toggle('active', el.style.textDecoration === 'underline');
-        }
-        
-        function hideFormatToolbar() {
-            $('format-toolbar').classList.remove('show');
-            if (selectedText) selectedText.classList.remove('selected');
-            selectedText = null;
-        }
-        
-        function rgbToHex(rgb) {
-            if (!rgb || rgb.startsWith('#')) return rgb || '#000000';
-            const match = rgb.match(/\d+/g);
-            if (!match) return '#000000';
-            return '#' + match.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
-        }
-        
-        // Format toolbar events
-        $('font-family').onchange = function() { if (selectedText) { selectedText.style.fontFamily = this.value; saveAddedText(); } };
-        $('font-size').onchange = function() { if (selectedText) { selectedText.style.fontSize = this.value + 'px'; saveAddedText(); } };
-        $('text-color').onchange = function() { if (selectedText) { selectedText.style.color = this.value; saveAddedText(); } };
-        $('bold-btn').onclick = function() { 
-            if (selectedText) { 
-                const isBold = selectedText.style.fontWeight === 'bold';
-                selectedText.style.fontWeight = isBold ? 'normal' : 'bold'; 
-                this.classList.toggle('active'); 
-                saveAddedText();
-            } 
-        };
-        $('italic-btn').onclick = function() { 
-            if (selectedText) { 
-                const isItalic = selectedText.style.fontStyle === 'italic';
-                selectedText.style.fontStyle = isItalic ? 'normal' : 'italic'; 
-                this.classList.toggle('active'); 
-                saveAddedText();
-            } 
-        };
-        $('underline-btn').onclick = function() { 
-            if (selectedText) { 
-                const isUnderline = selectedText.style.textDecoration === 'underline';
-                selectedText.style.textDecoration = isUnderline ? 'none' : 'underline'; 
-                this.classList.toggle('active'); 
-                saveAddedText();
-            } 
-        };
-        $('delete-text-btn').onclick = function() {
-            if (selectedText && selectedText.classList.contains('added-text')) {
-                const idx = parseInt(selectedText.dataset.idx);
-                if (addedTexts[currentPage]) {
-                    saveState();
-                    addedTexts[currentPage].splice(idx, 1);
-                    renderPage(currentPage);
-                    updateCount();
-                    hideFormatToolbar();
-                    showToast('Deleted');
-                }
-            }
-        };
-        
-        function saveAddedText() {
-            if (!selectedText || !selectedText.classList.contains('added-text')) return;
-            const idx = parseInt(selectedText.dataset.idx);
-            if (addedTexts[currentPage] && addedTexts[currentPage][idx]) {
-                addedTexts[currentPage][idx] = {
-                    x: parseFloat(selectedText.style.left),
-                    y: parseFloat(selectedText.style.top),
-                    text: selectedText.innerText,
-                    fontFamily: selectedText.style.fontFamily.replace(/['"]/g, ''),
-                    fontSize: parseInt(selectedText.style.fontSize),
-                    fontWeight: selectedText.style.fontWeight,
-                    fontStyle: selectedText.style.fontStyle,
-                    textDecoration: selectedText.style.textDecoration,
-                    color: selectedText.style.color
-                };
-            }
-        }
-        
-        // File Upload
-        $('file-input').onchange = async e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            showLoading(true, 'Analyzing PDF...');
-            const fd = new FormData();
-            fd.append('file', file);
-            try {
-                const res = await fetch('/upload-pdf', {method: 'POST', body: fd});
-                if (!res.ok) throw new Error('Upload failed');
-                pdfData = await res.json();
-                pdfId = pdfData.pdfId;
-                edits = {}; addedTexts = {}; drawings = {}; undoStack = []; redoStack = [];
-                $('upload-area').style.display = 'none';
-                $('page-container').classList.add('show');
-                $('sidebar').classList.add('show');
-                $('toolbar').classList.add('show');
-                $('hint').classList.add('show');
-                renderPageList(); renderPage(1); updateCount(); updateButtons();
-                showToast('PDF loaded! Click any text to edit.');
-            } catch (err) { showToast('Error: ' + err.message, 'error'); }
-            showLoading(false);
-        };
-        
-        function renderPageList() {
-            const list = $('page-list');
-            list.innerHTML = '';
-            pdfData.pages.forEach((page, i) => {
-                const d = document.createElement('div');
-                d.className = 'page-thumb' + (i + 1 === currentPage ? ' active' : '');
-                d.onclick = () => renderPage(i + 1);
-                d.innerHTML = '<img src="' + page.image + '"><div class="page-thumb-label">Page ' + (i + 1) + '</div>';
-                list.appendChild(d);
-            });
-        }
-        
-        function renderPage(num) {
-            currentPage = num;
-            const page = pdfData.pages[num - 1];
-            $('page-image').src = page.image;
-            drawCanvas.width = page.width; drawCanvas.height = page.height;
-            if (drawings[num]) {
-                const img = new Image();
-                img.onload = () => ctx.drawImage(img, 0, 0);
-                img.src = drawings[num];
-            } else ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-            document.querySelectorAll('.page-thumb').forEach((el, i) => el.className = 'page-thumb' + (i + 1 === num ? ' active' : ''));
-            renderTextLayer(page);
-            hideFormatToolbar();
-        }
-        
-        function renderTextLayer(page) {
-            const layer = $('text-layer');
-            layer.innerHTML = '';
-            
-            // Existing text blocks
-            page.textBlocks.forEach((block, i) => {
-                const key = currentPage + '-' + i;
-                const edit = edits[key];
-                const inp = document.createElement('input');
-                inp.type = 'text';
-                inp.className = 'text-box' + (edit ? ' edited' : '');
-                inp.value = edit ? edit.newText : block.text;
-                // Match original font
-                const fontName = block.fontName || 'Arial';
-                const mappedFont = mapFont(fontName);
-                inp.style.cssText = `left:${block.x}px;top:${block.y}px;width:${block.width}px;height:${block.height}px;font-size:${block.fontSize}px;font-family:${mappedFont}`;
-                inp.dataset.key = key;
-                inp.dataset.orig = block.text;
-                inp.dataset.w = block.width;
-                inp.dataset.font = mappedFont;
-                inp.dataset.ox = block.originalX; inp.dataset.oy = block.originalY;
-                inp.dataset.ow = block.originalWidth; inp.dataset.oh = block.originalHeight;
-                inp.dataset.ofs = block.originalFontSize;
-                inp.onfocus = function() { this.style.width = Math.max(block.width, 300) + 'px'; };
-                inp.onblur = function() { saveEdit(this, block); };
-                inp.onkeydown = function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } };
-                layer.appendChild(inp);
-            });
-            
-            // Added texts
-            (addedTexts[currentPage] || []).forEach((t, i) => createAddedText(t, i));
-            
-            // Click to add text
-            layer.onclick = e => {
-                if (currentTool === 'text' && e.target === layer) {
-                    const r = layer.getBoundingClientRect();
-                    addNewText(e.clientX - r.left, e.clientY - r.top);
-                }
-            };
-        }
-        
-        function mapFont(pdfFont) {
-            // Map PDF font names to web fonts
-            const f = pdfFont.toLowerCase();
-            if (f.includes('arial')) return 'Arial';
-            if (f.includes('helvetica')) return 'Helvetica, Arial';
-            if (f.includes('times')) return 'Times New Roman';
-            if (f.includes('courier')) return 'Courier New';
-            if (f.includes('georgia')) return 'Georgia';
-            if (f.includes('verdana')) return 'Verdana';
-            if (f.includes('calibri')) return 'Calibri, Arial';
-            if (f.includes('cambria')) return 'Cambria, Georgia';
-            return 'Arial'; // default
-        }
-        
-        function saveEdit(inp, block) {
-            const key = inp.dataset.key, newText = inp.value, orig = inp.dataset.orig;
-            inp.style.width = block.width + 'px';
-            if (newText !== orig) {
-                saveState();
-                edits[key] = {
-                    pageNum: currentPage, originalText: orig, newText,
-                    x: block.x, y: block.y, width: block.width, height: block.height, fontSize: block.fontSize,
-                    originalX: +inp.dataset.ox, originalY: +inp.dataset.oy,
-                    originalWidth: +inp.dataset.ow, originalHeight: +inp.dataset.oh, originalFontSize: +inp.dataset.ofs
-                };
-                inp.classList.add('edited');
-                inp.value = newText;
-                showToast('Saved');
-            } else if (edits[key]) {
-                saveState(); delete edits[key];
-                inp.classList.remove('edited');
-                inp.value = orig;
-            }
-            updateCount();
-        }
-        
-        function addNewText(x, y) {
-            saveState();
-            if (!addedTexts[currentPage]) addedTexts[currentPage] = [];
-            const t = { x, y, text: 'Text', fontFamily: 'Arial', fontSize: 16, fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none', color: '#000000' };
-            addedTexts[currentPage].push(t);
-            renderPage(currentPage);
-            updateCount();
-            // Select the newly added text
-            const els = document.querySelectorAll('.added-text');
-            if (els.length) {
-                const last = els[els.length - 1];
-                last.focus();
-                selectAllText(last);
-            }
-            document.querySelector('.tool-btn[data-tool="select"]').click();
-        }
-        
-        function selectAllText(el) {
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-        
-        function createAddedText(t, idx) {
-            const el = document.createElement('div');
-            el.className = 'added-text';
-            el.contentEditable = true;
-            el.innerText = t.text;
-            el.dataset.idx = idx;
-            el.style.cssText = `left:${t.x}px;top:${t.y}px;font-family:${t.fontFamily || 'Arial'};font-size:${t.fontSize || 16}px;font-weight:${t.fontWeight || 'normal'};font-style:${t.fontStyle || 'normal'};text-decoration:${t.textDecoration || 'none'};color:${t.color || '#000'}`;
-            
-            // Delete button
-            const delBtn = document.createElement('button');
-            delBtn.className = 'delete-btn';
-            delBtn.innerHTML = '<i class="fas fa-times"></i>';
-            delBtn.onclick = e => { e.stopPropagation(); deleteAddedText(idx); };
-            el.appendChild(delBtn);
-            
-            // Dragging
-            let isDragging = false, startX, startY, origX, origY;
-            el.onmousedown = e => {
-                if (e.target === delBtn || e.target.closest('.delete-btn')) return;
-                if (document.activeElement === el) return; // editing mode
-                isDragging = true;
-                startX = e.clientX; startY = e.clientY;
-                origX = parseFloat(el.style.left); origY = parseFloat(el.style.top);
-                el.classList.add('selected');
-                showFormatToolbar(el);
-                e.preventDefault();
-            };
-            
-            document.addEventListener('mousemove', e => {
-                if (!isDragging) return;
-                const dx = (e.clientX - startX) / zoomLevel;
-                const dy = (e.clientY - startY) / zoomLevel;
-                el.style.left = (origX + dx) + 'px';
-                el.style.top = (origY + dy) + 'px';
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    saveAddedTextPosition(el, idx);
-                }
-            });
-            
-            el.onfocus = () => {
-                el.classList.add('selected');
-                showFormatToolbar(el);
-            };
-            
-            el.onblur = () => {
-                saveAddedTextContent(el, idx);
-            };
-            
-            el.onclick = e => {
-                e.stopPropagation();
-                el.classList.add('selected');
-                showFormatToolbar(el);
-            };
-            
-            $('text-layer').appendChild(el);
-            return el;
-        }
-        
-        function deleteAddedText(idx) {
-            saveState();
-            addedTexts[currentPage].splice(idx, 1);
-            renderPage(currentPage);
-            updateCount();
-            hideFormatToolbar();
-            showToast('Deleted');
-        }
-        
-        function saveAddedTextPosition(el, idx) {
-            if (addedTexts[currentPage] && addedTexts[currentPage][idx]) {
-                addedTexts[currentPage][idx].x = parseFloat(el.style.left);
-                addedTexts[currentPage][idx].y = parseFloat(el.style.top);
-            }
-        }
-        
-        function saveAddedTextContent(el, idx) {
-            if (addedTexts[currentPage] && addedTexts[currentPage][idx]) {
-                addedTexts[currentPage][idx].text = el.innerText;
-            }
-        }
-        
-        // Drawing
-        drawCanvas.onmousedown = e => {
-            if (!['draw','highlight','erase','sign'].includes(currentTool)) return;
-            saveState();
-            isDrawing = true;
-            const r = drawCanvas.getBoundingClientRect();
-            lastX = (e.clientX - r.left) * (drawCanvas.width / r.width);
-            lastY = (e.clientY - r.top) * (drawCanvas.height / r.height);
-        };
-        
-        drawCanvas.onmousemove = e => {
-            if (!isDrawing) return;
-            const r = drawCanvas.getBoundingClientRect();
-            const x = (e.clientX - r.left) * (drawCanvas.width / r.width);
-            const y = (e.clientY - r.top) * (drawCanvas.height / r.height);
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            if (currentTool === 'draw' || currentTool === 'sign') { ctx.strokeStyle = drawColor; ctx.lineWidth = currentTool === 'sign' ? 2 : 3; }
-            else if (currentTool === 'highlight') { ctx.strokeStyle = 'rgba(255,255,0,0.4)'; ctx.lineWidth = 20; }
-            else { ctx.strokeStyle = '#fff'; ctx.lineWidth = 20; }
-            ctx.stroke();
-            lastX = x; lastY = y;
-        };
-        
-        drawCanvas.onmouseup = drawCanvas.onmouseleave = () => {
-            if (isDrawing) { isDrawing = false; drawings[currentPage] = drawCanvas.toDataURL(); updateCount(); }
-        };
-        
-        // Download
-        function handleDownload() {
-            const n = Object.keys(edits).length + Object.values(addedTexts).flat().length + Object.keys(drawings).length;
-            if (!n) return showToast('No changes', 'error');
-            $('payment-modal').classList.add('show');
-        }
-        
-        function closeModal() { $('payment-modal').classList.remove('show'); }
-        function closeExitModal() { $('exit-modal').classList.remove('show'); }
-        
-        async function processPayment() {
-            closeModal();
-            showLoading(true, 'Generating PDF...');
-            const fd = new FormData();
-            fd.append('pdf_id', pdfId);
-            fd.append('edits', JSON.stringify(Object.values(edits)));
-            try {
-                const res = await fetch('/save-pdf', {method: 'POST', body: fd});
-                if (!res.ok) throw new Error('Failed');
-                const blob = await res.blob();
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'luleit-edited.pdf';
-                a.click();
-                showToast('Downloaded!');
-            } catch (err) { showToast('Error: ' + err.message, 'error'); }
-            showLoading(false);
-        }
-        
-        // Keyboard shortcuts
-        document.onkeydown = e => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleDownload(); }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b' && selectedText) { e.preventDefault(); $('bold-btn').click(); }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'i' && selectedText) { e.preventDefault(); $('italic-btn').click(); }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'u' && selectedText) { e.preventDefault(); $('underline-btn').click(); }
-            if (e.key === 'Escape') hideFormatToolbar();
-            if (e.key === 'Delete' && selectedText && selectedText.classList.contains('added-text')) {
-                deleteAddedText(parseInt(selectedText.dataset.idx));
-            }
-        };
-        
-        // Click outside to deselect
-        document.onclick = e => {
-            if (!e.target.closest('.added-text') && !e.target.closest('.format-toolbar')) {
-                hideFormatToolbar();
-            }
-        };
-        
-        // Exit intent
-        let exitShown = false;
-        document.onmouseleave = e => {
-            if (e.clientY < 0 && !exitShown && pdfData && (Object.keys(edits).length || Object.keys(addedTexts).length)) {
-                $('exit-modal').classList.add('show');
-                exitShown = true;
-            }
-        };
-        
-        window.onbeforeunload = e => {
-            if (Object.keys(edits).length + Object.values(addedTexts).flat().length + Object.keys(drawings).length > 0) {
-                e.preventDefault(); return e.returnValue = '';
-            }
-        };
-        
-        // Drag & drop upload
-        document.ondragover = e => e.preventDefault();
-        document.ondrop = e => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            if (file && file.type === 'application/pdf') {
-                $('file-input').files = e.dataTransfer.files;
-                $('file-input').dispatchEvent(new Event('change'));
-            }
-        };
-    </script>
+    <input type="file" id="file-input" accept=".pdf">
+    <input type="file" id="merge-input" accept=".pdf" multiple>
+    <input type="file" id="split-input" accept=".pdf">
+    <input type="file" id="compress-input" accept=".pdf">
+    <input type="file" id="image-input" accept="image/*">
+    <input type="file" id="pdf2img-input" accept=".pdf">
+    <input type="file" id="img2pdf-input" accept="image/*" multiple>
+    <input type="file" id="protect-input" accept=".pdf">
+    <input type="file" id="unlock-input" accept=".pdf">
+    <input type="file" id="watermark-input" accept=".pdf">
+    <input type="file" id="pagenums-input" accept=".pdf">
+    <input type="file" id="rotate-input" accept=".pdf">
+<script>
+let pdfData=null,pdfId=null,currentPage=1,edits={},addedTexts={},addedImages={},addedShapes={},drawings={};
+let currentTool='select',currentShape='rectangle',drawColor='#000',isDrawing=false,lastX=0,lastY=0,zoomLevel=1;
+let undoStack=[],redoStack=[],selectedEl=null,documentStyle=null,currentPrice=199;
+let mergeFiles=[],splitPages=[],img2pdfFiles=[];
+let protectPdfId=null,watermarkPdfId=null,pagenumsPdfId=null;
+const $=id=>document.getElementById(id);
+const ctx=$('draw-canvas').getContext('2d');
+const sigCtx=$('sig-canvas').getContext('2d');
+let sigDrawing=false;
+
+function showToast(m,t='success'){const e=$('toast');$('toast-text').textContent=m;e.className='toast show '+t;e.querySelector('i').className='fas fa-'+(t==='success'?'check-circle':'exclamation-circle');setTimeout(()=>e.classList.remove('show'),3000)}
+function showLoading(s,t='Processing...'){$('loading').classList.toggle('show',s);$('loading-text').textContent=t}
+function closeModal(id){$(id).classList.remove('show')}
+function hasEdits(){return Object.keys(edits).length+Object.values(addedTexts).flat().length+Object.values(addedImages).flat().length+Object.values(addedShapes).flat().length+Object.keys(drawings).length>0}
+
+function switchView(v){
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+    document.querySelectorAll('.tab-content,.tool-view').forEach(e=>e.classList.remove('show','active'));
+    if(v==='home'){$('home-view').classList.add('active');$('sidebar').classList.remove('show');$('toolbar').classList.remove('show');$('format-bar').classList.remove('show');$('shape-bar').classList.remove('show');$('page-container').classList.remove('show')}
+    else if(v==='edit'&&pdfData){$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show')}
+    else if(['merge','split','compress','convert','secure'].includes(v)){$(v+'-view').classList.add('show');$('sidebar').classList.remove('show');$('toolbar').classList.remove('show');$('format-bar').classList.remove('show');$('shape-bar').classList.remove('show');$('page-container').classList.remove('show')}
+}
+document.querySelectorAll('.nav-tab').forEach(t=>{t.onclick=()=>switchView(t.dataset.view)});
+function switchConvertTab(t){document.querySelectorAll('#convert-view .nav-tab').forEach((e,i)=>e.classList.toggle('active',i===(t==='pdf2img'?0:1)));document.querySelectorAll('#convert-view .tab-content').forEach(e=>e.classList.remove('active'));$(t+'-tab').classList.add('active')}
+function switchSecureTab(t){document.querySelectorAll('#secure-view .nav-tab').forEach((e,i)=>e.classList.toggle('active',i===(t==='protect'?0:1)));document.querySelectorAll('#secure-view .tab-content').forEach(e=>e.classList.remove('active'));$(t+'-tab').classList.add('active')}
+
+function saveState(){undoStack.push(JSON.stringify({edits,addedTexts,addedImages,addedShapes,drawings}));if(undoStack.length>50)undoStack.shift();redoStack=[];updateBtns()}
+function undo(){if(!undoStack.length)return;redoStack.push(JSON.stringify({edits,addedTexts,addedImages,addedShapes,drawings}));const s=JSON.parse(undoStack.pop());edits=s.edits;addedTexts=s.addedTexts;addedImages=s.addedImages;addedShapes=s.addedShapes;drawings=s.drawings;renderPage(currentPage);updateBtns();showToast('Undone')}
+function redo(){if(!redoStack.length)return;undoStack.push(JSON.stringify({edits,addedTexts,addedImages,addedShapes,drawings}));const s=JSON.parse(redoStack.pop());edits=s.edits;addedTexts=s.addedTexts;addedImages=s.addedImages;addedShapes=s.addedShapes;drawings=s.drawings;renderPage(currentPage);updateBtns();showToast('Redone')}
+function updateBtns(){$('undo-btn').disabled=!undoStack.length;$('redo-btn').disabled=!redoStack.length;$('download-btn').disabled=!pdfData}
+function zoomIn(){zoomLevel=Math.min(zoomLevel+.25,3);$('page-container').style.transform=`scale(${zoomLevel})`;$('zoom-level').textContent=Math.round(zoomLevel*100)+'%'}
+function zoomOut(){zoomLevel=Math.max(zoomLevel-.25,.5);$('page-container').style.transform=`scale(${zoomLevel})`;$('zoom-level').textContent=Math.round(zoomLevel*100)+'%'}
+
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.tool-btn[data-tool]').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentTool=b.dataset.tool;$('draw-canvas').classList.toggle('active',['draw','highlight','erase'].includes(currentTool));$('text-layer').style.pointerEvents=['draw','highlight','erase'].includes(currentTool)?'none':'auto';$('shape-bar').classList.toggle('show',currentTool==='shape');if(currentTool==='text')showToast('Click to add text');if(currentTool==='image')$('image-input').click();if(currentTool==='sign')$('sign-modal').classList.add('show');deselectEl()}});
+document.querySelectorAll('.shape-btn').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.shape-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentShape=b.dataset.shape}});
+document.querySelectorAll('.option-card').forEach(c=>{c.onclick=()=>{c.parentElement.querySelectorAll('.option-card').forEach(x=>x.classList.remove('active'));c.classList.add('active')}});
+
+function setupFormatBar(s){documentStyle=s;const fs=$('font-family');fs.innerHTML='';[...(s.fontFamilies||[]),'Arial','Times New Roman','Courier New','Georgia'].forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f.split(',')[0];fs.appendChild(o)});const ss=$('font-size');ss.innerHTML='';[8,10,12,14,16,18,20,24,28,32,36,48,72].forEach(z=>{const o=document.createElement('option');o.value=z;o.textContent=z+'px';ss.appendChild(o)});ss.value=Math.round(s.defaultSize)||12;const cs=$('color-swatches');cs.innerHTML='';[...(s.colors||['#000000']),'#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6'].slice(0,8).forEach((c,i)=>{const d=document.createElement('div');d.className='color-swatch'+(i===0?' active':'');d.style.background=c;d.dataset.color=c;d.onclick=()=>{document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));d.classList.add('active');if(selectedEl)selectedEl.style.color=c;drawColor=c};cs.appendChild(d)})}
+$('font-family').onchange=function(){if(selectedEl)selectedEl.style.fontFamily=this.value};
+$('font-size').onchange=function(){if(selectedEl)selectedEl.style.fontSize=this.value+'px'};
+$('bold-btn').onclick=function(){if(selectedEl){const b=selectedEl.style.fontWeight!=='bold';selectedEl.style.fontWeight=b?'bold':'normal';this.classList.toggle('active',b)}};
+$('italic-btn').onclick=function(){if(selectedEl){const i=selectedEl.style.fontStyle!=='italic';selectedEl.style.fontStyle=i?'italic':'normal';this.classList.toggle('active',i)}};
+$('underline-btn').onclick=function(){if(selectedEl){const u=selectedEl.style.textDecoration!=='underline';selectedEl.style.textDecoration=u?'underline':'none';this.classList.toggle('active',u)}};
+$('delete-btn').onclick=()=>{if(selectedEl)deleteEl(selectedEl)};
+
+$('file-input').onchange=async e=>{const f=e.target.files[0];if(f)await loadPDF(f)};
+async function loadPDF(f){showLoading(true,'Analyzing PDF...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;edits={};addedTexts={};addedImages={};addedShapes={};drawings={};undoStack=[];redoStack=[];setupFormatBar(pdfData.documentStyle);switchView('edit');$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Loaded: ${pdfData.pageCount} pages`)}catch(e){showToast('Error: '+e.message,'error')}showLoading(false)}
+
+function renderPageList(){const l=$('page-list');l.innerHTML='';pdfData.pages.forEach((p,i)=>{const d=document.createElement('div');d.className='page-thumb'+(i+1===currentPage?' active':'');d.innerHTML=`<img src="${p.image}" draggable="false"><div class="page-thumb-label">Page ${i+1}</div><div class="page-actions"><button class="page-action" onclick="event.stopPropagation();rotatePage(${i+1})"><i class="fas fa-redo"></i></button><button class="page-action danger" onclick="event.stopPropagation();deletePage(${i+1})"><i class="fas fa-trash"></i></button></div>`;d.onclick=()=>renderPage(i+1);l.appendChild(d)});$('doc-info').innerHTML=`<strong>${pdfData.fileName}</strong><br>${pdfData.pageCount} pages • ${pdfData.fileSize}`}
+
+function renderPage(n){currentPage=n;const p=pdfData.pages[n-1];$('page-image').src=p.image;$('draw-canvas').width=p.width;$('draw-canvas').height=p.height;if(drawings[n]){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=drawings[n]}else ctx.clearRect(0,0,$('draw-canvas').width,$('draw-canvas').height);document.querySelectorAll('.page-thumb').forEach((e,i)=>e.classList.toggle('active',i+1===n));renderTextLayer(p);deselectEl()}
+
+function renderTextLayer(p){const l=$('text-layer');l.innerHTML='';p.textBlocks.forEach((b,i)=>{const k=`${currentPage}-${i}`,e=edits[k];const inp=document.createElement('input');inp.type='text';inp.className='text-box'+(e?' edited':'');inp.value=e?e.newText:b.text;inp.style.cssText=`left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};`;inp.dataset.key=k;inp.dataset.orig=b.text;inp.dataset.block=JSON.stringify(b);inp.onfocus=function(){this.style.width=Math.max(b.width,300)+'px'};inp.onblur=function(){const nv=this.value,ov=this.dataset.orig;this.style.width=b.width+'px';if(nv!==ov){saveState();edits[k]={pageNum:currentPage,originalText:ov,newText:nv,originalX:b.originalX,originalY:b.originalY,originalWidth:b.originalWidth,originalHeight:b.originalHeight,originalFontSize:b.originalFontSize};this.classList.add('edited');showToast('Saved')}else if(edits[k]){saveState();delete edits[k];this.classList.remove('edited')}};inp.onkeydown=function(e){if(e.key==='Enter')this.blur()};l.appendChild(inp)});(addedTexts[currentPage]||[]).forEach((t,i)=>createAddedText(t,i));(addedImages[currentPage]||[]).forEach((m,i)=>createAddedImage(m,i));(addedShapes[currentPage]||[]).forEach((s,i)=>createAddedShape(s,i));let shapeStart=null;l.onclick=e=>{if(e.target===l&&currentTool==='text'){saveState();if(!addedTexts[currentPage])addedTexts[currentPage]=[];const r=l.getBoundingClientRect();addedTexts[currentPage].push({x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel,text:'Text',fontFamily:documentStyle?.defaultFontFamily||'Arial',fontSize:documentStyle?.defaultSize||14,fontWeight:'normal',fontStyle:'normal',color:'#000000'});renderPage(currentPage);document.querySelector('.tool-btn[data-tool="select"]').click()}};l.onmousedown=e=>{if(currentTool==='shape'&&e.target===l){const r=l.getBoundingClientRect();shapeStart={x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel}}};l.onmouseup=e=>{if(shapeStart&&currentTool==='shape'){const r=l.getBoundingClientRect(),ex=(e.clientX-r.left)/zoomLevel,ey=(e.clientY-r.top)/zoomLevel,w=Math.abs(ex-shapeStart.x),h=Math.abs(ey-shapeStart.y);if(w>10||h>10){saveState();if(!addedShapes[currentPage])addedShapes[currentPage]=[];addedShapes[currentPage].push({x:Math.min(shapeStart.x,ex),y:Math.min(shapeStart.y,ey),width:w,height:h,type:currentShape,stroke:$('shape-stroke').value,fill:$('shape-no-fill').checked?'transparent':$('shape-fill').value});renderPage(currentPage);showToast('Shape added')}shapeStart=null}}}
+
+function createAddedText(t,i){const e=document.createElement('div');e.className='added-el added-text';e.contentEditable=true;e.innerText=t.text;e.dataset.idx=i;e.dataset.type='text';e.style.cssText=`left:${t.x}px;top:${t.y}px;font-family:${t.fontFamily};font-size:${t.fontSize}px;font-weight:${t.fontWeight||'normal'};font-style:${t.fontStyle||'normal'};color:${t.color||'#000'};`;e.innerHTML+=`<div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedTexts[currentPage]?.[i]){addedTexts[currentPage][i].x=parseFloat(e.style.left);addedTexts[currentPage][i].y=parseFloat(e.style.top)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};e.onblur=()=>{if(addedTexts[currentPage]?.[i])addedTexts[currentPage][i].text=e.innerText.replace(/<[^>]*>/g,'')};$('text-layer').appendChild(e)}
+
+function createAddedImage(m,i){const e=document.createElement('div');e.className='added-el added-image';e.dataset.idx=i;e.dataset.type='image';e.style.cssText=`left:${m.x}px;top:${m.y}px;width:${m.width}px;height:${m.height}px;`;e.innerHTML=`<img src="${m.src}"><div class="resize-handle"></div><div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedImages[currentPage]?.[i]){addedImages[currentPage][i].x=parseFloat(e.style.left);addedImages[currentPage][i].y=parseFloat(e.style.top)}});makeResize(e,()=>{if(addedImages[currentPage]?.[i]){addedImages[currentPage][i].width=parseFloat(e.style.width);addedImages[currentPage][i].height=parseFloat(e.style.height)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};$('text-layer').appendChild(e)}
+
+function createAddedShape(s,i){const e=document.createElement('div');e.className='added-el';e.dataset.idx=i;e.dataset.type='shape';e.style.cssText=`left:${s.x}px;top:${s.y}px;width:${s.width}px;height:${s.height}px;`;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width','100%');svg.setAttribute('height','100%');svg.style.overflow='visible';let sh;if(s.type==='rectangle'){sh=document.createElementNS('http://www.w3.org/2000/svg','rect');sh.setAttribute('x',1);sh.setAttribute('y',1);sh.setAttribute('width',s.width-2);sh.setAttribute('height',s.height-2)}else if(s.type==='circle'){sh=document.createElementNS('http://www.w3.org/2000/svg','ellipse');sh.setAttribute('cx',s.width/2);sh.setAttribute('cy',s.height/2);sh.setAttribute('rx',s.width/2-1);sh.setAttribute('ry',s.height/2-1)}else if(s.type==='line'){sh=document.createElementNS('http://www.w3.org/2000/svg','line');sh.setAttribute('x1',0);sh.setAttribute('y1',0);sh.setAttribute('x2',s.width);sh.setAttribute('y2',s.height)}else{sh=document.createElementNS('http://www.w3.org/2000/svg','line');sh.setAttribute('x1',0);sh.setAttribute('y1',0);sh.setAttribute('x2',s.width);sh.setAttribute('y2',s.height);sh.setAttribute('marker-end','url(#arr)')}sh.setAttribute('stroke',s.stroke);sh.setAttribute('stroke-width',2);sh.setAttribute('fill',s.fill);svg.appendChild(sh);e.appendChild(svg);e.innerHTML+=`<div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedShapes[currentPage]?.[i]){addedShapes[currentPage][i].x=parseFloat(e.style.left);addedShapes[currentPage][i].y=parseFloat(e.style.top)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};$('text-layer').appendChild(e)}
+
+function makeDrag(el,cb){let dr=false,sx,sy,ox,oy;el.onmousedown=e=>{if(e.target.classList.contains('resize-handle')||e.target.closest('.el-controls'))return;if(el.contentEditable==='true'&&document.activeElement===el)return;dr=true;sx=e.clientX;sy=e.clientY;ox=parseFloat(el.style.left);oy=parseFloat(el.style.top);e.preventDefault()};document.addEventListener('mousemove',e=>{if(!dr)return;el.style.left=(ox+(e.clientX-sx)/zoomLevel)+'px';el.style.top=(oy+(e.clientY-sy)/zoomLevel)+'px'});document.addEventListener('mouseup',()=>{if(dr){dr=false;cb?.()}})}
+function makeResize(el,cb){const h=el.querySelector('.resize-handle');if(!h)return;let rs=false,sx,sy,ow,oh;h.onmousedown=e=>{rs=true;sx=e.clientX;sy=e.clientY;ow=parseFloat(el.style.width);oh=parseFloat(el.style.height);e.stopPropagation();e.preventDefault()};document.addEventListener('mousemove',e=>{if(!rs)return;el.style.width=Math.max(50,ow+(e.clientX-sx)/zoomLevel)+'px';el.style.height=Math.max(50,oh+(e.clientY-sy)/zoomLevel)+'px'});document.addEventListener('mouseup',()=>{if(rs){rs=false;cb?.()}})}
+function selectEl(el){deselectEl();selectedEl=el;el.classList.add('selected')}
+function deselectEl(){if(selectedEl)selectedEl.classList.remove('selected');selectedEl=null}
+function deleteEl(el){const i=parseInt(el.dataset.idx),t=el.dataset.type;saveState();if(t==='text')addedTexts[currentPage]?.splice(i,1);else if(t==='image')addedImages[currentPage]?.splice(i,1);else addedShapes[currentPage]?.splice(i,1);renderPage(currentPage);showToast('Deleted')}
+
+$('image-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{saveState();if(!addedImages[currentPage])addedImages[currentPage]=[];addedImages[currentPage].push({x:100,y:100,width:200,height:200,src:ev.target.result});renderPage(currentPage);showToast('Image added')};r.readAsDataURL(f);document.querySelector('.tool-btn[data-tool="select"]').click()};
+
+async function rotatePage(n){showLoading(true,'Rotating...');const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('operations',JSON.stringify([{type:'rotate',page:n,angle:90}]));try{const r=await fetch('/page-operations',{method:'POST',body:fd});const d=await r.json();if(d.success){pdfData.pages=d.pages;pdfData.pageCount=d.pageCount;renderPageList();renderPage(currentPage);showToast('Rotated')}}catch(e){showToast('Error','error')}showLoading(false)}
+async function deletePage(n){if(pdfData.pageCount<=1)return showToast('Cannot delete only page','error');if(!confirm(`Delete page ${n}?`))return;showLoading(true,'Deleting...');const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('operations',JSON.stringify([{type:'delete',page:n}]));try{const r=await fetch('/page-operations',{method:'POST',body:fd});const d=await r.json();if(d.success){pdfData.pages=d.pages;pdfData.pageCount=d.pageCount;if(currentPage>pdfData.pageCount)currentPage=pdfData.pageCount;renderPageList();renderPage(currentPage);showToast('Deleted')}}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('draw-canvas').onmousedown=e=>{if(!['draw','highlight','erase'].includes(currentTool))return;saveState();isDrawing=true;const r=$('draw-canvas').getBoundingClientRect();lastX=(e.clientX-r.left)*($('draw-canvas').width/r.width);lastY=(e.clientY-r.top)*($('draw-canvas').height/r.height)};
+$('draw-canvas').onmousemove=e=>{if(!isDrawing)return;const r=$('draw-canvas').getBoundingClientRect(),x=(e.clientX-r.left)*($('draw-canvas').width/r.width),y=(e.clientY-r.top)*($('draw-canvas').height/r.height);ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.lineCap='round';if(currentTool==='draw'){ctx.strokeStyle=drawColor;ctx.lineWidth=3}else if(currentTool==='highlight'){ctx.strokeStyle='rgba(255,255,0,.4)';ctx.lineWidth=20}else{ctx.strokeStyle='#fff';ctx.lineWidth=20}ctx.stroke();lastX=x;lastY=y};
+$('draw-canvas').onmouseup=$('draw-canvas').onmouseleave=()=>{if(isDrawing){isDrawing=false;drawings[currentPage]=$('draw-canvas').toDataURL()}};
+
+$('sig-canvas').onmousedown=e=>{sigDrawing=true;const r=$('sig-canvas').getBoundingClientRect();sigCtx.beginPath();sigCtx.moveTo(e.clientX-r.left,e.clientY-r.top)};
+$('sig-canvas').onmousemove=e=>{if(!sigDrawing)return;const r=$('sig-canvas').getBoundingClientRect();sigCtx.lineTo(e.clientX-r.left,e.clientY-r.top);sigCtx.stroke()};
+$('sig-canvas').onmouseup=$('sig-canvas').onmouseleave=()=>{sigDrawing=false};
+function applySignature(){const d=$('sig-canvas').toDataURL();saveState();if(!addedImages[currentPage])addedImages[currentPage]=[];addedImages[currentPage].push({x:100,y:100,width:150,height:50,src:d});renderPage(currentPage);closeModal('sign-modal');sigCtx.clearRect(0,0,400,150);showToast('Signature added')}
+
+$('merge-input').onchange=e=>{Array.from(e.target.files).forEach(f=>{if(mergeFiles.length<20)mergeFiles.push(f)});renderMergeFiles()};
+function renderMergeFiles(){$('merge-files').innerHTML='';mergeFiles.forEach((f,i)=>{$('merge-files').innerHTML+=`<div class="file-item"><div class="file-icon"><i class="fas fa-file-pdf"></i></div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div><button class="file-btn danger" onclick="mergeFiles.splice(${i},1);renderMergeFiles()"><i class="fas fa-times"></i></button></div>`});$('merge-actions').style.display=mergeFiles.length>=2?'flex':'none'}
+async function doMerge(){if(mergeFiles.length<2)return showToast('Need 2+ files','error');showLoading(true,'Merging...');const fd=new FormData();mergeFiles.forEach(f=>fd.append('files',f));try{const r=await fetch('/merge-pdfs',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;mergeFiles=[];renderMergeFiles();switchView('edit');setupFormatBar({fonts:[],fontFamilies:[],sizes:[],colors:['#000'],defaultSize:12,pageFormat:{}});$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Merged! ${pdfData.pageCount} pages`)}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('split-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Loading...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();splitPages=[];$('split-pages').innerHTML='';d.pages.forEach((p,i)=>{$('split-pages').innerHTML+=`<div class="preview-item" data-page="${i+1}" onclick="toggleSplit(${i+1})"><img src="${p.image}"><div class="preview-item-label">Page ${i+1}</div></div>`});$('split-preview').style.display='block';pdfId=d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
+function toggleSplit(n){const i=splitPages.indexOf(n);if(i>=0)splitPages.splice(i,1);else splitPages.push(n);document.querySelectorAll('#split-pages .preview-item').forEach(e=>e.classList.toggle('selected',splitPages.includes(parseInt(e.dataset.page))))}
+async function doSplit(){if(!splitPages.length)return showToast('Select pages','error');showLoading(true,'Extracting...');const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('pages',JSON.stringify(splitPages.sort((a,b)=>a-b)));try{const r=await fetch('/extract-pages',{method:'POST',body:fd});const d=await r.json();$('split-result').innerHTML=`<div class="result-box"><h3 style="color:var(--success)"><i class="fas fa-check-circle"></i> Done!</h3><p style="margin:12px 0">${d.pageCount} pages extracted</p><button class="btn btn-success" onclick="location.href='/download-direct/${d.pdfId}'"><i class="fas fa-download"></i> Download</button></div>`;showToast('Extracted!')}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('compress-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const q=document.querySelector('#compress-view .option-card.active')?.dataset.quality||'medium';showLoading(true,'Compressing...');const fd=new FormData();fd.append('file',f);fd.append('quality',q);try{const r=await fetch('/compress-pdf',{method:'POST',body:fd});const d=await r.json();$('compress-result').innerHTML=`<div class="result-box"><h3 style="color:var(--success)"><i class="fas fa-check-circle"></i> Compressed!</h3><div class="result-stats"><div class="result-stat"><div class="result-stat-value">${d.originalSize}</div><div class="result-stat-label">Original</div></div><div style="font-size:24px;color:var(--success)">→</div><div class="result-stat"><div class="result-stat-value success">${d.compressedSize}</div><div class="result-stat-label">Compressed</div></div><div class="result-stat"><div class="result-stat-value success">${d.savings}</div><div class="result-stat-label">Saved</div></div></div><button class="btn btn-success" onclick="location.href='/download-direct/${d.pdfId}'"><i class="fas fa-download"></i> Download</button></div>`;showToast('Compressed!')}catch(e){showToast('Error','error')}showLoading(false)};
+
+$('pdf2img-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const fmt=document.querySelector('#pdf2img-tab .option-card.active')?.dataset.format||'png';showLoading(true,'Converting...');const fd=new FormData();fd.append('file',f);fd.append('format',fmt);try{const r=await fetch('/pdf-to-images',{method:'POST',body:fd});const d=await r.json();$('pdf2img-result').innerHTML=`<div class="result-box"><h3 style="color:var(--success)"><i class="fas fa-check-circle"></i> Converted!</h3><p style="margin:12px 0">${d.images.length} images</p><div class="preview-grid">${d.images.map(img=>`<div class="preview-item"><a href="${img.data}" download="${img.filename}"><img src="${img.data}"></a><div class="preview-item-label">${img.filename}</div></div>`).join('')}</div><p style="color:var(--muted);font-size:11px;margin-top:12px">Click images to download</p></div>`;showToast('Converted!')}catch(e){showToast('Error','error')}showLoading(false)};
+
+$('img2pdf-input').onchange=e=>{Array.from(e.target.files).forEach(f=>img2pdfFiles.push(f));renderImg2Pdf()};
+function renderImg2Pdf(){$('img2pdf-files').innerHTML='';img2pdfFiles.forEach((f,i)=>{$('img2pdf-files').innerHTML+=`<div class="file-item"><div class="file-icon" style="background:#ec4899"><i class="fas fa-image"></i></div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div><button class="file-btn danger" onclick="img2pdfFiles.splice(${i},1);renderImg2Pdf()"><i class="fas fa-times"></i></button></div>`});$('img2pdf-actions').style.display=img2pdfFiles.length?'flex':'none'}
+async function doImg2Pdf(){if(!img2pdfFiles.length)return showToast('Add images','error');showLoading(true,'Creating PDF...');const fd=new FormData();img2pdfFiles.forEach(f=>fd.append('files',f));try{const r=await fetch('/images-to-pdf',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;img2pdfFiles=[];renderImg2Pdf();switchView('edit');setupFormatBar({fonts:[],fontFamilies:[],sizes:[],colors:['#000'],defaultSize:12,pageFormat:{}});$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Created! ${pdfData.pageCount} pages`)}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('protect-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true);const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});protectPdfId=(await r.json()).pdfId;$('protect-form').style.display='block';showToast('PDF loaded')}catch(e){showToast('Error','error')}showLoading(false)};
+async function doProtect(){const pw=$('protect-password').value;if(!pw)return showToast('Enter password','error');showLoading(true,'Protecting...');const fd=new FormData();fd.append('pdf_id',protectPdfId);fd.append('password',pw);fd.append('permissions',$('protect-perms').value);try{const r=await fetch('/protect-pdf',{method:'POST',body:fd});const d=await r.json();$('protect-result').innerHTML=`<div class="result-box"><h3 style="color:var(--success)"><i class="fas fa-check-circle"></i> Protected!</h3><button class="btn btn-success" style="margin-top:12px" onclick="location.href='/download-direct/${d.pdfId}'"><i class="fas fa-download"></i> Download</button></div>`;showToast('Protected!')}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('unlock-input').onchange=e=>{$('unlock-form').style.display='block'};
+async function doUnlock(){const pw=$('unlock-password').value;if(!pw)return showToast('Enter password','error');showLoading(true,'Unlocking...');const fd=new FormData();fd.append('file',$('unlock-input').files[0]);fd.append('password',pw);try{const r=await fetch('/unlock-pdf',{method:'POST',body:fd});const d=await r.json();$('unlock-result').innerHTML=`<div class="result-box"><h3 style="color:var(--success)"><i class="fas fa-check-circle"></i> Unlocked!</h3><button class="btn btn-success" style="margin-top:12px" onclick="location.href='/download-direct/${d.pdfId}'"><i class="fas fa-download"></i> Download</button></div>`;showToast('Unlocked!')}catch(e){showToast('Wrong password','error')}showLoading(false)}
+
+$('watermark-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true);const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});watermarkPdfId=(await r.json()).pdfId;$('watermark-modal').classList.add('show')}catch(e){showToast('Error','error')}showLoading(false)};
+async function applyWatermark(){const txt=$('wm-text').value;if(!txt)return showToast('Enter text','error');showLoading(true,'Adding watermark...');const fd=new FormData();fd.append('pdf_id',watermarkPdfId);fd.append('text',txt);fd.append('position',$('wm-position').value);fd.append('rotation','-45');try{await fetch('/add-watermark',{method:'POST',body:fd});closeModal('watermark-modal');showToast('Watermark added!');location.href='/download-direct/'+watermarkPdfId}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('pagenums-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true);const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});pagenumsPdfId=(await r.json()).pdfId;$('pagenums-modal').classList.add('show')}catch(e){showToast('Error','error')}showLoading(false)};
+async function applyPageNumbers(){showLoading(true,'Adding...');const fd=new FormData();fd.append('pdf_id',pagenumsPdfId);fd.append('position',$('pn-position').value);fd.append('format_str',$('pn-format').value);fd.append('start_num','1');try{await fetch('/add-page-numbers',{method:'POST',body:fd});closeModal('pagenums-modal');showToast('Page numbers added!');location.href='/download-direct/'+pagenumsPdfId}catch(e){showToast('Error','error')}showLoading(false)}
+
+$('rotate-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Rotating...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();const fd2=new FormData();fd2.append('pdf_id',d.pdfId);fd2.append('angle','90');await fetch('/rotate-all',{method:'POST',body:fd2});showToast('Rotated!');location.href='/download-direct/'+d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
+
+function handleDownload(){if(!pdfData)return showToast('No PDF','error');$('payment-modal').classList.add('show')}
+async function processPayment(){closeModal('payment-modal');showLoading(true);const fd=new FormData();fd.append('pdf_id',pdfId);fd.append('edits',JSON.stringify(Object.values(edits)));fd.append('price',currentPrice);try{const r=await fetch('/create-checkout-session',{method:'POST',body:fd});const d=await r.json();location.href=d.checkoutUrl}catch(e){showToast('Error','error');showLoading(false)}}
+
+document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo()}if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo()}if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();handleDownload()}if(e.key==='Delete'&&selectedEl)deleteEl(selectedEl);if(e.key==='Escape')deselectEl()};
+document.onclick=e=>{if(!e.target.closest('.added-el,.format-bar,.shape-bar'))deselectEl()};
+document.ondragover=e=>e.preventDefault();
+document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')loadPDF(f)};
+
+(async()=>{try{const r=await fetch('/get-price?cores='+(navigator.hardwareConcurrency||4));if(r.ok){const d=await r.json();currentPrice=d.price;$('current-price').textContent=d.display_price;$('pay-btn').innerHTML=`<i class="fas fa-lock"></i> Pay ${d.display_price}`;$('savings-text').textContent=`You save $${((d.original_price-d.price)/100).toFixed(2)}!`}}catch(e){}})();
+</script>
 </body>
 </html>
-
-<!-- Add Stripe integration - Replace the processPayment function -->
-<script src="https://js.stripe.com/v3/"></script>
-<script>
-// Override processPayment with Stripe Checkout
-async function processPayment() {
-    closeModal();
-    showLoading(true, 'Redirecting to payment...');
-    
-    const fd = new FormData();
-    fd.append('pdf_id', pdfId);
-    fd.append('edits', JSON.stringify(Object.values(edits)));
-    
-    try {
-        const res = await fetch('/create-checkout-session', {method: 'POST', body: fd});
-        if (!res.ok) throw new Error('Failed to create checkout');
-        const data = await res.json();
-        
-        // Redirect to Stripe Checkout
-        window.location.href = data.checkoutUrl;
-    } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-        showLoading(false);
-    }
-}
-</script>
