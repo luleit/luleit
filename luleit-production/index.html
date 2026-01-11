@@ -83,12 +83,49 @@
         .tool-section h2 i{color:var(--accent)}
         .page-container{position:relative;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5);display:none;transform-origin:top center}
         .page-container.show{display:block}
-        .page-container img{display:block}
-        .text-layer{position:absolute;top:0;left:0;width:100%;height:100%}
-        .text-box{position:absolute;background:transparent;border:1px solid transparent;padding:2px 4px;cursor:text;outline:none;color:transparent;caret-color:#000;font-family:inherit}
-        .text-box:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4)}
-        .text-box:focus{background:#fff;color:#000;border-color:var(--accent);box-shadow:0 4px 20px rgba(99,102,241,.3);z-index:50}
-        .text-box.edited{border:2px solid var(--success);background:#fff;color:#000}
+        .page-container img{display:block;user-select:none;-webkit-user-drag:none}
+        .text-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+        .text-box{position:absolute;background:transparent;border:2px solid transparent;padding:1px 3px;cursor:pointer;outline:none;color:transparent;font-family:inherit;pointer-events:auto;border-radius:2px;transition:background .15s,border-color .15s}
+        .text-box:hover{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.5)}
+        .text-box.edited{border-color:var(--success);background:rgba(16,185,129,.1)}
+        .text-box.editing{background:#fff !important;color:#000 !important;border-color:var(--accent) !important;box-shadow:0 4px 20px rgba(99,102,241,.4);z-index:1000;pointer-events:auto}
+        
+        /* Mobile text edit popup - appears when tapping text on mobile */
+        .text-edit-popup{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:2px solid var(--accent);padding:16px;z-index:2000;display:none;flex-direction:column;gap:12px;box-shadow:0 -10px 40px rgba(0,0,0,.5);border-radius:16px 16px 0 0;max-height:50vh}
+        .text-edit-popup.show{display:flex}
+        .text-edit-popup-header{display:flex;justify-content:space-between;align-items:center}
+        .text-edit-popup-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+        .text-edit-popup-title i{color:var(--accent)}
+        .text-edit-popup-close{background:var(--bg3);border:none;color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
+        .text-edit-popup textarea{width:100%;padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:16px;font-family:inherit;resize:none;min-height:80px}
+        .text-edit-popup textarea:focus{border-color:var(--accent);outline:none}
+        .text-edit-popup-original{font-size:11px;color:var(--text2);padding:8px;background:var(--bg);border-radius:6px;margin-bottom:4px}
+        .text-edit-popup-original strong{color:var(--text)}
+        .text-edit-popup-actions{display:flex;gap:8px}
+        .text-edit-popup-actions .btn{flex:1;justify-content:center;padding:12px}
+        
+        /* Improved signature modal with tabs */
+        .sig-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--bg3);border-radius:8px;padding:4px}
+        .sig-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;font-size:13px;font-family:inherit;font-weight:500}
+        .sig-tab.active{background:var(--accent);color:#fff}
+        .sig-tab-content{display:none}
+        .sig-tab-content.active{display:block}
+        .sig-text-input{width:100%;padding:14px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:18px;text-align:center;margin-bottom:12px}
+        .sig-text-input:focus{border-color:var(--accent);outline:none}
+        .sig-font-options{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+        .sig-font-option{padding:12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;text-align:center;font-size:20px;transition:all .15s}
+        .sig-font-option:hover{border-color:var(--accent)}
+        .sig-font-option.active{border-color:var(--accent);background:rgba(99,102,241,.1)}
+        .sig-font-option.script{font-family:'Brush Script MT',cursive}
+        .sig-font-option.elegant{font-family:'Georgia',serif;font-style:italic}
+        .sig-font-option.bold{font-family:'Arial Black',sans-serif}
+        .sig-font-option.classic{font-family:'Times New Roman',serif}
+        .sig-preview{background:#fff;border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;min-height:60px;display:flex;align-items:center;justify-content:center}
+        .sig-preview-text{font-size:32px;color:#000}
+        .sig-color-options{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+        .sig-color{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent}
+        .sig-color.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+        
         .added-el{position:absolute;cursor:move;border:2px solid transparent}
         .added-el:hover,.added-el.selected{border-color:var(--accent)}
         .added-el.selected{box-shadow:0 0 0 3px rgba(99,102,241,.3)}
@@ -166,11 +203,30 @@
         .feature-item i{color:var(--success)}
         .modal-btn{width:100%;padding:11px;margin-top:6px;justify-content:center;font-size:13px}
         .badge{background:linear-gradient(135deg,#f59e0b,#ef4444);padding:5px 10px;border-radius:16px;font-size:10px;font-weight:600;display:inline-block;margin-bottom:10px}
-        .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
+        .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.98);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:2000}
         .loading.show{display:flex}
-        .spinner{width:44px;height:44px;border:3px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+        .loading-content{text-align:center;max-width:320px;padding:20px}
+        .loading-icon{width:80px;height:80px;margin:0 auto 24px;position:relative}
+        .loading-icon-bg{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;animation:pulse-glow 2s ease-in-out infinite}
+        .loading-icon i{font-size:32px;color:#fff}
+        @keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(99,102,241,.4)}50%{box-shadow:0 0 40px rgba(99,102,241,.8)}}
+        .loading-spinner{position:absolute;top:-4px;left:-4px;width:88px;height:88px;border:3px solid transparent;border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+        .loading-title{font-size:18px;font-weight:600;margin-bottom:8px}
+        .loading-text{color:var(--text2);font-size:14px;margin-bottom:20px;min-height:20px}
+        .loading-progress{background:var(--bg3);border-radius:10px;height:6px;overflow:hidden;margin-bottom:12px}
+        .loading-progress-bar{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6,#d946ef);border-radius:10px;width:0%;transition:width .3s ease;animation:progress-shimmer 1.5s ease-in-out infinite}
+        @keyframes progress-shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        .loading-steps{text-align:left;margin-top:20px}
+        .loading-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text2);opacity:0.4;transition:all .3s}
+        .loading-step.active{opacity:1;color:var(--text)}
+        .loading-step.done{opacity:1;color:var(--success)}
+        .loading-step-icon{width:24px;height:24px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+        .loading-step.active .loading-step-icon{background:var(--accent);color:#fff;animation:pulse 1s ease-in-out infinite}
+        .loading-step.done .loading-step-icon{background:var(--success);color:#fff}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+        .loading-tip{margin-top:24px;padding:12px;background:var(--bg2);border-radius:8px;font-size:11px;color:var(--text2)}
+        .loading-tip i{color:var(--accent);margin-right:6px}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .loading p{margin-top:14px;color:var(--text2)}
         .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg2);padding:10px 18px;border-radius:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--border);z-index:3000;transition:transform .3s;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
         .toast.show{transform:translateX(-50%) translateY(0)}
         .toast.success{border-color:var(--success)}
@@ -706,15 +762,73 @@
     </main>
     <!-- Download is free! No payment modal needed -->
     <div class="modal-overlay" id="sign-modal">
-        <div class="modal" style="max-width:450px">
-            <div class="modal-header"><button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button><i class="fas fa-signature"></i><h2>Draw Signature</h2></div>
+        <div class="modal" style="max-width:480px">
+            <div class="modal-header"><button class="modal-close" onclick="closeModal('sign-modal')"><i class="fas fa-times"></i></button><i class="fas fa-signature"></i><h2>Add Signature</h2></div>
             <div class="modal-body">
-                <canvas id="sig-canvas" class="signature-pad" width="400" height="150"></canvas>
-                <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
-                    <button class="btn btn-ghost" onclick="sigCtx.clearRect(0,0,400,150)"><i class="fas fa-eraser"></i> Clear</button>
-                    <button class="btn btn-primary" onclick="applySignature()"><i class="fas fa-check"></i> Apply</button>
+                <div class="sig-tabs">
+                    <button class="sig-tab active" onclick="switchSigTab('draw')"><i class="fas fa-pen"></i> Draw</button>
+                    <button class="sig-tab" onclick="switchSigTab('type')"><i class="fas fa-keyboard"></i> Type</button>
+                    <button class="sig-tab" onclick="switchSigTab('upload')"><i class="fas fa-upload"></i> Upload</button>
+                </div>
+                
+                <!-- Draw Tab -->
+                <div class="sig-tab-content active" id="sig-draw-tab">
+                    <canvas id="sig-canvas" class="signature-pad" width="400" height="150"></canvas>
+                    <div style="display:flex;gap:8px;margin-top:10px">
+                        <button class="btn btn-ghost" onclick="clearSignature()" style="flex:1"><i class="fas fa-eraser"></i> Clear</button>
+                        <button class="btn btn-primary" onclick="applyDrawnSignature()" style="flex:1"><i class="fas fa-check"></i> Apply</button>
+                    </div>
+                </div>
+                
+                <!-- Type Tab -->
+                <div class="sig-tab-content" id="sig-type-tab">
+                    <input type="text" class="sig-text-input" id="sig-text-input" placeholder="Type your name" oninput="updateSigPreview()">
+                    <div class="sig-font-options">
+                        <div class="sig-font-option script active" data-font="script" onclick="selectSigFont('script')">Signature</div>
+                        <div class="sig-font-option elegant" data-font="elegant" onclick="selectSigFont('elegant')">Signature</div>
+                        <div class="sig-font-option bold" data-font="bold" onclick="selectSigFont('bold')">Signature</div>
+                        <div class="sig-font-option classic" data-font="classic" onclick="selectSigFont('classic')">Signature</div>
+                    </div>
+                    <div class="sig-color-options">
+                        <div class="sig-color active" style="background:#000" data-color="#000" onclick="selectSigColor('#000')"></div>
+                        <div class="sig-color" style="background:#1e40af" data-color="#1e40af" onclick="selectSigColor('#1e40af')"></div>
+                        <div class="sig-color" style="background:#166534" data-color="#166534" onclick="selectSigColor('#166534')"></div>
+                        <div class="sig-color" style="background:#991b1b" data-color="#991b1b" onclick="selectSigColor('#991b1b')"></div>
+                    </div>
+                    <div class="sig-preview" id="sig-preview">
+                        <span class="sig-preview-text" id="sig-preview-text" style="font-family:'Brush Script MT',cursive">Your Name</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="applyTypedSignature()" style="width:100%"><i class="fas fa-check"></i> Apply Signature</button>
+                </div>
+                
+                <!-- Upload Tab -->
+                <div class="sig-tab-content" id="sig-upload-tab">
+                    <div class="dropzone" onclick="document.getElementById('sig-upload-input').click()" style="padding:30px">
+                        <i class="fas fa-image"></i>
+                        <h3>Upload Signature Image</h3>
+                        <p style="color:var(--muted);font-size:12px;margin-top:8px">PNG with transparent background works best</p>
+                    </div>
+                    <input type="file" id="sig-upload-input" accept="image/*" style="display:none" onchange="handleSigUpload(event)">
+                    <div id="sig-upload-preview" style="display:none;text-align:center;margin-top:12px">
+                        <img id="sig-upload-img" style="max-width:100%;max-height:100px;background:#fff;border-radius:8px;padding:10px">
+                        <button class="btn btn-primary" onclick="applyUploadedSignature()" style="width:100%;margin-top:12px"><i class="fas fa-check"></i> Apply</button>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Text Edit Popup -->
+    <div class="text-edit-popup" id="text-edit-popup">
+        <div class="text-edit-popup-header">
+            <div class="text-edit-popup-title"><i class="fas fa-edit"></i> Edit Text</div>
+            <button class="text-edit-popup-close" onclick="closeTextEditPopup()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="text-edit-popup-original" id="text-edit-original"><strong>Original:</strong> <span id="text-edit-original-text"></span></div>
+        <textarea id="text-edit-textarea" placeholder="Enter new text..."></textarea>
+        <div class="text-edit-popup-actions">
+            <button class="btn btn-ghost" onclick="closeTextEditPopup()"><i class="fas fa-times"></i> Cancel</button>
+            <button class="btn btn-success" onclick="saveTextEdit()"><i class="fas fa-check"></i> Save</button>
         </div>
     </div>
     <div class="modal-overlay" id="watermark-modal">
@@ -737,7 +851,25 @@
             </div>
         </div>
     </div>
-    <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Processing...</p></div>
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="loading-icon">
+                <div class="loading-icon-bg"><i class="fas fa-file-pdf" id="loading-icon"></i></div>
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="loading-title" id="loading-title">Preparing Your PDF</div>
+            <div class="loading-text" id="loading-text">Starting...</div>
+            <div class="loading-progress"><div class="loading-progress-bar" id="loading-progress"></div></div>
+            <div class="loading-steps" id="loading-steps">
+                <div class="loading-step" data-step="upload"><div class="loading-step-icon"><i class="fas fa-cloud-upload-alt"></i></div><span>Uploading file</span></div>
+                <div class="loading-step" data-step="analyze"><div class="loading-step-icon"><i class="fas fa-search"></i></div><span>Analyzing document</span></div>
+                <div class="loading-step" data-step="extract"><div class="loading-step-icon"><i class="fas fa-font"></i></div><span>Extracting text</span></div>
+                <div class="loading-step" data-step="render"><div class="loading-step-icon"><i class="fas fa-image"></i></div><span>Rendering pages</span></div>
+                <div class="loading-step" data-step="ready"><div class="loading-step-icon"><i class="fas fa-check"></i></div><span>Getting tools ready</span></div>
+            </div>
+            <div class="loading-tip" id="loading-tip"><i class="fas fa-lightbulb"></i><span>Tip: You can edit text by clicking directly on it</span></div>
+        </div>
+    </div>
     <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-text"></span></div>
     
     <input type="file" id="file-input" accept=".pdf">
@@ -764,7 +896,109 @@ const sigCtx=$('sig-canvas').getContext('2d');
 let sigDrawing=false;
 
 function showToast(m,t='success'){const e=$('toast');$('toast-text').textContent=m;e.className='toast show '+t;e.querySelector('i').className='fas fa-'+(t==='success'?'check-circle':'exclamation-circle');setTimeout(()=>e.classList.remove('show'),3000)}
-function showLoading(s,t='Processing...'){$('loading').classList.toggle('show',s);$('loading-text').textContent=t}
+// ===== ENHANCED LOADING SYSTEM =====
+const loadingTips = [
+    "Tip: You can edit text by clicking directly on it",
+    "Tip: Use Ctrl+Z to undo changes",
+    "Tip: Pinch to zoom on mobile devices",
+    "Tip: Add signatures by clicking the Sign tool",
+    "Tip: Drag and drop images onto your PDF",
+    "Tip: Download is completely free!",
+    "Tip: Use the highlight tool to mark important text",
+    "Tip: You can rotate individual pages"
+];
+
+let loadingInterval = null;
+
+function showLoading(show, text = 'Processing...', type = 'simple') {
+    const el = $('loading');
+    if (show) {
+        el.classList.add('show');
+        $('loading-text').textContent = text;
+        $('loading-title').textContent = type === 'upload' ? 'Preparing Your PDF' : 'Processing';
+        $('loading-progress').style.width = '0%';
+        
+        // Reset steps
+        document.querySelectorAll('.loading-step').forEach(s => {
+            s.classList.remove('active', 'done');
+        });
+        
+        // Show/hide steps based on type
+        $('loading-steps').style.display = type === 'upload' ? 'block' : 'none';
+        
+        // Random tip
+        $('loading-tip').querySelector('span').textContent = loadingTips[Math.floor(Math.random() * loadingTips.length)];
+        
+        // Update icon
+        const icons = { upload: 'fa-cloud-upload-alt', merge: 'fa-layer-group', compress: 'fa-compress', convert: 'fa-exchange-alt', default: 'fa-file-pdf' };
+        $('loading-icon').className = 'fas ' + (icons[type] || icons.default);
+    } else {
+        el.classList.remove('show');
+        if (loadingInterval) {
+            clearInterval(loadingInterval);
+            loadingInterval = null;
+        }
+    }
+}
+
+function updateLoadingStep(step, progress) {
+    // Update progress bar
+    $('loading-progress').style.width = progress + '%';
+    
+    // Update steps
+    const steps = ['upload', 'analyze', 'extract', 'render', 'ready'];
+    const stepIndex = steps.indexOf(step);
+    
+    document.querySelectorAll('.loading-step').forEach((el, i) => {
+        if (i < stepIndex) {
+            el.classList.remove('active');
+            el.classList.add('done');
+        } else if (i === stepIndex) {
+            el.classList.add('active');
+            el.classList.remove('done');
+        } else {
+            el.classList.remove('active', 'done');
+        }
+    });
+    
+    // Update text based on step
+    const texts = {
+        upload: 'Uploading your file...',
+        analyze: 'Analyzing document structure...',
+        extract: 'Extracting editable text...',
+        render: 'Rendering high-quality pages...',
+        ready: 'Almost ready!'
+    };
+    $('loading-text').textContent = texts[step] || 'Processing...';
+}
+
+function simulateLoadingProgress(callback) {
+    let progress = 0;
+    const steps = ['upload', 'analyze', 'extract', 'render', 'ready'];
+    let stepIndex = 0;
+    
+    loadingInterval = setInterval(() => {
+        progress += Math.random() * 8 + 2;
+        if (progress > 95) progress = 95;
+        
+        // Move to next step at certain progress points
+        if (progress > 20 && stepIndex === 0) stepIndex = 1;
+        if (progress > 40 && stepIndex === 1) stepIndex = 2;
+        if (progress > 60 && stepIndex === 2) stepIndex = 3;
+        if (progress > 80 && stepIndex === 3) stepIndex = 4;
+        
+        updateLoadingStep(steps[stepIndex], progress);
+    }, 300);
+}
+
+function completeLoading() {
+    if (loadingInterval) {
+        clearInterval(loadingInterval);
+        loadingInterval = null;
+    }
+    updateLoadingStep('ready', 100);
+    setTimeout(() => showLoading(false), 500);
+}
 function closeModal(id){$(id).classList.remove('show')}
 function hasEdits(){return Object.keys(edits).length+Object.values(addedTexts).flat().length+Object.values(addedImages).flat().length+Object.values(addedShapes).flat().length+Object.keys(drawings).length>0}
 
@@ -799,13 +1033,401 @@ $('underline-btn').onclick=function(){if(selectedEl){const u=selectedEl.style.te
 $('delete-btn').onclick=()=>{if(selectedEl)deleteEl(selectedEl)};
 
 $('file-input').onchange=async e=>{const f=e.target.files[0];if(f)await loadPDF(f)};
-async function loadPDF(f){showLoading(true,'Analyzing PDF...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;edits={};addedTexts={};addedImages={};addedShapes={};drawings={};undoStack=[];redoStack=[];setupFormatBar(pdfData.documentStyle);switchView('edit');$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Loaded: ${pdfData.pageCount} pages`)}catch(e){showToast('Error: '+e.message,'error')}showLoading(false)}
+async function loadPDF(f){
+    showLoading(true, 'Uploading your file...', 'upload');
+    simulateLoadingProgress();
+    
+    const fd = new FormData();
+    fd.append('file', f);
+    
+    try {
+        const r = await fetch('/upload-pdf', {method: 'POST', body: fd});
+        
+        if (!r.ok) throw new Error('Upload failed');
+        
+        updateLoadingStep('extract', 70);
+        pdfData = await r.json();
+        pdfId = pdfData.pdfId;
+        edits = {};
+        addedTexts = {};
+        addedImages = {};
+        addedShapes = {};
+        drawings = {};
+        undoStack = [];
+        redoStack = [];
+        
+        updateLoadingStep('render', 85);
+        setupFormatBar(pdfData.documentStyle);
+        
+        updateLoadingStep('ready', 95);
+        await new Promise(r => setTimeout(r, 300)); // Small delay for visual feedback
+        
+        switchView('edit');
+        $('page-container').classList.add('show');
+        $('sidebar').classList.add('show');
+        $('toolbar').classList.add('show');
+        $('format-bar').classList.add('show');
+        renderPageList();
+        renderPage(1);
+        updateBtns();
+        
+        completeLoading();
+        showToast(`Loaded: ${pdfData.pageCount} pages`);
+    } catch(e) {
+        showLoading(false);
+        showToast('Error: ' + (e.message || 'Failed to load PDF'), 'error');
+    }
+}
 
 function renderPageList(){const l=$('page-list');l.innerHTML='';pdfData.pages.forEach((p,i)=>{const d=document.createElement('div');d.className='page-thumb'+(i+1===currentPage?' active':'');d.innerHTML=`<img src="${p.image}" draggable="false"><div class="page-thumb-label">Page ${i+1}</div><div class="page-actions"><button class="page-action" onclick="event.stopPropagation();rotatePage(${i+1})"><i class="fas fa-redo"></i></button><button class="page-action danger" onclick="event.stopPropagation();deletePage(${i+1})"><i class="fas fa-trash"></i></button></div>`;d.onclick=()=>renderPage(i+1);l.appendChild(d)});$('doc-info').innerHTML=`<strong>${pdfData.fileName}</strong><br>${pdfData.pageCount} pages • ${pdfData.fileSize}`}
 
 function renderPage(n){currentPage=n;const p=pdfData.pages[n-1];$('page-image').src=p.image;$('draw-canvas').width=p.width;$('draw-canvas').height=p.height;if(drawings[n]){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=drawings[n]}else ctx.clearRect(0,0,$('draw-canvas').width,$('draw-canvas').height);document.querySelectorAll('.page-thumb').forEach((e,i)=>e.classList.toggle('active',i+1===n));renderTextLayer(p);deselectEl()}
 
-function renderTextLayer(p){const l=$('text-layer');l.innerHTML='';p.textBlocks.forEach((b,i)=>{const k=`${currentPage}-${i}`,e=edits[k];const inp=document.createElement('input');inp.type='text';inp.className='text-box'+(e?' edited':'');inp.value=e?e.newText:b.text;inp.style.cssText=`left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};`;inp.dataset.key=k;inp.dataset.orig=b.text;inp.dataset.block=JSON.stringify(b);inp.onfocus=function(){this.style.width=Math.max(b.width,300)+'px'};inp.onblur=function(){const nv=this.value,ov=this.dataset.orig;this.style.width=b.width+'px';if(nv!==ov){saveState();edits[k]={pageNum:currentPage,originalText:ov,newText:nv,originalX:b.originalX,originalY:b.originalY,originalWidth:b.originalWidth,originalHeight:b.originalHeight,originalFontSize:b.originalFontSize};this.classList.add('edited');showToast('Saved')}else if(edits[k]){saveState();delete edits[k];this.classList.remove('edited')}};inp.onkeydown=function(e){if(e.key==='Enter')this.blur()};l.appendChild(inp)});(addedTexts[currentPage]||[]).forEach((t,i)=>createAddedText(t,i));(addedImages[currentPage]||[]).forEach((m,i)=>createAddedImage(m,i));(addedShapes[currentPage]||[]).forEach((s,i)=>createAddedShape(s,i));let shapeStart=null;l.onclick=e=>{if(e.target===l&&currentTool==='text'){saveState();if(!addedTexts[currentPage])addedTexts[currentPage]=[];const r=l.getBoundingClientRect();addedTexts[currentPage].push({x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel,text:'Text',fontFamily:documentStyle?.defaultFontFamily||'Arial',fontSize:documentStyle?.defaultSize||14,fontWeight:'normal',fontStyle:'normal',color:'#000000'});renderPage(currentPage);document.querySelector('.tool-btn[data-tool="select"]').click()}};l.onmousedown=e=>{if(currentTool==='shape'&&e.target===l){const r=l.getBoundingClientRect();shapeStart={x:(e.clientX-r.left)/zoomLevel,y:(e.clientY-r.top)/zoomLevel}}};l.onmouseup=e=>{if(shapeStart&&currentTool==='shape'){const r=l.getBoundingClientRect(),ex=(e.clientX-r.left)/zoomLevel,ey=(e.clientY-r.top)/zoomLevel,w=Math.abs(ex-shapeStart.x),h=Math.abs(ey-shapeStart.y);if(w>10||h>10){saveState();if(!addedShapes[currentPage])addedShapes[currentPage]=[];addedShapes[currentPage].push({x:Math.min(shapeStart.x,ex),y:Math.min(shapeStart.y,ey),width:w,height:h,type:currentShape,stroke:$('shape-stroke').value,fill:$('shape-no-fill').checked?'transparent':$('shape-fill').value});renderPage(currentPage);showToast('Shape added')}shapeStart=null}}}
+
+// Current text being edited (for mobile popup)
+let currentEditingTextBox = null;
+let currentEditingKey = null;
+let currentEditingBlock = null;
+
+function renderTextLayer(p){
+    const l = $('text-layer');
+    l.innerHTML = '';
+    
+    p.textBlocks.forEach((b, i) => {
+        const k = `${currentPage}-${i}`;
+        const e = edits[k];
+        
+        const box = document.createElement('div');
+        box.className = 'text-box' + (e ? ' edited' : '');
+        box.textContent = e ? e.newText : b.text;
+        box.style.cssText = `left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};line-height:${b.height}px;`;
+        box.dataset.key = k;
+        box.dataset.orig = b.text;
+        box.dataset.block = JSON.stringify(b);
+        
+        box.onclick = function(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            if (isMobile()) {
+                openTextEditPopup(this, k, b);
+            } else {
+                openInlineEdit(this, k, b);
+            }
+        };
+        
+        l.appendChild(box);
+    });
+    
+    (addedTexts[currentPage] || []).forEach((t, i) => createAddedText(t, i));
+    (addedImages[currentPage] || []).forEach((m, i) => createAddedImage(m, i));
+    (addedShapes[currentPage] || []).forEach((s, i) => createAddedShape(s, i));
+    
+    // Shape drawing
+    let shapeStart = null;
+    l.onclick = e => {
+        if (e.target === l && currentTool === 'text') {
+            saveState();
+            if (!addedTexts[currentPage]) addedTexts[currentPage] = [];
+            const r = l.getBoundingClientRect();
+            addedTexts[currentPage].push({
+                x: (e.clientX - r.left) / zoomLevel,
+                y: (e.clientY - r.top) / zoomLevel,
+                text: 'Text',
+                fontFamily: documentStyle?.defaultFontFamily || 'Arial',
+                fontSize: documentStyle?.defaultSize || 14,
+                color: '#000000'
+            });
+            renderPage(currentPage);
+        }
+    };
+    
+    l.onmousedown = e => {
+        if (currentTool === 'shape' && e.target === l) {
+            const r = l.getBoundingClientRect();
+            shapeStart = { x: (e.clientX - r.left) / zoomLevel, y: (e.clientY - r.top) / zoomLevel };
+        }
+    };
+    
+    l.onmouseup = e => {
+        if (shapeStart && currentTool === 'shape') {
+            const r = l.getBoundingClientRect();
+            const ex = (e.clientX - r.left) / zoomLevel, ey = (e.clientY - r.top) / zoomLevel;
+            const w = Math.abs(ex - shapeStart.x), h = Math.abs(ey - shapeStart.y);
+            if (w > 10 || h > 10) {
+                saveState();
+                if (!addedShapes[currentPage]) addedShapes[currentPage] = [];
+                addedShapes[currentPage].push({
+                    x: Math.min(shapeStart.x, ex), y: Math.min(shapeStart.y, ey),
+                    width: w, height: h, type: currentShape,
+                    stroke: $('shape-stroke').value,
+                    fill: $('shape-no-fill').checked ? 'transparent' : $('shape-fill').value
+                });
+                renderPage(currentPage);
+            }
+            shapeStart = null;
+        }
+    };
+}
+
+// Desktop inline edit
+function openInlineEdit(box, key, block) {
+    document.querySelectorAll('.text-box.editing').forEach(b => b.classList.remove('editing'));
+    
+    box.classList.add('editing');
+    box.contentEditable = true;
+    box.style.width = Math.max(parseFloat(box.style.width), 200) + 'px';
+    box.focus();
+    
+    const range = document.createRange();
+    range.selectNodeContents(box);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    
+    box.onblur = function() {
+        const newText = this.textContent.trim();
+        const origText = this.dataset.orig;
+        
+        this.classList.remove('editing');
+        this.contentEditable = false;
+        this.style.width = block.width + 'px';
+        
+        if (newText !== origText) {
+            saveState();
+            edits[key] = {
+                pageNum: currentPage, originalText: origText, newText: newText,
+                originalX: block.originalX, originalY: block.originalY,
+                originalWidth: block.originalWidth, originalHeight: block.originalHeight,
+                originalFontSize: block.originalFontSize
+            };
+            this.classList.add('edited');
+            this.textContent = newText;
+            showToast('Text saved');
+        } else if (edits[key] && newText === origText) {
+            delete edits[key];
+            this.classList.remove('edited');
+        }
+    };
+    
+    box.onkeydown = function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+        if (e.key === 'Escape') { this.textContent = this.dataset.orig; this.blur(); }
+    };
+}
+
+// Mobile popup edit
+function openTextEditPopup(box, key, block) {
+    currentEditingTextBox = box;
+    currentEditingKey = key;
+    currentEditingBlock = block;
+    
+    const existingEdit = edits[key];
+    const currentText = existingEdit ? existingEdit.newText : block.text;
+    
+    $('text-edit-original-text').textContent = block.text;
+    $('text-edit-textarea').value = currentText;
+    $('text-edit-popup').classList.add('show');
+    
+    setTimeout(() => $('text-edit-textarea').focus(), 100);
+    
+    document.querySelectorAll('.text-box').forEach(b => b.style.opacity = '0.3');
+    box.style.opacity = '1';
+    box.style.background = 'rgba(99,102,241,.3)';
+    box.style.borderColor = 'var(--accent)';
+}
+
+function closeTextEditPopup() {
+    $('text-edit-popup').classList.remove('show');
+    document.querySelectorAll('.text-box').forEach(b => {
+        b.style.opacity = '1';
+        b.style.background = '';
+        b.style.borderColor = '';
+    });
+    currentEditingTextBox = null;
+    currentEditingKey = null;
+    currentEditingBlock = null;
+}
+
+function saveTextEdit() {
+    if (!currentEditingTextBox || !currentEditingKey || !currentEditingBlock) return;
+    
+    const newText = $('text-edit-textarea').value.trim();
+    const origText = currentEditingBlock.text;
+    
+    if (newText !== origText) {
+        saveState();
+        edits[currentEditingKey] = {
+            pageNum: currentPage, originalText: origText, newText: newText,
+            originalX: currentEditingBlock.originalX, originalY: currentEditingBlock.originalY,
+            originalWidth: currentEditingBlock.originalWidth, originalHeight: currentEditingBlock.originalHeight,
+            originalFontSize: currentEditingBlock.originalFontSize
+        };
+        currentEditingTextBox.textContent = newText;
+        currentEditingTextBox.classList.add('edited');
+        showToast('Text saved!');
+    } else if (edits[currentEditingKey]) {
+        delete edits[currentEditingKey];
+        currentEditingTextBox.classList.remove('edited');
+        currentEditingTextBox.textContent = origText;
+    }
+    
+    closeTextEditPopup();
+}
+
+// ===== SIGNATURE FUNCTIONS =====
+let sigFont = 'script';
+let sigColor = '#000';
+let uploadedSigData = null;
+
+function switchSigTab(tab) {
+    document.querySelectorAll('.sig-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab)));
+    document.querySelectorAll('.sig-tab-content').forEach(c => c.classList.remove('active'));
+    $(`sig-${tab}-tab`).classList.add('active');
+}
+
+function selectSigFont(font) {
+    sigFont = font;
+    document.querySelectorAll('.sig-font-option').forEach(f => f.classList.toggle('active', f.dataset.font === font));
+    updateSigPreview();
+}
+
+function selectSigColor(color) {
+    sigColor = color;
+    document.querySelectorAll('.sig-color').forEach(c => c.classList.toggle('active', c.dataset.color === color));
+    updateSigPreview();
+}
+
+function updateSigPreview() {
+    const text = $('sig-text-input').value || 'Your Name';
+    const preview = $('sig-preview-text');
+    preview.textContent = text;
+    preview.style.color = sigColor;
+    
+    const fonts = {
+        script: "'Brush Script MT', cursive",
+        elegant: "'Georgia', serif",
+        bold: "'Arial Black', sans-serif",
+        classic: "'Times New Roman', serif"
+    };
+    preview.style.fontFamily = fonts[sigFont];
+    preview.style.fontStyle = sigFont === 'elegant' ? 'italic' : 'normal';
+}
+
+function clearSignature() {
+    sigCtx.clearRect(0, 0, 400, 150);
+}
+
+function applyDrawnSignature() {
+    const canvas = $('sig-canvas');
+    const dataUrl = canvas.toDataURL();
+    addSignatureToPage(dataUrl);
+    clearSignature();
+    closeModal('sign-modal');
+}
+
+function applyTypedSignature() {
+    const text = $('sig-text-input').value.trim();
+    if (!text) return showToast('Enter your name', 'error');
+    
+    // Create canvas to render text as image
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 80;
+    const ctx = canvas.getContext('2d');
+    
+    const fonts = {
+        script: "48px 'Brush Script MT', cursive",
+        elegant: "italic 40px 'Georgia', serif",
+        bold: "36px 'Arial Black', sans-serif",
+        classic: "40px 'Times New Roman', serif"
+    };
+    
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, 300, 80);
+    ctx.fillStyle = sigColor;
+    ctx.font = fonts[sigFont];
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 150, 45);
+    
+    addSignatureToPage(canvas.toDataURL());
+    $('sig-text-input').value = '';
+    closeModal('sign-modal');
+}
+
+function handleSigUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = ev => {
+        uploadedSigData = ev.target.result;
+        $('sig-upload-img').src = uploadedSigData;
+        $('sig-upload-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function applyUploadedSignature() {
+    if (!uploadedSigData) return showToast('Upload an image first', 'error');
+    addSignatureToPage(uploadedSigData);
+    uploadedSigData = null;
+    $('sig-upload-preview').style.display = 'none';
+    closeModal('sign-modal');
+}
+
+function addSignatureToPage(dataUrl) {
+    saveState();
+    if (!addedImages[currentPage]) addedImages[currentPage] = [];
+    addedImages[currentPage].push({ x: 100, y: 100, width: 180, height: 60, src: dataUrl });
+    renderPage(currentPage);
+    showToast('Signature added!');
+}
+
+// Legacy function for compatibility
+function applySignature() {
+    applyDrawnSignature();
+}
+
+let currentEditingTextBox = null;
+let currentEditingKey = null;
+let currentEditingBlock = null;
+
+function renderTextLayer(p){
+    const l = $('text-layer');
+    l.innerHTML = '';
+    
+    p.textBlocks.forEach((b, i) => {
+        const k = `${currentPage}-${i}`;
+        const e = edits[k];
+        
+        const box = document.createElement('div');
+        box.className = 'text-box' + (e ? ' edited' : '');
+        box.textContent = e ? e.newText : b.text;
+        box.style.cssText = `left:${b.x}px;top:${b.y}px;width:${b.width}px;height:${b.height}px;font-size:${b.fontSize}px;font-family:${b.fontFamily};line-height:${b.height}px;`;
+        box.dataset.key = k;
+        box.dataset.orig = b.text;
+        box.dataset.block = JSON.stringify(b);
+        
+        box.onclick = function(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            
+            if (isMobile()) {
+                openTextEditPopup(this, k, b);
+            } else {
+                openInlineEdit(this, k, b);
+            }
+        };
+        
+        l.appendChild(box);
+    });
+    
+    (addedTexts[currentPage] || []).forEach((t, i) => createAddedText(t, i));
+    (addedImages[currentPage] || []).forEach((m, i) => createAddedImage(m, i));
+    (addedShapes[currentPage] || []).forEach((s, i) => createAddedShape(s, i));
+}
+
 
 function createAddedText(t,i){const e=document.createElement('div');e.className='added-el added-text';e.contentEditable=true;e.innerText=t.text;e.dataset.idx=i;e.dataset.type='text';e.style.cssText=`left:${t.x}px;top:${t.y}px;font-family:${t.fontFamily};font-size:${t.fontSize}px;font-weight:${t.fontWeight||'normal'};font-style:${t.fontStyle||'normal'};color:${t.color||'#000'};`;e.innerHTML+=`<div class="el-controls"><button class="el-ctrl danger" onclick="event.stopPropagation();deleteEl(this.closest('.added-el'))"><i class="fas fa-trash"></i></button></div>`;makeDrag(e,()=>{if(addedTexts[currentPage]?.[i]){addedTexts[currentPage][i].x=parseFloat(e.style.left);addedTexts[currentPage][i].y=parseFloat(e.style.top)}});e.onclick=ev=>{ev.stopPropagation();selectEl(e)};e.onblur=()=>{if(addedTexts[currentPage]?.[i])addedTexts[currentPage][i].text=e.innerText.replace(/<[^>]*>/g,'')};$('text-layer').appendChild(e)}
 
@@ -835,7 +1457,35 @@ function applySignature(){const d=$('sig-canvas').toDataURL();saveState();if(!ad
 
 $('merge-input').onchange=e=>{Array.from(e.target.files).forEach(f=>{if(mergeFiles.length<20)mergeFiles.push(f)});renderMergeFiles()};
 function renderMergeFiles(){$('merge-files').innerHTML='';mergeFiles.forEach((f,i)=>{$('merge-files').innerHTML+=`<div class="file-item"><div class="file-icon"><i class="fas fa-file-pdf"></i></div><div class="file-info"><div class="file-name">${f.name}</div><div class="file-size">${(f.size/1024).toFixed(1)} KB</div></div><button class="file-btn danger" onclick="mergeFiles.splice(${i},1);renderMergeFiles()"><i class="fas fa-times"></i></button></div>`});$('merge-actions').style.display=mergeFiles.length>=2?'flex':'none'}
-async function doMerge(){if(mergeFiles.length<2)return showToast('Need 2+ files','error');showLoading(true,'Merging...');const fd=new FormData();mergeFiles.forEach(f=>fd.append('files',f));try{const r=await fetch('/merge-pdfs',{method:'POST',body:fd});pdfData=await r.json();pdfId=pdfData.pdfId;mergeFiles=[];renderMergeFiles();switchView('edit');setupFormatBar({fonts:[],fontFamilies:[],sizes:[],colors:['#000'],defaultSize:12,pageFormat:{}});$('page-container').classList.add('show');$('sidebar').classList.add('show');$('toolbar').classList.add('show');$('format-bar').classList.add('show');renderPageList();renderPage(1);updateBtns();showToast(`Merged! ${pdfData.pageCount} pages`)}catch(e){showToast('Error','error')}showLoading(false)}
+async function doMerge(){
+    if(mergeFiles.length<2) return showToast('Need 2+ files','error');
+    showLoading(true, 'Merging your PDFs...', 'merge');
+    
+    const fd = new FormData();
+    mergeFiles.forEach(f => fd.append('files', f));
+    
+    try {
+        const r = await fetch('/merge-pdfs', {method: 'POST', body: fd});
+        pdfData = await r.json();
+        pdfId = pdfData.pdfId;
+        mergeFiles = [];
+        renderMergeFiles();
+        switchView('edit');
+        setupFormatBar({fonts:[], fontFamilies:[], sizes:[], colors:['#000'], defaultSize:12, pageFormat:{}});
+        $('page-container').classList.add('show');
+        $('sidebar').classList.add('show');
+        $('toolbar').classList.add('show');
+        $('format-bar').classList.add('show');
+        renderPageList();
+        renderPage(1);
+        updateBtns();
+        showLoading(false);
+        showToast(`Merged! ${pdfData.pageCount} pages`);
+    } catch(e) {
+        showLoading(false);
+        showToast('Error merging files', 'error');
+    }
+}
 
 $('split-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;showLoading(true,'Loading...');const fd=new FormData();fd.append('file',f);try{const r=await fetch('/upload-pdf',{method:'POST',body:fd});const d=await r.json();splitPages=[];$('split-pages').innerHTML='';d.pages.forEach((p,i)=>{$('split-pages').innerHTML+=`<div class="preview-item" data-page="${i+1}" onclick="toggleSplit(${i+1})"><img src="${p.image}"><div class="preview-item-label">Page ${i+1}</div></div>`});$('split-preview').style.display='block';pdfId=d.pdfId}catch(e){showToast('Error','error')}showLoading(false)};
 function toggleSplit(n){const i=splitPages.indexOf(n);if(i>=0)splitPages.splice(i,1);else splitPages.push(n);document.querySelectorAll('#split-pages .preview-item').forEach(e=>e.classList.toggle('selected',splitPages.includes(parseInt(e.dataset.page))))}

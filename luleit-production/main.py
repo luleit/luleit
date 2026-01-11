@@ -471,13 +471,28 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     pdf_id = str(uuid.uuid4())
     pdf_storage[pdf_id] = {"content": content, "filename": file.filename, "created": datetime.now()}
     
-    # Extract text and build response
+    # Extract text and build response - OPTIMIZED
     fonts_used, sizes_used, colors_used = {}, {}, {}
     pages_data = []
     
+    # Use lower resolution for faster loading (1.5 instead of 2.5)
+    # This significantly speeds up rendering while maintaining good quality
+    scale = 1.8
+    
     for pn in range(len(doc)):
         page = doc[pn]
-        pix = page.get_pixmap(matrix=fitz.Matrix(2.5, 2.5))
+        
+        # Render page to image with optimized settings
+        pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False)
+        
+        # Convert to JPEG for smaller file size (faster transfer)
+        if Image:
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='JPEG', quality=85, optimize=True)
+            img_data = "data:image/jpeg;base64," + base64.b64encode(img_buffer.getvalue()).decode()
+        else:
+            img_data = "data:image/png;base64," + base64.b64encode(pix.tobytes("png")).decode()
         
         text_blocks = []
         try:
@@ -495,10 +510,10 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
                                 colors_used[ch] = colors_used.get(ch, 0) + 1
                                 text_blocks.append({
                                     "text": span["text"],
-                                    "x": span["bbox"][0] * 2.5, "y": span["bbox"][1] * 2.5,
-                                    "width": (span["bbox"][2] - span["bbox"][0]) * 2.5,
-                                    "height": (span["bbox"][3] - span["bbox"][1]) * 2.5,
-                                    "fontSize": span["size"] * 2.5,
+                                    "x": span["bbox"][0] * scale, "y": span["bbox"][1] * scale,
+                                    "width": (span["bbox"][2] - span["bbox"][0]) * scale,
+                                    "height": (span["bbox"][3] - span["bbox"][1]) * scale,
+                                    "fontSize": span["size"] * scale,
                                     "fontFamily": extract_font_family(fn),
                                     "color": ch,
                                     "originalX": span["bbox"][0], "originalY": span["bbox"][1],
@@ -512,7 +527,7 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
             "pageNum": pn + 1,
             "width": pix.width, "height": pix.height,
             "originalWidth": page.rect.width, "originalHeight": page.rect.height,
-            "image": "data:image/png;base64," + base64.b64encode(pix.tobytes("png")).decode(),
+            "image": img_data,
             "textBlocks": text_blocks
         })
     
