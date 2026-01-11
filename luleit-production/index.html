@@ -190,6 +190,219 @@
         .preview-item.selected{border-color:var(--success)}
         .preview-item img{width:100%;display:block}
         .preview-item-label{padding:4px;text-align:center;font-size:10px;background:var(--bg2)}
+        
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            /* Header */
+            .header{flex-wrap:wrap;padding:8px 12px;gap:8px}
+            .logo{font-size:18px}
+            .nav-tabs{order:3;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px}
+            .nav-tabs::-webkit-scrollbar{display:none}
+            .nav-tab{padding:6px 10px;font-size:11px}
+            .nav-tab span{display:none}
+            .toolbar{order:2;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:60%;padding:2px 4px}
+            .toolbar.show{display:flex}
+            .tool-btn{padding:6px;min-width:36px}
+            .tool-btn span{display:none}
+            .tool-btn i{font-size:16px}
+            .tool-divider{display:none}
+            .header-right{gap:6px}
+            .btn{padding:6px 10px;font-size:11px}
+            .btn span{display:none}
+            
+            /* Main layout */
+            .main{flex-direction:column;height:auto;min-height:calc(100vh - 100px)}
+            .sidebar{width:100%;max-height:120px;flex-direction:row;padding:8px;order:2;border-right:none;border-top:1px solid var(--border)}
+            .sidebar.show{display:flex}
+            .sidebar-title{display:none}
+            .page-list{flex-direction:row;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+            .page-thumb{min-width:60px;max-width:60px}
+            .page-thumb-label{font-size:8px;padding:2px}
+            .page-actions{display:flex !important;position:static;justify-content:center;padding:2px;gap:4px;background:var(--bg2)}
+            .page-action{width:24px;height:24px;font-size:11px}
+            .zoom-controls{margin-top:0;margin-left:auto}
+            .doc-info{display:none}
+            
+            /* Editor */
+            .editor{padding:10px;order:1}
+            .page-container{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch}
+            .page-container img{max-width:none}
+            
+            /* Home */
+            .home-container{padding:12px}
+            .home-header{margin-bottom:20px}
+            .home-header h1{font-size:24px}
+            .home-header p{font-size:13px}
+            .upload-hero{padding:30px 20px}
+            .upload-icon{width:60px;height:60px;font-size:24px;margin-bottom:12px}
+            .upload-hero h2{font-size:18px}
+            .tool-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+            .tool-card{padding:12px}
+            .tool-icon{width:36px;height:36px;font-size:14px;margin-bottom:6px}
+            .tool-card h3{font-size:12px}
+            .tool-card p{font-size:9px}
+            .tool-section{margin-bottom:20px}
+            .tool-section h2{font-size:12px;margin-bottom:8px}
+            .social-proof{flex-wrap:wrap;gap:12px;font-size:10px}
+            
+            /* Format bar */
+            .format-bar{padding:6px 10px;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+            .format-bar.show{display:flex}
+            .format-bar label{display:none}
+            .format-bar select{min-width:70px;padding:4px;font-size:10px}
+            .format-btn{width:32px;height:32px}
+            .format-divider{display:none}
+            .color-swatch{width:28px;height:28px}
+            
+            /* Shape bar */
+            .shape-bar{padding:6px 10px;overflow-x:auto;flex-wrap:nowrap}
+            .shape-btn{padding:6px 8px;font-size:10px;white-space:nowrap}
+            
+            /* Tool views */
+            .tool-view{padding:0 10px}
+            .tool-view-header h2{font-size:20px}
+            .tool-view-header p{font-size:12px}
+            .dropzone{padding:30px 20px}
+            .dropzone i{font-size:32px;margin-bottom:8px}
+            .dropzone h3{font-size:14px}
+            .options-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+            .option-card{padding:10px 6px}
+            .option-card h4{font-size:11px}
+            .option-card p{font-size:9px}
+            .file-item{padding:8px 10px}
+            .file-icon{width:30px;height:30px;font-size:12px}
+            .file-name{font-size:12px}
+            .result-box{padding:16px}
+            .result-stat-value{font-size:22px}
+            .preview-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+            
+            /* Modals */
+            .modal{max-width:calc(100% - 24px);margin:12px}
+            .modal-header{padding:16px}
+            .modal-header i{font-size:24px;margin-bottom:6px}
+            .modal-header h2{font-size:14px}
+            .modal-body{padding:16px}
+            .signature-pad{width:100%;height:120px}
+            
+            /* Text editing on mobile */
+            .text-box{min-height:24px;font-size:inherit !important}
+            .text-box:focus{position:relative;z-index:100}
+            .added-el{min-width:44px;min-height:44px}
+            .added-text{padding:8px 12px;font-size:14px;min-width:80px}
+            .el-controls{top:-32px}
+            .el-ctrl{width:28px;height:28px;font-size:14px}
+            .resize-handle{width:20px;height:20px;bottom:-10px;right:-10px}
+            
+            /* Toast */
+            .toast{bottom:80px;padding:8px 14px;font-size:11px;max-width:calc(100% - 24px)}
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 400px) {
+            .logo{font-size:16px}
+            .nav-tab{padding:5px 8px;font-size:10px}
+            .tool-grid{grid-template-columns:repeat(2,1fr)}
+            .options-grid{grid-template-columns:1fr 1fr}
+            .home-header h1{font-size:20px}
+            .upload-hero{padding:24px 16px}
+            .upload-icon{width:50px;height:50px;font-size:20px}
+        }
+        
+        /* Touch improvements */
+        @media (pointer: coarse) {
+            .tool-btn,.btn,.nav-tab,.page-action,.file-btn,.format-btn,.shape-btn,.option-card,.tool-card{
+                min-height:44px;
+                min-width:44px;
+            }
+            .text-box{min-height:32px}
+            .page-thumb{min-width:70px}
+        }
+        
+        /* Mobile toolbar at bottom */
+        @media (max-width: 768px) {
+            .mobile-toolbar{
+                position:fixed;
+                bottom:0;
+                left:0;
+                right:0;
+                background:var(--bg2);
+                border-top:1px solid var(--border);
+                padding:8px 4px;
+                display:none;
+                justify-content:space-around;
+                z-index:100;
+                gap:2px;
+            }
+            .mobile-toolbar.show{display:flex}
+            .mobile-toolbar .tool-btn{
+                flex-direction:column;
+                gap:3px;
+                padding:8px 12px;
+                min-width:60px;
+                border-radius:8px;
+            }
+            .mobile-toolbar .tool-btn span{display:block;font-size:10px}
+            .mobile-toolbar .tool-btn i{font-size:18px}
+            .mobile-toolbar .tool-btn.active{background:var(--accent);color:#fff}
+            
+            /* Mobile pages panel */
+            .mobile-pages{
+                position:fixed;
+                bottom:75px;
+                left:10px;
+                right:10px;
+                background:var(--bg2);
+                border-radius:12px;
+                padding:12px;
+                z-index:99;
+                box-shadow:0 -4px 30px rgba(0,0,0,.5);
+                display:none;
+                max-height:180px;
+            }
+            .mobile-pages.show{display:block}
+            .mobile-pages-grid{
+                display:flex;
+                gap:10px;
+                overflow-x:auto;
+                padding-bottom:8px;
+                -webkit-overflow-scrolling:touch;
+            }
+            .mobile-pages-grid::-webkit-scrollbar{height:3px}
+            .mobile-pages-grid::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+            .mobile-page{
+                flex-shrink:0;
+                width:70px;
+                border-radius:6px;
+                overflow:hidden;
+                border:2px solid var(--border);
+                background:var(--bg);
+            }
+            .mobile-page.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.3)}
+            .mobile-page img{width:100%;display:block}
+            
+            /* Adjust main content for bottom toolbar */
+            .main{padding-bottom:75px}
+            
+            /* Better touch targets for text editing */
+            .added-text{
+                min-width:100px;
+                min-height:44px;
+                padding:10px 14px;
+                font-size:16px;
+                line-height:1.4;
+            }
+            
+            /* Modal adjustments for mobile keyboard */
+            .modal-overlay{align-items:flex-start;padding-top:10vh}
+            
+            /* Larger signature pad on mobile */
+            .signature-pad{
+                width:100% !important;
+                max-width:100%;
+                height:150px !important;
+                touch-action:none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -411,6 +624,25 @@
     </div>
     <div class="loading" id="loading"><div class="spinner"></div><p id="loading-text">Processing...</p></div>
     <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toast-text"></span></div>
+    
+    <!-- Mobile Bottom Toolbar -->
+    <div class="mobile-toolbar" id="mobile-toolbar">
+        <button class="tool-btn active" data-tool="select" onclick="setMobileTool('select')"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
+        <button class="tool-btn" data-tool="text" onclick="setMobileTool('text')"><i class="fas fa-font"></i><span>Text</span></button>
+        <button class="tool-btn" data-tool="draw" onclick="setMobileTool('draw')"><i class="fas fa-pen"></i><span>Draw</span></button>
+        <button class="tool-btn" data-tool="sign" onclick="setMobileTool('sign')"><i class="fas fa-signature"></i><span>Sign</span></button>
+        <button class="tool-btn" onclick="showMobilePages()"><i class="fas fa-copy"></i><span>Pages</span></button>
+    </div>
+    
+    <!-- Mobile Page Selector -->
+    <div class="mobile-pages" id="mobile-pages">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--text2)">Pages</span>
+            <button onclick="closeMobilePages()" style="background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="mobile-pages-grid" id="mobile-pages-grid"></div>
+    </div>
+    
     <input type="file" id="file-input" accept=".pdf">
     <input type="file" id="merge-input" accept=".pdf" multiple>
     <input type="file" id="split-input" accept=".pdf">
@@ -563,6 +795,277 @@ document.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f?.typ
 
 // Free version - no pricing needed
 console.log('Luleit PDF Editor - Free Version');
+
+// ===== MOBILE TOUCH SUPPORT =====
+// Touch events for drawing canvas
+$('draw-canvas').ontouchstart=e=>{
+    if(!['draw','highlight'].includes(currentTool))return;
+    e.preventDefault();
+    saveState();
+    isDrawing=true;
+    const touch=e.touches[0];
+    const r=$('draw-canvas').getBoundingClientRect();
+    lastX=(touch.clientX-r.left)*($('draw-canvas').width/r.width);
+    lastY=(touch.clientY-r.top)*($('draw-canvas').height/r.height);
+};
+$('draw-canvas').ontouchmove=e=>{
+    if(!isDrawing)return;
+    e.preventDefault();
+    const touch=e.touches[0];
+    const r=$('draw-canvas').getBoundingClientRect();
+    const x=(touch.clientX-r.left)*($('draw-canvas').width/r.width);
+    const y=(touch.clientY-r.top)*($('draw-canvas').height/r.height);
+    ctx.beginPath();
+    ctx.moveTo(lastX,lastY);
+    ctx.lineTo(x,y);
+    ctx.lineCap='round';
+    ctx.strokeStyle=currentTool==='highlight'?'rgba(255,255,0,.4)':drawColor;
+    ctx.lineWidth=currentTool==='highlight'?20:3;
+    ctx.stroke();
+    lastX=x;lastY=y;
+};
+$('draw-canvas').ontouchend=()=>{
+    if(isDrawing){isDrawing=false;drawings[currentPage]=$('draw-canvas').toDataURL()}
+};
+
+// Touch events for signature canvas
+$('sig-canvas').ontouchstart=e=>{
+    e.preventDefault();
+    sigDrawing=true;
+    const touch=e.touches[0];
+    const r=$('sig-canvas').getBoundingClientRect();
+    sigCtx.beginPath();
+    sigCtx.moveTo(touch.clientX-r.left,touch.clientY-r.top);
+};
+$('sig-canvas').ontouchmove=e=>{
+    if(!sigDrawing)return;
+    e.preventDefault();
+    const touch=e.touches[0];
+    const r=$('sig-canvas').getBoundingClientRect();
+    sigCtx.lineTo(touch.clientX-r.left,touch.clientY-r.top);
+    sigCtx.stroke();
+};
+$('sig-canvas').ontouchend=()=>{sigDrawing=false};
+
+// Touch drag for added elements
+function makeTouchDrag(el,cb){
+    let startX,startY,origX,origY;
+    el.ontouchstart=e=>{
+        if(el.contentEditable==='true'&&document.activeElement===el)return;
+        const touch=e.touches[0];
+        startX=touch.clientX;
+        startY=touch.clientY;
+        origX=parseFloat(el.style.left)||0;
+        origY=parseFloat(el.style.top)||0;
+    };
+    el.ontouchmove=e=>{
+        e.preventDefault();
+        const touch=e.touches[0];
+        el.style.left=(origX+(touch.clientX-startX)/zoomLevel)+'px';
+        el.style.top=(origY+(touch.clientY-startY)/zoomLevel)+'px';
+    };
+    el.ontouchend=()=>{cb?.()};
+}
+
+// Override createAddedText and createAddedImage to include touch support
+const origCreateAddedText=createAddedText;
+createAddedText=function(t,i){
+    origCreateAddedText(t,i);
+    const el=document.querySelector(`.added-text[data-idx="${i}"]`);
+    if(el)makeTouchDrag(el,()=>{
+        if(addedTexts[currentPage]?.[i]){
+            addedTexts[currentPage][i].x=parseFloat(el.style.left);
+            addedTexts[currentPage][i].y=parseFloat(el.style.top);
+        }
+    });
+};
+
+const origCreateAddedImage=createAddedImage;
+createAddedImage=function(m,i){
+    origCreateAddedImage(m,i);
+    const el=document.querySelector(`.added-image[data-idx="${i}"]`);
+    if(el)makeTouchDrag(el,()=>{
+        if(addedImages[currentPage]?.[i]){
+            addedImages[currentPage][i].x=parseFloat(el.style.left);
+            addedImages[currentPage][i].y=parseFloat(el.style.top);
+        }
+    });
+};
+
+// Prevent zoom on double tap
+document.addEventListener('touchstart',e=>{
+    if(e.touches.length>1)e.preventDefault();
+},{passive:false});
+
+let lastTap=0;
+document.addEventListener('touchend',e=>{
+    const now=Date.now();
+    if(now-lastTap<300&&e.target.closest('.page-container')){
+        e.preventDefault();
+    }
+    lastTap=now;
+},{passive:false});
+
+// Pinch to zoom on page container
+let initialDistance=0;
+let initialZoom=1;
+$('page-container')?.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+        initialDistance=Math.hypot(
+            e.touches[0].clientX-e.touches[1].clientX,
+            e.touches[0].clientY-e.touches[1].clientY
+        );
+        initialZoom=zoomLevel;
+    }
+},{passive:true});
+
+$('page-container')?.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){
+        e.preventDefault();
+        const dist=Math.hypot(
+            e.touches[0].clientX-e.touches[1].clientX,
+            e.touches[0].clientY-e.touches[1].clientY
+        );
+        const scale=dist/initialDistance;
+        zoomLevel=Math.min(Math.max(initialZoom*scale,0.5),3);
+        $('page-container').style.transform=`scale(${zoomLevel})`;
+        $('zoom-level').textContent=Math.round(zoomLevel*100)+'%';
+    }
+},{passive:false});
+
+// ===== MOBILE FUNCTIONS =====
+function isMobile(){return window.innerWidth<=768}
+
+function setMobileTool(tool){
+    currentTool=tool;
+    document.querySelectorAll('#mobile-toolbar .tool-btn').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+    document.querySelectorAll('.toolbar .tool-btn[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+    $('draw-canvas').classList.toggle('active',['draw','highlight'].includes(tool));
+    if(tool==='text')showToast('Tap on PDF to add text');
+    if(tool==='sign')$('sign-modal').classList.add('show');
+    closeMobilePages();
+}
+
+function showMobilePages(){
+    if(!pdfData)return showToast('Load a PDF first','error');
+    const grid=$('mobile-pages-grid');
+    grid.innerHTML='';
+    pdfData.pages.forEach((p,i)=>{
+        const div=document.createElement('div');
+        div.className='mobile-page'+(i+1===currentPage?' active':'');
+        div.innerHTML=`<img src="${p.image}">`;
+        div.onclick=()=>{renderPage(i+1);closeMobilePages()};
+        grid.appendChild(div);
+    });
+    $('mobile-pages').classList.add('show');
+}
+
+function closeMobilePages(){$('mobile-pages').classList.remove('show')}
+
+// Show/hide mobile toolbar based on view
+function updateMobileToolbar(){
+    if(isMobile()&&pdfData&&document.querySelector('.page-container.show')){
+        $('mobile-toolbar').classList.add('show');
+    }else{
+        $('mobile-toolbar').classList.remove('show');
+    }
+}
+
+// Update switchView to handle mobile toolbar
+const origSwitchView=switchView;
+switchView=function(v){
+    origSwitchView(v);
+    setTimeout(updateMobileToolbar,100);
+};
+
+// Touch drawing support
+let touchDrawing=false;
+$('draw-canvas')?.addEventListener('touchstart',e=>{
+    if(!['draw','highlight'].includes(currentTool))return;
+    e.preventDefault();
+    touchDrawing=true;
+    saveState();
+    const touch=e.touches[0];
+    const rect=$('draw-canvas').getBoundingClientRect();
+    lastX=(touch.clientX-rect.left)*($('draw-canvas').width/rect.width);
+    lastY=(touch.clientY-rect.top)*($('draw-canvas').height/rect.height);
+},{passive:false});
+
+$('draw-canvas')?.addEventListener('touchmove',e=>{
+    if(!touchDrawing)return;
+    e.preventDefault();
+    const touch=e.touches[0];
+    const rect=$('draw-canvas').getBoundingClientRect();
+    const x=(touch.clientX-rect.left)*($('draw-canvas').width/rect.width);
+    const y=(touch.clientY-rect.top)*($('draw-canvas').height/rect.height);
+    ctx.beginPath();
+    ctx.moveTo(lastX,lastY);
+    ctx.lineTo(x,y);
+    ctx.lineCap='round';
+    ctx.strokeStyle=currentTool==='highlight'?'rgba(255,255,0,.4)':drawColor;
+    ctx.lineWidth=currentTool==='highlight'?20:3;
+    ctx.stroke();
+    lastX=x;lastY=y;
+},{passive:false});
+
+$('draw-canvas')?.addEventListener('touchend',()=>{
+    if(touchDrawing){
+        touchDrawing=false;
+        drawings[currentPage]=$('draw-canvas').toDataURL();
+    }
+});
+
+// Touch support for text layer (tap to add text)
+$('text-layer')?.addEventListener('touchend',e=>{
+    if(currentTool!=='text'||e.target!==$('text-layer'))return;
+    e.preventDefault();
+    const touch=e.changedTouches[0];
+    const rect=$('text-layer').getBoundingClientRect();
+    saveState();
+    if(!addedTexts[currentPage])addedTexts[currentPage]=[];
+    addedTexts[currentPage].push({
+        x:(touch.clientX-rect.left)/zoomLevel,
+        y:(touch.clientY-rect.top)/zoomLevel,
+        text:'Text',
+        fontFamily:'Arial',
+        fontSize:16,
+        color:'#000000'
+    });
+    renderPage(currentPage);
+    setMobileTool('select');
+    showToast('Text added - tap to edit');
+});
+
+// Touch signature canvas
+$('sig-canvas')?.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    sigDrawing=true;
+    const touch=e.touches[0];
+    const rect=$('sig-canvas').getBoundingClientRect();
+    sigCtx.beginPath();
+    sigCtx.moveTo(touch.clientX-rect.left,touch.clientY-rect.top);
+},{passive:false});
+
+$('sig-canvas')?.addEventListener('touchmove',e=>{
+    if(!sigDrawing)return;
+    e.preventDefault();
+    const touch=e.touches[0];
+    const rect=$('sig-canvas').getBoundingClientRect();
+    sigCtx.lineTo(touch.clientX-rect.left,touch.clientY-rect.top);
+    sigCtx.stroke();
+},{passive:false});
+
+$('sig-canvas')?.addEventListener('touchend',()=>{sigDrawing=false});
+
+// Handle window resize
+window.addEventListener('resize',updateMobileToolbar);
+
+// Close mobile pages on outside tap
+document.addEventListener('click',e=>{
+    if($('mobile-pages').classList.contains('show')&&!e.target.closest('#mobile-pages')&&!e.target.closest('#mobile-toolbar')){
+        closeMobilePages();
+    }
+});
 </script>
 </body>
 </html>
