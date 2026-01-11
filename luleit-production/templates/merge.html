@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge PDF Files Online Free - Luleit PDF Merger</title>
+    <meta name="description" content="Merge multiple PDF files into one document online for free. Combine PDFs quickly and easily with Luleit.">
+    <meta name="keywords" content="merge PDF, combine PDF, PDF merger, join PDF files, free PDF merge">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#DA2D26;--text:#1a1a1a;--text-gray:#6b7280;--bg:#fff;--bg-gray:#f9fafb;--border:#e5e7eb;--font:'Poppins',sans-serif}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);color:var(--text);background:var(--bg)}
+        .header{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--border);height:80px;display:flex;align-items:center;justify-content:center;padding:0 16px}
+        .header__container{width:100%;max-width:1160px;display:flex;align-items:center;justify-content:space-between}
+        .header__logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)}
+        .header__logo-icon{width:40px;height:40px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .header__logo-text{font-size:24px;font-weight:600}
+        .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none;gap:8px}
+        .btn--primary{background:var(--primary);color:#fff}
+        .hero{padding:80px 16px;text-align:center;max-width:800px;margin:0 auto}
+        .hero__icon{width:80px;height:80px;background:rgba(218,45,38,0.1);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+        .hero__icon svg{width:40px;height:40px;color:var(--primary)}
+        .hero__title{font-size:48px;font-weight:700;margin-bottom:16px}
+        .hero__subtitle{font-size:18px;color:var(--text-gray);margin-bottom:32px}
+        .upload-box{max-width:600px;margin:0 auto;background:var(--bg);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.1);padding:32px}
+        .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:48px;text-align:center;cursor:pointer}
+        .upload-zone:hover{border-color:var(--primary);background:rgba(218,45,38,0.02)}
+        .file-list{margin-top:24px;text-align:left}
+        .file-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg-gray);border-radius:8px;margin-bottom:8px}
+        .file-item__name{font-size:14px;font-weight:500}
+        .file-item__remove{background:none;border:none;color:var(--text-gray);cursor:pointer}
+        .merge-btn{margin-top:24px;width:100%;padding:16px}
+        .features{padding:80px 16px;background:var(--bg-gray)}
+        .features__container{max-width:1160px;margin:0 auto}
+        .features__title{font-size:32px;font-weight:600;text-align:center;margin-bottom:48px}
+        .features__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+        .feature{text-align:center;padding:32px}
+        .feature__icon{width:48px;height:48px;background:var(--bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        .feature__icon svg{width:24px;height:24px;color:var(--primary)}
+        .feature__title{font-size:18px;font-weight:600;margin-bottom:8px}
+        .feature__desc{font-size:14px;color:var(--text-gray)}
+        .toast{position:fixed;bottom:24px;right:24px;padding:16px 24px;background:#10b981;color:#fff;border-radius:8px;z-index:9999}
+        .toast--error{background:#ef4444}
+        .loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.9);z-index:9998;align-items:center;justify-content:center}
+        .loading--active{display:flex}
+        .loading__spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @media(max-width:768px){.hero__title{font-size:32px}.features__grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header__container">
+            <a href="/" class="header__logo"><div class="header__logo-icon">L</div><span class="header__logo-text">Luleit</span></a>
+            <a href="/" class="btn btn--primary">All Tools</a>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="hero__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8" y="14" width="8" height="7"/></svg>
+        </div>
+        <h1 class="hero__title">Merge PDF Files</h1>
+        <p class="hero__subtitle">Combine multiple PDF documents into a single file. Fast, free, and easy to use.</p>
+        
+        <div class="upload-box">
+            <div class="upload-zone" id="uploadZone">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DA2D26" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p style="margin-top:16px;font-weight:500">Drop PDF files here or click to browse</p>
+                <p style="margin-top:8px;font-size:13px;color:#6b7280">Select multiple PDFs to merge</p>
+                <input type="file" id="fileInput" accept=".pdf" multiple style="display:none">
+            </div>
+            <div class="file-list" id="fileList"></div>
+            <button class="btn btn--primary merge-btn" id="mergeBtn" style="display:none">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8" y="14" width="8" height="7"/></svg>
+                Merge PDFs
+            </button>
+        </div>
+    </section>
+    
+    <section class="features">
+        <div class="features__container">
+            <h2 class="features__title">Why Use Our PDF Merger?</h2>
+            <div class="features__grid">
+                <div class="feature">
+                    <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <h3 class="feature__title">Lightning Fast</h3>
+                    <p class="feature__desc">Merge your PDFs in seconds with our optimized processing.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                    <h3 class="feature__title">100% Secure</h3>
+                    <p class="feature__desc">Your files are encrypted and deleted after processing.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <h3 class="feature__title">High Quality</h3>
+                    <p class="feature__desc">Preserve original quality with no compression artifacts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="loading" id="loading"><div class="loading__spinner"></div></div>
+    
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const mergeBtn = document.getElementById('mergeBtn');
+        const loading = document.getElementById('loading');
+        let files = [];
+        
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = '#DA2D26'; });
+        uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = '#e5e7eb'; });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = '#e5e7eb';
+            addFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => addFiles(e.target.files));
+        
+        function addFiles(newFiles) {
+            for (const file of newFiles) {
+                if (file.type === 'application/pdf') files.push(file);
+            }
+            renderFileList();
+        }
+        
+        function renderFileList() {
+            fileList.innerHTML = files.map((f, i) => `
+                <div class="file-item">
+                    <span class="file-item__name">${f.name}</span>
+                    <button class="file-item__remove" onclick="removeFile(${i})">✕</button>
+                </div>
+            `).join('');
+            mergeBtn.style.display = files.length >= 2 ? 'flex' : 'none';
+        }
+        
+        function removeFile(index) {
+            files.splice(index, 1);
+            renderFileList();
+        }
+        
+        mergeBtn.addEventListener('click', async () => {
+            if (files.length < 2) return;
+            
+            loading.classList.add('loading--active');
+            
+            const formData = new FormData();
+            files.forEach(f => formData.append('files', f));
+            
+            try {
+                const response = await fetch('/api/merge', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.fileId) {
+                    // Get download token (free for merge)
+                    const tokenForm = new FormData();
+                    tokenForm.append('file_id', data.fileId);
+                    tokenForm.append('payment_intent_id', 'free');
+                    const tokenRes = await fetch('/api/verify-payment', { method: 'POST', body: tokenForm }).then(r => r.json());
+                    window.location.href = `/api/download/${tokenRes.token}`;
+                }
+            } catch (error) {
+                showToast('Merge failed. Please try again.', 'error');
+            }
+            
+            loading.classList.remove('loading--active');
+        });
+        
+        function showToast(msg, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
