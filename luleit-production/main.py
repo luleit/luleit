@@ -726,8 +726,10 @@ async def download_pdf(token: str):
         filename="luleit_edited.pdf",
     )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files (only if directory exists)
+import os
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
     import uvicorn
