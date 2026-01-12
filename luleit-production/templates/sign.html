@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign PDF Online Free - Add Signature to PDF | Luleit</title>
+    <meta name="description" content="Sign PDF documents online for free. Add your signature, initials, or text to PDF files. Easy e-signature tool.">
+    <meta name="keywords" content="sign PDF, e-signature, electronic signature, add signature to PDF, PDF signer">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#DA2D26;--text:#1a1a1a;--text-gray:#6b7280;--bg:#fff;--bg-gray:#f9fafb;--border:#e5e7eb;--font:'Poppins',sans-serif}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);color:var(--text);background:var(--bg)}
+        .header{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--border);height:80px;display:flex;align-items:center;justify-content:center;padding:0 16px}
+        .header__container{width:100%;max-width:1160px;display:flex;align-items:center;justify-content:space-between}
+        .header__logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)}
+        .header__logo-icon{width:40px;height:40px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .header__logo-text{font-size:24px;font-weight:600}
+        .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none;gap:8px}
+        .btn--primary{background:var(--primary);color:#fff}
+        .btn--large{padding:16px 32px;font-size:16px}
+        .hero{padding:80px 16px;text-align:center;max-width:800px;margin:0 auto}
+        .hero__icon{width:80px;height:80px;background:rgba(218,45,38,0.1);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+        .hero__icon svg{width:40px;height:40px;color:var(--primary)}
+        .hero__title{font-size:48px;font-weight:700;margin-bottom:16px}
+        .hero__subtitle{font-size:18px;color:var(--text-gray);margin-bottom:32px}
+        .upload-box{max-width:600px;margin:0 auto;background:var(--bg);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.1);padding:32px}
+        .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:48px;text-align:center;cursor:pointer}
+        .upload-zone:hover{border-color:var(--primary);background:rgba(218,45,38,0.02)}
+        .features{padding:80px 16px;background:var(--bg-gray)}
+        .features__container{max-width:1160px;margin:0 auto}
+        .features__title{font-size:32px;font-weight:600;text-align:center;margin-bottom:48px}
+        .features__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+        .feature{text-align:center;padding:32px}
+        .feature__icon{width:48px;height:48px;background:var(--bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        .feature__icon svg{width:24px;height:24px;color:var(--primary)}
+        .feature__title{font-size:18px;font-weight:600;margin-bottom:8px}
+        .feature__desc{font-size:14px;color:var(--text-gray)}
+        .loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.9);z-index:9998;align-items:center;justify-content:center}
+        .loading--active{display:flex}
+        .loading__spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @media(max-width:768px){.hero__title{font-size:32px}.features__grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header__container">
+            <a href="/" class="header__logo"><div class="header__logo-icon">L</div><span class="header__logo-text">Luleit</span></a>
+            <a href="/" class="btn btn--primary">All Tools</a>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="hero__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        </div>
+        <h1 class="hero__title">Sign PDF Online</h1>
+        <p class="hero__subtitle">Add your electronic signature to PDF documents. Draw, type, or upload your signature.</p>
+        
+        <div class="upload-box">
+            <div class="upload-zone" id="uploadZone">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DA2D26" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p style="margin-top:16px;font-weight:500">Drop your PDF here or click to browse</p>
+                <p style="margin-top:8px;font-size:13px;color:#6b7280">Upload your PDF to add a signature</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display:none">
+            </div>
+        </div>
+    </section>
+    
+    <section class="features">
+        <div class="features__container">
+            <h2 class="features__title">Easy E-Signature Features</h2>
+            <div class="features__grid">
+                <div class="feature">
+                    <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></div>
+                    <h3 class="feature__title">Draw Signature</h3>
+                    <p class="feature__desc">Draw your signature using your mouse or touchscreen.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>
+                    <h3 class="feature__title">Type Signature</h3>
+                    <p class="feature__desc">Type your name and choose from signature-style fonts.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+                    <h3 class="feature__title">Upload Image</h3>
+                    <p class="feature__desc">Upload an image of your signature to add to PDFs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="loading" id="loading"><div class="loading__spinner"></div></div>
+    
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = '#DA2D26'; });
+        uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = '#e5e7eb'; });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = '#e5e7eb';
+            if (e.dataTransfer.files[0]?.type === 'application/pdf') handleFile(e.dataTransfer.files[0]);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+        
+        async function handleFile(file) {
+            loading.classList.add('loading--active');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.fileId) {
+                    sessionStorage.setItem('fileId', data.fileId);
+                    sessionStorage.setItem('fileData', JSON.stringify(data));
+                    window.location.href = '/edit';
+                }
+            } catch (error) {
+                alert('Upload failed. Please try again.');
+            }
+            
+            loading.classList.remove('loading--active');
+        }
+    </script>
+</body>
+</html>

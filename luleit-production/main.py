@@ -16,6 +16,11 @@ import base64
 from datetime import datetime, timedelta
 from typing import Optional
 import httpx
+from pathlib import Path
+
+# Get the directory where this script is located
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 app = FastAPI(title="Luleit PDF Editor", version="2.0.0")
 
@@ -379,32 +384,32 @@ async def calculate_dynamic_price(
 @app.get("/", response_class=HTMLResponse)
 async def home():
     """Serve the landing page"""
-    with open("templates/index.html", "r") as f:
+    with open(TEMPLATES_DIR / "index.html", "r") as f:
         return f.read()
 
 @app.get("/edit", response_class=HTMLResponse)
 @app.get("/editor", response_class=HTMLResponse)
 async def editor():
     """Serve the editor page"""
-    with open("templates/editor.html", "r") as f:
+    with open(TEMPLATES_DIR / "editor.html", "r") as f:
         return f.read()
 
 @app.get("/merge", response_class=HTMLResponse)
 async def merge_page():
     """Serve merge PDF page"""
-    with open("templates/merge.html", "r") as f:
+    with open(TEMPLATES_DIR / "merge.html", "r") as f:
         return f.read()
 
 @app.get("/compress", response_class=HTMLResponse)
 async def compress_page():
     """Serve compress PDF page"""
-    with open("templates/compress.html", "r") as f:
+    with open(TEMPLATES_DIR / "compress.html", "r") as f:
         return f.read()
 
 @app.get("/sign", response_class=HTMLResponse)
 async def sign_page():
     """Serve sign PDF page"""
-    with open("templates/sign.html", "r") as f:
+    with open(TEMPLATES_DIR / "sign.html", "r") as f:
         return f.read()
 
 @app.get("/api/health")
@@ -727,9 +732,9 @@ async def download_pdf(token: str):
     )
 
 # Mount static files (only if directory exists)
-import os
-if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+static_dir = BASE_DIR / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 if __name__ == "__main__":
     import uvicorn

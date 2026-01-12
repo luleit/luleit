@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit PDF Online - Luleit PDF Editor</title>
+    <meta name="description" content="Edit your PDF files online. Add text, images, signatures, and annotations. Free and easy to use.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XLD83G2Q6"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-7XLD83G2Q6');</script>
+    <style>
+        :root{--primary:#DA2D26;--primary-hover:#c42620;--text:#1a1a1a;--text-gray:#6b7280;--text-light:#9ca3af;--bg:#fff;--bg-gray:#f9fafb;--bg-dark:#111827;--border:#e5e7eb;--shadow:0 4px 6px -1px rgba(0,0,0,0.1);--font:'Poppins',sans-serif}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--font);color:var(--text);background:var(--bg-gray);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+        
+        /* Header */
+        .header{background:var(--bg);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0}
+        .header__left{display:flex;align-items:center;gap:16px}
+        .header__logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)}
+        .header__logo-icon{width:32px;height:32px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+        .header__logo-text{font-size:18px;font-weight:600}
+        .header__filename{font-size:14px;color:var(--text-gray);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .header__center{display:flex;align-items:center;gap:8px}
+        .header__right{display:flex;align-items:center;gap:12px}
+        
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;font-family:var(--font);text-decoration:none;cursor:pointer;transition:all .2s;border:none;gap:6px}
+        .btn--primary{background:var(--primary);color:#fff}
+        .btn--primary:hover{background:var(--primary-hover)}
+        .btn--secondary{background:var(--bg-gray);color:var(--text);border:1px solid var(--border)}
+        .btn--secondary:hover{background:var(--border)}
+        .btn--icon{padding:8px;background:transparent;border:none}
+        .btn--icon:hover{background:var(--bg-gray)}
+        .btn--icon svg{width:20px;height:20px}
+        .btn:disabled{opacity:0.5;cursor:not-allowed}
+        
+        /* Main Layout */
+        .main{display:flex;flex:1;overflow:hidden}
+        
+        /* Toolbar */
+        .toolbar{width:64px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 8px;gap:4px;flex-shrink:0}
+        .toolbar__btn{width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;cursor:pointer;color:var(--text-gray);font-size:10px;gap:4px;transition:all .2s}
+        .toolbar__btn:hover{background:var(--bg-gray);color:var(--text)}
+        .toolbar__btn--active{background:rgba(218,45,38,0.1);color:var(--primary)}
+        .toolbar__btn svg{width:20px;height:20px}
+        .toolbar__divider{width:32px;height:1px;background:var(--border);margin:8px 0}
+        
+        /* Sidebar (Thumbnails) */
+        .sidebar{width:180px;background:var(--bg);border-right:1px solid var(--border);overflow-y:auto;padding:16px;flex-shrink:0}
+        .sidebar__title{font-size:12px;font-weight:600;color:var(--text-gray);text-transform:uppercase;margin-bottom:12px}
+        .thumbnail{border:2px solid transparent;border-radius:8px;overflow:hidden;cursor:pointer;margin-bottom:12px;transition:all .2s}
+        .thumbnail:hover{border-color:var(--border)}
+        .thumbnail--active{border-color:var(--primary)}
+        .thumbnail img{width:100%;display:block}
+        .thumbnail__label{text-align:center;font-size:11px;color:var(--text-gray);padding:4px}
+        
+        /* Canvas Area */
+        .canvas-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:var(--bg-gray)}
+        .canvas-container{position:relative;background:var(--bg);box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;overflow:hidden}
+        .canvas-container img{display:block;max-width:100%;height:auto}
+        
+        /* Edits Layer */
+        .edits-layer{position:absolute;inset:0;pointer-events:none}
+        .edit-item{position:absolute;pointer-events:auto;cursor:move}
+        .edit-item--text{padding:4px 8px;min-width:20px;outline:none;border:1px dashed transparent}
+        .edit-item--text:focus{border-color:var(--primary)}
+        .edit-item--image{border:2px solid var(--primary);resize:both;overflow:hidden}
+        .edit-item--image img{width:100%;height:100%;object-fit:contain}
+        
+        /* Properties Panel */
+        .properties{width:280px;background:var(--bg);border-left:1px solid var(--border);padding:16px;overflow-y:auto;flex-shrink:0}
+        .properties__title{font-size:14px;font-weight:600;margin-bottom:16px}
+        .properties__group{margin-bottom:20px}
+        .properties__label{font-size:12px;color:var(--text-gray);margin-bottom:6px;display:block}
+        .properties__input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:var(--font)}
+        .properties__input:focus{outline:none;border-color:var(--primary)}
+        .properties__row{display:flex;gap:8px}
+        .properties__row > *{flex:1}
+        .color-picker{display:flex;align-items:center;gap:8px}
+        .color-picker input[type="color"]{width:32px;height:32px;border:none;border-radius:4px;cursor:pointer}
+        
+        /* Zoom Controls */
+        .zoom-controls{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px}
+        .zoom-controls__btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;border-radius:4px}
+        .zoom-controls__btn:hover{background:var(--bg-gray)}
+        .zoom-controls__value{font-size:12px;min-width:50px;text-align:center}
+        
+        /* Modal */
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
+        .modal--active{display:flex}
+        .modal__content{background:var(--bg);border-radius:16px;padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto}
+        .modal__title{font-size:24px;font-weight:600;margin-bottom:8px}
+        .modal__subtitle{font-size:14px;color:var(--text-gray);margin-bottom:24px}
+        .modal__price{font-size:48px;font-weight:700;color:var(--primary);margin-bottom:8px}
+        .modal__price-note{font-size:12px;color:var(--text-gray);margin-bottom:24px}
+        .modal__features{list-style:none;margin-bottom:24px}
+        .modal__features li{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:8px}
+        .modal__features li svg{width:16px;height:16px;color:#10b981}
+        .modal__actions{display:flex;flex-direction:column;gap:12px}
+        .modal__close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;padding:8px}
+        #card-element{padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:16px}
+        #card-errors{color:#ef4444;font-size:12px;margin-bottom:16px}
+        
+        /* Upload State */
+        .upload-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px}
+        .upload-state__icon{width:80px;height:80px;background:var(--bg-gray);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+        .upload-state__icon svg{width:40px;height:40px;color:var(--primary)}
+        .upload-state__title{font-size:24px;font-weight:600;margin-bottom:8px}
+        .upload-state__subtitle{font-size:14px;color:var(--text-gray);margin-bottom:24px}
+        
+        /* Toast */
+        .toast{position:fixed;bottom:24px;right:24px;padding:16px 24px;background:var(--text);color:#fff;border-radius:8px;box-shadow:var(--shadow);z-index:9999;animation:slideIn .3s ease}
+        .toast--success{background:#10b981}
+        .toast--error{background:#ef4444}
+        @keyframes slideIn{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+        
+        /* Loading */
+        .loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.9);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+        .loading--active{display:flex}
+        .loading__spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+        .loading__text{font-size:14px;color:var(--text-gray)}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        
+        @media(max-width:768px){
+            .sidebar,.properties{display:none}
+            .toolbar{width:56px}
+            .toolbar__btn{width:40px;height:40px}
+            .toolbar__btn span{display:none}
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header__left">
+            <a href="/" class="header__logo">
+                <div class="header__logo-icon">L</div>
+                <span class="header__logo-text">Luleit</span>
+            </a>
+            <span class="header__filename" id="fileName">No file loaded</span>
+        </div>
+        <div class="header__center">
+            <div class="zoom-controls">
+                <button class="zoom-controls__btn" id="zoomOut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                <span class="zoom-controls__value" id="zoomValue">100%</span>
+                <button class="zoom-controls__btn" id="zoomIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+        </div>
+        <div class="header__right">
+            <button class="btn btn--icon" id="undoBtn" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+            <button class="btn btn--icon" id="redoBtn" title="Redo (Ctrl+Y)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+            <button class="btn btn--secondary" id="saveBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save</button>
+            <button class="btn btn--primary" id="downloadBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download</button>
+        </div>
+    </header>
+    
+    <!-- Main -->
+    <main class="main">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="toolbar__btn toolbar__btn--active" data-tool="select" title="Select">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+                <span>Select</span>
+            </button>
+            <button class="toolbar__btn" data-tool="text" title="Add Text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                <span>Text</span>
+            </button>
+            <button class="toolbar__btn" data-tool="image" title="Add Image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Image</span>
+            </button>
+            <button class="toolbar__btn" data-tool="draw" title="Draw">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                <span>Draw</span>
+            </button>
+            <button class="toolbar__btn" data-tool="highlight" title="Highlight">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+                <span>Highlight</span>
+            </button>
+            <div class="toolbar__divider"></div>
+            <button class="toolbar__btn" data-tool="signature" title="Signature">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 19.5v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8.5L18 5.5"/><polyline points="14 2 14 8 20 8"/><path d="M12 18s-4-3-4-6c0-2.2 1.8-4 4-4s4 1.8 4 4c0 3-4 6-4 6z"/></svg>
+                <span>Sign</span>
+            </button>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar__title">Pages</div>
+            <div id="thumbnails"></div>
+        </div>
+        
+        <!-- Canvas Area -->
+        <div class="canvas-area" id="canvasArea">
+            <div class="upload-state" id="uploadState">
+                <div class="upload-state__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h2 class="upload-state__title">Upload a PDF to edit</h2>
+                <p class="upload-state__subtitle">Drag and drop or click to browse</p>
+                <button class="btn btn--primary btn--large" id="uploadBtn">Select PDF File</button>
+                <input type="file" id="fileInput" accept=".pdf" style="display:none">
+            </div>
+            <div class="canvas-container" id="canvasContainer" style="display:none">
+                <img id="pageImage" src="" alt="PDF Page">
+                <div class="edits-layer" id="editsLayer"></div>
+            </div>
+        </div>
+        
+        <!-- Properties Panel -->
+        <div class="properties" id="properties">
+            <div class="properties__title">Properties</div>
+            <div class="properties__group">
+                <label class="properties__label">Font Size</label>
+                <input type="number" class="properties__input" id="fontSize" value="16" min="8" max="72">
+            </div>
+            <div class="properties__group">
+                <label class="properties__label">Color</label>
+                <div class="color-picker">
+                    <input type="color" id="textColor" value="#000000">
+                    <input type="text" class="properties__input" id="textColorHex" value="#000000">
+                </div>
+            </div>
+            <div class="properties__group">
+                <label class="properties__label">Font Family</label>
+                <select class="properties__input" id="fontFamily">
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times-Roman">Times New Roman</option>
+                    <option value="Courier">Courier</option>
+                    <option value="Arial">Arial</option>
+                </select>
+            </div>
+            <div class="properties__group">
+                <label class="properties__label">Stroke Width</label>
+                <input type="range" id="strokeWidth" min="1" max="10" value="2" style="width:100%">
+            </div>
+        </div>
+    </main>
+    
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal__content">
+            <h2 class="modal__title">Download Your PDF</h2>
+            <p class="modal__subtitle">One-time payment for this document</p>
+            <div class="modal__price" id="modalPrice">$2.99</div>
+            <p class="modal__price-note">Price adjusted for your region</p>
+            <ul class="modal__features">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Full quality PDF download</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> All edits preserved</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> No watermarks</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 24-hour download link</li>
+            </ul>
+            <div id="card-element"></div>
+            <div id="card-errors"></div>
+            <div class="modal__actions">
+                <button class="btn btn--primary btn--large" id="payBtn" style="width:100%">Pay & Download</button>
+                <button class="btn btn--secondary" id="cancelPayBtn" style="width:100%">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="loading__spinner"></div>
+        <div class="loading__text" id="loadingText">Processing...</div>
+    </div>
+    
+    <script>
+        // State
+        let fileId = null;
+        let fileData = null;
+        let currentPage = 0;
+        let currentTool = 'select';
+        let edits = [];
+        let undoStack = [];
+        let redoStack = [];
+        let zoom = 100;
+        let stripe = null;
+        let cardElement = null;
+        let clientSecret = null;
+        let startTime = Date.now();
+        let editCount = 0;
+        let featuresUsed = new Set();
+        
+        // DOM Elements
+        const uploadState = document.getElementById('uploadState');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const pageImage = document.getElementById('pageImage');
+        const editsLayer = document.getElementById('editsLayer');
+        const thumbnails = document.getElementById('thumbnails');
+        const fileName = document.getElementById('fileName');
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        const paymentModal = document.getElementById('paymentModal');
+        
+        // Initialize
+        async function init() {
+            // Check for stored file data
+            const storedData = sessionStorage.getItem('fileData');
+            if (storedData) {
+                fileData = JSON.parse(storedData);
+                fileId = sessionStorage.getItem('fileId');
+                loadPDF(fileData);
+            }
+            
+            // Initialize Stripe
+            const config = await fetch('/api/config').then(r => r.json());
+            if (config.stripe_enabled && config.stripe_publishable_key) {
+                stripe = Stripe(config.stripe_publishable_key);
+                const elements = stripe.elements();
+                cardElement = elements.create('card');
+                cardElement.mount('#card-element');
+                cardElement.on('change', (e) => {
+                    document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
+                });
+            }
+            
+            // Setup event listeners
+            setupEventListeners();
+        }
+        
+        function setupEventListeners() {
+            // File upload
+            document.getElementById('uploadBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            
+            // Drag and drop
+            const canvasArea = document.getElementById('canvasArea');
+            canvasArea.addEventListener('dragover', (e) => { e.preventDefault(); });
+            canvasArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type === 'application/pdf') {
+                    uploadFile(files[0]);
+                }
+            });
+            
+            // Toolbar
+            document.querySelectorAll('.toolbar__btn[data-tool]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.toolbar__btn').forEach(b => b.classList.remove('toolbar__btn--active'));
+                    btn.classList.add('toolbar__btn--active');
+                    currentTool = btn.dataset.tool;
+                    
+                    if (currentTool === 'image') {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => addImage(e.target.files[0]);
+                        input.click();
+                    } else if (currentTool === 'signature') {
+                        createSignaturePad();
+                    }
+                });
+            });
+            
+            // Canvas click for adding elements
+            editsLayer.addEventListener('click', handleCanvasClick);
+            
+            // Zoom
+            document.getElementById('zoomIn').addEventListener('click', () => setZoom(zoom + 25));
+            document.getElementById('zoomOut').addEventListener('click', () => setZoom(zoom - 25));
+            
+            // Undo/Redo
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('redoBtn').addEventListener('click', redo);
+            
+            // Save/Download
+            document.getElementById('saveBtn').addEventListener('click', savePDF);
+            document.getElementById('downloadBtn').addEventListener('click', initiateDownload);
+            
+            // Payment modal
+            document.getElementById('cancelPayBtn').addEventListener('click', () => paymentModal.classList.remove('modal--active'));
+            document.getElementById('payBtn').addEventListener('click', processPayment);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') { e.preventDefault(); undo(); }
+                    if (e.key === 'y') { e.preventDefault(); redo(); }
+                    if (e.key === 's') { e.preventDefault(); savePDF(); }
+                }
+            });
+            
+            // Properties
+            document.getElementById('textColor').addEventListener('change', (e) => {
+                document.getElementById('textColorHex').value = e.target.value;
+            });
+        }
+        
+        async function handleFileUpload(e) {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+            }
+        }
+        
+        async function uploadFile(file) {
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('File too large. Maximum size is 50MB.', 'error');
+                return;
+            }
+            
+            showLoading('Uploading PDF...');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.fileId) {
+                    fileId = data.fileId;
+                    fileData = data;
+                    sessionStorage.setItem('fileId', fileId);
+                    sessionStorage.setItem('fileData', JSON.stringify(data));
+                    loadPDF(data);
+                    trackEvent('pdf_upload', { page_count: data.pageCount });
+                } else {
+                    showToast('Upload failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showToast('Upload failed. Please try again.', 'error');
+            }
+            
+            hideLoading();
+        }
+        
+        function loadPDF(data) {
+            uploadState.style.display = 'none';
+            canvasContainer.style.display = 'block';
+            
+            fileName.textContent = data.fileName;
+            
+            // Load first page
+            loadPage(0);
+            
+            // Generate thumbnails
+            thumbnails.innerHTML = '';
+            data.pages.forEach((page, i) => {
+                const thumb = document.createElement('div');
+                thumb.className = `thumbnail ${i === 0 ? 'thumbnail--active' : ''}`;
+                thumb.innerHTML = `<img src="${page.image}" alt="Page ${i + 1}"><div class="thumbnail__label">Page ${i + 1}</div>`;
+                thumb.addEventListener('click', () => {
+                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('thumbnail--active'));
+                    thumb.classList.add('thumbnail--active');
+                    loadPage(i);
+                });
+                thumbnails.appendChild(thumb);
+            });
+        }
+        
+        function loadPage(pageNum) {
+            currentPage = pageNum;
+            const page = fileData.pages[pageNum];
+            pageImage.src = page.image;
+            
+            // Render edits for this page
+            renderEdits();
+        }
+        
+        function handleCanvasClick(e) {
+            if (currentTool === 'select') return;
+            
+            const rect = editsLayer.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / (zoom / 100);
+            const y = (e.clientY - rect.top) / (zoom / 100);
+            
+            if (currentTool === 'text') {
+                addText(x, y);
+            } else if (currentTool === 'highlight') {
+                addHighlight(x, y);
+            }
+        }
+        
+        function addText(x, y) {
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            const color = document.getElementById('textColor').value;
+            
+            const edit = {
+                id: Date.now(),
+                type: 'text',
+                page: currentPage + 1,
+                x, y,
+                text: 'Type here...',
+                fontSize,
+                color,
+                fontFamily: document.getElementById('fontFamily').value
+            };
+            
+            edits.push(edit);
+            editCount++;
+            featuresUsed.add('text');
+            saveToUndo();
+            renderEdits();
+            
+            // Focus on the new text
+            setTimeout(() => {
+                const el = document.querySelector(`[data-id="${edit.id}"]`);
+                if (el) {
+                    el.focus();
+                    document.execCommand('selectAll', false, null);
+                }
+            }, 50);
+        }
+        
+        function addImage(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const edit = {
+                    id: Date.now(),
+                    type: 'image',
+                    page: currentPage + 1,
+                    x: 100,
+                    y: 100,
+                    width: 150,
+                    height: 150,
+                    data: e.target.result
+                };
+                
+                edits.push(edit);
+                editCount++;
+                featuresUsed.add('image');
+                saveToUndo();
+                renderEdits();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function addHighlight(x, y) {
+            const edit = {
+                id: Date.now(),
+                type: 'highlight',
+                page: currentPage + 1,
+                x, y,
+                width: 100,
+                height: 20,
+                color: '#ffff00'
+            };
+            
+            edits.push(edit);
+            editCount++;
+            saveToUndo();
+            renderEdits();
+        }
+        
+        function createSignaturePad() {
+            featuresUsed.add('signature');
+            // Simplified: Just add text for now
+            addText(100, 100);
+        }
+        
+        function renderEdits() {
+            const pageEdits = edits.filter(e => e.page === currentPage + 1);
+            
+            editsLayer.innerHTML = '';
+            
+            pageEdits.forEach(edit => {
+                const el = document.createElement('div');
+                el.className = `edit-item edit-item--${edit.type}`;
+                el.dataset.id = edit.id;
+                el.style.left = `${edit.x}px`;
+                el.style.top = `${edit.y}px`;
+                
+                if (edit.type === 'text') {
+                    el.contentEditable = true;
+                    el.textContent = edit.text;
+                    el.style.fontSize = `${edit.fontSize}px`;
+                    el.style.color = edit.color;
+                    el.style.fontFamily = edit.fontFamily;
+                    
+                    el.addEventListener('blur', () => {
+                        edit.text = el.textContent;
+                    });
+                } else if (edit.type === 'image') {
+                    el.style.width = `${edit.width}px`;
+                    el.style.height = `${edit.height}px`;
+                    el.innerHTML = `<img src="${edit.data}" alt="Added image">`;
+                } else if (edit.type === 'highlight') {
+                    el.style.width = `${edit.width}px`;
+                    el.style.height = `${edit.height}px`;
+                    el.style.background = 'rgba(255, 255, 0, 0.4)';
+                }
+                
+                // Make draggable
+                makeDraggable(el, edit);
+                
+                editsLayer.appendChild(el);
+            });
+        }
+        
+        function makeDraggable(el, edit) {
+            let isDragging = false;
+            let startX, startY, origX, origY;
+            
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                origX = edit.x;
+                origY = edit.y;
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = (e.clientX - startX) / (zoom / 100);
+                const dy = (e.clientY - startY) / (zoom / 100);
+                edit.x = origX + dx;
+                edit.y = origY + dy;
+                el.style.left = `${edit.x}px`;
+                el.style.top = `${edit.y}px`;
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    saveToUndo();
+                }
+            });
+        }
+        
+        function setZoom(value) {
+            zoom = Math.max(25, Math.min(200, value));
+            document.getElementById('zoomValue').textContent = `${zoom}%`;
+            canvasContainer.style.transform = `scale(${zoom / 100})`;
+            canvasContainer.style.transformOrigin = 'top center';
+        }
+        
+        function saveToUndo() {
+            undoStack.push(JSON.stringify(edits));
+            redoStack = [];
+        }
+        
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push(JSON.stringify(edits));
+            edits = JSON.parse(undoStack.pop());
+            renderEdits();
+        }
+        
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push(JSON.stringify(edits));
+            edits = JSON.parse(redoStack.pop());
+            renderEdits();
+        }
+        
+        async function savePDF() {
+            if (!fileId) return;
+            
+            showLoading('Saving PDF...');
+            
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('edits', JSON.stringify(edits));
+            
+            try {
+                const response = await fetch('/api/save', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.status === 'saved') {
+                    showToast('PDF saved successfully!', 'success');
+                    trackEvent('pdf_save', { edit_count: editCount });
+                } else {
+                    showToast('Save failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showToast('Save failed. Please try again.', 'error');
+            }
+            
+            hideLoading();
+        }
+        
+        async function initiateDownload() {
+            if (!fileId) return;
+            
+            // First save
+            await savePDF();
+            
+            // Get price
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            
+            const formData = new FormData();
+            formData.append('edit_count', editCount);
+            formData.append('time_spent', timeSpent);
+            formData.append('features', JSON.stringify([...featuresUsed]));
+            
+            const priceData = await fetch('/api/price', { method: 'POST', body: formData }).then(r => r.json());
+            
+            document.getElementById('modalPrice').textContent = `$${priceData.price.toFixed(2)}`;
+            
+            // If stripe not enabled, skip payment
+            if (!stripe) {
+                const tokenResponse = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    body: new FormData().append('file_id', fileId)
+                }).then(r => r.json());
+                
+                window.location.href = `/api/download/${tokenResponse.token}`;
+                return;
+            }
+            
+            // Get payment intent
+            const paymentFormData = new FormData();
+            paymentFormData.append('file_id', fileId);
+            paymentFormData.append('edit_count', editCount);
+            paymentFormData.append('time_spent', timeSpent);
+            paymentFormData.append('features', JSON.stringify([...featuresUsed]));
+            
+            const paymentData = await fetch('/api/create-payment', { method: 'POST', body: paymentFormData }).then(r => r.json());
+            clientSecret = paymentData.clientSecret;
+            
+            paymentModal.classList.add('modal--active');
+            trackEvent('payment_modal_open', { price: priceData.price });
+        }
+        
+        async function processPayment() {
+            if (!stripe || !clientSecret) return;
+            
+            document.getElementById('payBtn').disabled = true;
+            document.getElementById('payBtn').textContent = 'Processing...';
+            
+            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: { card: cardElement }
+            });
+            
+            if (error) {
+                document.getElementById('card-errors').textContent = error.message;
+                document.getElementById('payBtn').disabled = false;
+                document.getElementById('payBtn').textContent = 'Pay & Download';
+                trackEvent('payment_error', { error: error.message });
+            } else if (paymentIntent.status === 'succeeded') {
+                // Get download token
+                const formData = new FormData();
+                formData.append('payment_intent_id', paymentIntent.id);
+                formData.append('file_id', fileId);
+                
+                const tokenResponse = await fetch('/api/verify-payment', { method: 'POST', body: formData }).then(r => r.json());
+                
+                paymentModal.classList.remove('modal--active');
+                trackEvent('payment_success', { amount: paymentIntent.amount / 100 });
+                
+                window.location.href = `/api/download/${tokenResponse.token}`;
+            }
+        }
+        
+        function showLoading(text = 'Processing...') {
+            loadingText.textContent = text;
+            loading.classList.add('loading--active');
+        }
+        
+        function hideLoading() {
+            loading.classList.remove('loading--active');
+        }
+        
+        function showToast(message, type = 'success') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function trackEvent(name, params = {}) {
+            if (typeof gtag === 'function') gtag('event', name, params);
+        }
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
