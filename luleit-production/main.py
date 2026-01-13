@@ -719,6 +719,207 @@ async def extract_all_text(file_id: str = Form(...)):
 
 
 # ============================================================================
+# LIBREOFFICE CONVERSION (Full Document Editing)
+# ============================================================================
+
+import subprocess
+import shutil
+
+def check_libreoffice():
+    """Check if LibreOffice is installed"""
+    return shutil.which("libreoffice") or shutil.which("soffice")
+
+
+@app.get("/api/conversion-available")
+async def conversion_available():
+    """Check if PDF<->DOCX conversion is available"""
+    lo_path = check_libreoffice()
+    return {
+        "available": lo_path is not None,
+        "path": lo_path,
+        "message": "LibreOffice is available for document conversion" if lo_path else "LibreOffice not installed - install with: apt-get install libreoffice"
+    }
+
+
+@app.post("/api/convert/pdf-to-docx")
+async def convert_pdf_to_docx(file_id: str = Form(...)):
+    """
+    Convert PDF to DOCX for full text editing with reflow.
+    This uses LibreOffice headless mode.
+    """
+    
+    if not check_libreoffice():
+        raise HTTPException(
+            503, 
+            "LibreOffice not installed. Install with: apt-get install libreoffice-writer"
+        )
+    
+    if file_id not in pdf_storage:
+        raise HTTPException(404, "File not found")
+    
+    try:
+        # Save PDF to temp file
+        pdf_path = OUTPUT_DIR / f"{file_id}.pdf"
+        with open(pdf_path, "wb") as f:
+            f.write(pdf_storage[file_id])
+        
+        # Convert using LibreOffice
+        # --headless: no GUI
+        # --convert-to docx: output format
+        # --outdir: output directory
+        result = subprocess.run(
+            [
+                "libreoffice",
+                "--headless",
+                "--infilter=writer_pdf_import",  # Use PDF import filter
+                "--convert-to", "docx",
+                "--outdir", str(OUTPUT_DIR),
+                str(pdf_path)
+            ],
+            capture_output=True,
+            timeout=60,  # 60 second timeout
+        )
+        
+        docx_path = OUTPUT_DIR / f"{file_id}.docx"
+        
+        if not docx_path.exists():
+            raise HTTPException(500, f"Conversion failed: {result.stderr.decode()}")
+        
+        # Generate download token
+        token = str(uuid.uuid4())
+        download_tokens[token] = {
+            "file_id": file_id,
+            "file_path": str(docx_path),
+            "file_type": "docx",
+            "expires": datetime.now() + timedelta(hours=24),
+        }
+        
+        return {
+            "success": True,
+            "message": "PDF converted to DOCX successfully",
+            "downloadToken": token,
+            "downloadUrl": f"/api/download-converted/{token}",
+            "fileSize": docx_path.stat().st_size,
+        }
+        
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "Conversion timed out - file may be too large")
+    except Exception as e:
+        raise HTTPException(500, f"Conversion error: {str(e)}")
+
+
+@app.post("/api/convert/docx-to-pdf")
+async def convert_docx_to_pdf(file: UploadFile = File(...)):
+    """
+    Convert edited DOCX back to PDF.
+    User uploads their edited DOCX, gets a PDF back.
+    """
+    
+    if not check_libreoffice():
+        raise HTTPException(503, "LibreOffice not installed")
+    
+    if not file.filename.lower().endswith(('.docx', '.doc', '.odt')):
+        raise HTTPException(400, "Only DOCX, DOC, or ODT files allowed")
+    
+    try:
+        content = await file.read()
+        file_id = str(uuid.uuid4())
+        
+        # Save uploaded DOCX
+        docx_path = OUTPUT_DIR / f"{file_id}.docx"
+        with open(docx_path, "wb") as f:
+            f.write(content)
+        
+        # Convert to PDF using LibreOffice
+        result = subprocess.run(
+            [
+                "libreoffice",
+                "--headless",
+                "--convert-to", "pdf",
+                "--outdir", str(OUTPUT_DIR),
+                str(docx_path)
+            ],
+            capture_output=True,
+            timeout=60,
+        )
+        
+        pdf_path = OUTPUT_DIR / f"{file_id}.pdf"
+        
+        if not pdf_path.exists():
+            raise HTTPException(500, f"Conversion failed: {result.stderr.decode()}")
+        
+        # Read and store the PDF
+        with open(pdf_path, "rb") as f:
+            pdf_content = f.read()
+        
+        pdf_storage[file_id] = pdf_content
+        
+        # Generate download token
+        token = str(uuid.uuid4())
+        download_tokens[token] = {
+            "file_id": file_id,
+            "file_path": str(pdf_path),
+            "file_type": "pdf",
+            "expires": datetime.now() + timedelta(hours=24),
+        }
+        
+        return {
+            "success": True,
+            "message": "DOCX converted to PDF successfully",
+            "fileId": file_id,
+            "downloadToken": token,
+            "downloadUrl": f"/api/download-converted/{token}",
+            "fileSize": len(pdf_content),
+        }
+        
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "Conversion timed out")
+    except Exception as e:
+        raise HTTPException(500, f"Conversion error: {str(e)}")
+
+
+@app.get("/api/download-converted/{token}")
+async def download_converted(token: str):
+    """Download converted file (DOCX or PDF)"""
+    
+    if token not in download_tokens:
+        raise HTTPException(403, "Invalid or expired token")
+    
+    token_data = download_tokens[token]
+    
+    if datetime.now() > token_data["expires"]:
+        del download_tokens[token]
+        raise HTTPException(403, "Token expired")
+    
+    file_path = Path(token_data["file_path"])
+    
+    if not file_path.exists():
+        raise HTTPException(404, "File not found")
+    
+    file_type = token_data.get("file_type", "pdf")
+    
+    if file_type == "docx":
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        filename = "document.docx"
+    else:
+        media_type = "application/pdf"
+        filename = "document.pdf"
+    
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=filename
+    )
+
+
+@app.get("/convert", response_class=HTMLResponse)
+async def convert_page():
+    """Page for PDF<->DOCX conversion"""
+    with open(TEMPLATES_DIR / "convert.html", "r") as f:
+        return f.read()
+
+
+# ============================================================================
 # STATIC FILES & STARTUP
 # ============================================================================
 
