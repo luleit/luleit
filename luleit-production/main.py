@@ -441,6 +441,287 @@ async def download_pdf(token: str):
     raise HTTPException(404, "File not found")
 
 
+# ============================================================================
+# TEXT EDITING FEATURES (Edit Existing Text)
+# ============================================================================
+
+@app.post("/api/get-text-blocks/{file_id}/{page_num}")
+async def get_text_blocks(file_id: str, page_num: int):
+    """
+    Extract text blocks with precise positions for inline editing.
+    Returns text spans with exact coordinates, font info, and content.
+    """
+    
+    if file_id not in pdf_storage:
+        raise HTTPException(404, "File not found")
+    
+    try:
+        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        
+        if page_num < 1 or page_num > len(doc):
+            raise HTTPException(400, "Invalid page number")
+        
+        page = doc[page_num - 1]
+        
+        # Get detailed text with positions using "dict" format
+        text_dict = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE)
+        
+        blocks = []
+        block_id = 0
+        
+        for block in text_dict.get("blocks", []):
+            if block.get("type") != 0:  # Skip image blocks
+                continue
+            
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    text = span.get("text", "").strip()
+                    if not text:
+                        continue
+                    
+                    bbox = span.get("bbox", [0, 0, 0, 0])
+                    
+                    # Convert color from integer to hex
+                    color_int = span.get("color", 0)
+                    if isinstance(color_int, int):
+                        color_hex = "#{:06x}".format(color_int)
+                    else:
+                        color_hex = "#000000"
+                    
+                    blocks.append({
+                        "id": f"txt_{block_id}",
+                        "text": text,
+                        "x": bbox[0],
+                        "y": bbox[1],
+                        "width": bbox[2] - bbox[0],
+                        "height": bbox[3] - bbox[1],
+                        "fontSize": span.get("size", 12),
+                        "fontName": span.get("font", ""),
+                        "color": color_hex,
+                        "colorInt": color_int,
+                        "flags": span.get("flags", 0),  # Bold=16, Italic=2
+                    })
+                    block_id += 1
+        
+        doc.close()
+        
+        return {
+            "success": True,
+            "page": page_num,
+            "blocks": blocks,
+            "pageWidth": text_dict.get("width", 612),
+            "pageHeight": text_dict.get("height", 792),
+        }
+        
+    except Exception as e:
+        raise HTTPException(500, f"Error extracting text blocks: {str(e)}")
+
+
+@app.post("/api/replace-text")
+async def replace_text_endpoint(
+    file_id: str = Form(...),
+    replacements: str = Form(...),
+):
+    """
+    Replace existing text by redacting original and inserting new text.
+    
+    replacements: JSON array of objects:
+    {
+        "page": 1,
+        "x": 100,
+        "y": 200,
+        "width": 150,
+        "height": 20,
+        "oldText": "original",
+        "newText": "replacement",
+        "fontSize": 12,
+        "color": "#000000"
+    }
+    """
+    
+    if file_id not in pdf_storage:
+        raise HTTPException(404, "File not found")
+    
+    try:
+        replacements_data = json.loads(replacements)
+        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        
+        for repl in replacements_data:
+            page_num = repl.get("page", 1) - 1
+            if page_num < 0 or page_num >= len(doc):
+                continue
+            
+            page = doc[page_num]
+            
+            x = repl.get("x", 0)
+            y = repl.get("y", 0)
+            width = repl.get("width", 100)
+            height = repl.get("height", 20)
+            new_text = repl.get("newText", "")
+            font_size = repl.get("fontSize", 12)
+            color_str = repl.get("color", "#000000")
+            
+            # Parse hex color to RGB tuple
+            color_str = color_str.lstrip("#")
+            try:
+                r = int(color_str[0:2], 16) / 255
+                g = int(color_str[2:4], 16) / 255
+                b = int(color_str[4:6], 16) / 255
+                color = (r, g, b)
+            except:
+                color = (0, 0, 0)
+            
+            # Create rect with small padding
+            rect = fitz.Rect(x - 1, y - 1, x + width + 1, y + height + 1)
+            
+            # Add white redaction to cover original text
+            page.add_redact_annot(rect, fill=(1, 1, 1))
+            page.apply_redactions()
+            
+            # Insert new text
+            # Baseline is approximately fontSize * 0.8 from top
+            text_y = y + font_size * 0.82
+            
+            page.insert_text(
+                fitz.Point(x, text_y),
+                new_text,
+                fontname="helv",
+                fontsize=font_size,
+                color=color,
+                overlay=True,
+            )
+        
+        # Save
+        output_id = f"{file_id.replace('_edited', '')}_edited"
+        output_buffer = io.BytesIO()
+        doc.save(output_buffer, garbage=4, deflate=True, clean=True)
+        doc.close()
+        
+        content = output_buffer.getvalue()
+        pdf_storage[output_id] = content
+        
+        output_path = OUTPUT_DIR / f"{output_id}.pdf"
+        with open(output_path, "wb") as f:
+            f.write(content)
+        
+        return {
+            "success": True,
+            "fileId": output_id,
+            "replacementCount": len(replacements_data),
+        }
+        
+    except Exception as e:
+        raise HTTPException(500, f"Error replacing text: {str(e)}")
+
+
+@app.post("/api/search-replace")
+async def search_and_replace(
+    file_id: str = Form(...),
+    search: str = Form(...),
+    replace: str = Form(...),
+):
+    """
+    Find and replace text throughout the entire PDF.
+    """
+    
+    if file_id not in pdf_storage:
+        raise HTTPException(404, "File not found")
+    
+    if not search:
+        raise HTTPException(400, "Search text required")
+    
+    try:
+        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        total_replacements = 0
+        
+        for page in doc:
+            # Find all instances of search text
+            instances = page.search_for(search)
+            
+            for rect in instances:
+                # Get text properties from that area
+                text_dict = page.get_text("dict", clip=rect)
+                
+                font_size = 11
+                color = (0, 0, 0)
+                
+                # Extract font info
+                for block in text_dict.get("blocks", []):
+                    if block.get("type") == 0:
+                        for line in block.get("lines", []):
+                            for span in line.get("spans", []):
+                                font_size = span.get("size", 11)
+                                c = span.get("color", 0)
+                                if isinstance(c, int) and c > 0:
+                                    color = (
+                                        ((c >> 16) & 0xFF) / 255,
+                                        ((c >> 8) & 0xFF) / 255,
+                                        (c & 0xFF) / 255
+                                    )
+                                break
+                
+                # Redact original
+                page.add_redact_annot(rect, fill=(1, 1, 1))
+                page.apply_redactions()
+                
+                # Insert replacement
+                page.insert_text(
+                    fitz.Point(rect.x0, rect.y0 + font_size * 0.82),
+                    replace,
+                    fontsize=font_size,
+                    color=color,
+                    fontname="helv",
+                    overlay=True,
+                )
+                total_replacements += 1
+        
+        # Save
+        output_id = f"{file_id.replace('_edited', '')}_edited"
+        output_buffer = io.BytesIO()
+        doc.save(output_buffer, garbage=4, deflate=True, clean=True)
+        doc.close()
+        
+        content = output_buffer.getvalue()
+        pdf_storage[output_id] = content
+        
+        return {
+            "success": True,
+            "fileId": output_id,
+            "replacements": total_replacements,
+        }
+        
+    except Exception as e:
+        raise HTTPException(500, f"Error in search/replace: {str(e)}")
+
+
+@app.post("/api/extract-text")
+async def extract_all_text(file_id: str = Form(...)):
+    """Extract all text from PDF for search functionality"""
+    
+    if file_id not in pdf_storage:
+        raise HTTPException(404, "File not found")
+    
+    try:
+        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        pages = []
+        
+        for i, page in enumerate(doc):
+            pages.append({
+                "page": i + 1,
+                "text": page.get_text("text"),
+            })
+        
+        doc.close()
+        return {"success": True, "pages": pages}
+        
+    except Exception as e:
+        raise HTTPException(500, f"Error: {str(e)}")
+
+
+# ============================================================================
+# STATIC FILES & STARTUP
+# ============================================================================
+
 static_dir = BASE_DIR / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
