@@ -452,11 +452,11 @@ async def get_text_blocks(file_id: str, page_num: int):
     Returns text spans with exact coordinates, font info, and content.
     """
     
-    if file_id not in pdf_storage:
+    if file_id not in file_storage:
         raise HTTPException(404, "File not found")
     
     try:
-        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        doc = fitz.open(stream=file_storage[file_id]["bytes"], filetype="pdf")
         
         if page_num < 1 or page_num > len(doc):
             raise HTTPException(400, "Invalid page number")
@@ -539,12 +539,12 @@ async def replace_text_endpoint(
     }
     """
     
-    if file_id not in pdf_storage:
+    if file_id not in file_storage:
         raise HTTPException(404, "File not found")
     
     try:
         replacements_data = json.loads(replacements)
-        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        doc = fitz.open(stream=file_storage[file_id]["bytes"], filetype="pdf")
         
         for repl in replacements_data:
             page_num = repl.get("page", 1) - 1
@@ -598,7 +598,7 @@ async def replace_text_endpoint(
         doc.close()
         
         content = output_buffer.getvalue()
-        pdf_storage[output_id] = content
+        file_storage[output_id] = {"bytes": content, "name": "edited.pdf", "scale": 1.5}
         
         output_path = OUTPUT_DIR / f"{output_id}.pdf"
         with open(output_path, "wb") as f:
@@ -624,14 +624,14 @@ async def search_and_replace(
     Find and replace text throughout the entire PDF.
     """
     
-    if file_id not in pdf_storage:
+    if file_id not in file_storage:
         raise HTTPException(404, "File not found")
     
     if not search:
         raise HTTPException(400, "Search text required")
     
     try:
-        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        doc = fitz.open(stream=file_storage[file_id]["bytes"], filetype="pdf")
         total_replacements = 0
         
         for page in doc:
@@ -682,7 +682,7 @@ async def search_and_replace(
         doc.close()
         
         content = output_buffer.getvalue()
-        pdf_storage[output_id] = content
+        file_storage[output_id] = {"bytes": content, "name": "edited.pdf", "scale": 1.5}
         
         return {
             "success": True,
@@ -698,11 +698,11 @@ async def search_and_replace(
 async def extract_all_text(file_id: str = Form(...)):
     """Extract all text from PDF for search functionality"""
     
-    if file_id not in pdf_storage:
+    if file_id not in file_storage:
         raise HTTPException(404, "File not found")
     
     try:
-        doc = fitz.open(stream=pdf_storage[file_id], filetype="pdf")
+        doc = fitz.open(stream=file_storage[file_id]["bytes"], filetype="pdf")
         pages = []
         
         for i, page in enumerate(doc):
@@ -754,14 +754,14 @@ async def convert_pdf_to_docx(file_id: str = Form(...)):
             "LibreOffice not installed. Install with: apt-get install libreoffice-writer"
         )
     
-    if file_id not in pdf_storage:
+    if file_id not in file_storage:
         raise HTTPException(404, "File not found")
     
     try:
         # Save PDF to temp file
         pdf_path = OUTPUT_DIR / f"{file_id}.pdf"
         with open(pdf_path, "wb") as f:
-            f.write(pdf_storage[file_id])
+            f.write(file_storage[file_id]["bytes"])
         
         # Convert using LibreOffice
         # --headless: no GUI
@@ -852,7 +852,7 @@ async def convert_docx_to_pdf(file: UploadFile = File(...)):
         with open(pdf_path, "rb") as f:
             pdf_content = f.read()
         
-        pdf_storage[file_id] = pdf_content
+        file_storage[file_id] = {"bytes": pdf_content, "name": "converted.pdf", "scale": 1.5}
         
         # Generate download token
         token = str(uuid.uuid4())
