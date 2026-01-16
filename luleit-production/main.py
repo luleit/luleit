@@ -47,6 +47,8 @@ import httpx
 import fitz
 import zipfile
 import re
+import pytesseract
+from PIL import Image
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
@@ -1004,15 +1006,110 @@ def pdf_to_images(pdf_bytes: bytes, dpi: int = 150) -> List[str]:
     return images
 
 
-def extract_text_with_positions(pdf_bytes: bytes) -> List[Dict]:
-    """Extract text blocks with positions"""
+def extract_text_with_ocr(pdf_bytes: bytes, dpi: int = 150) -> List[Dict]:
+    """
+    Extract text using OCR (Optical Character Recognition).
+    Works on ALL PDFs including scanned documents and images.
+
+    Returns text blocks with precise bounding boxes from OCR.
+    """
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     pages_data = []
-    
+
+    for page_num, page in enumerate(doc):
+        # Render page as image at specified DPI
+        mat = fitz.Matrix(dpi / 72, dpi / 72)
+        pix = page.get_pixmap(matrix=mat)
+        img_data = pix.tobytes("png")
+
+        # Convert to PIL Image for OCR
+        img = Image.open(io.BytesIO(img_data))
+
+        # Run OCR with bounding box data
+        # Output includes: level, page_num, block_num, par_num, line_num, word_num,
+        #                  left, top, width, height, conf, text
+        ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+
+        blocks = []
+        full_text = []
+
+        n_boxes = len(ocr_data['text'])
+        for i in range(n_boxes):
+            text = ocr_data['text'][i].strip()
+            conf = int(ocr_data['conf'][i])
+
+            # Only include text with reasonable confidence (> 30%)
+            if text and conf > 30:
+                # OCR returns coordinates in pixels at render DPI
+                # We keep them as-is since our display also uses same DPI
+                x = ocr_data['left'][i]
+                y = ocr_data['top'][i]
+                w = ocr_data['width'][i]
+                h = ocr_data['height'][i]
+
+                # Estimate font size from height (rough approximation)
+                font_size = h * 0.75  # Typical text height to font size ratio
+
+                blocks.append({
+                    "text": text,
+                    "x": x,
+                    "y": y,
+                    "width": w,
+                    "height": h,
+                    "fontSize": font_size,
+                    "color": 0,  # OCR doesn't detect color, default to black
+                    "font": "helv",  # Default font
+                    "flags": 0,
+                    "confidence": conf,
+                    # PDF coordinates for editing (convert back from display DPI)
+                    "pdf_x": x * 72 / dpi,
+                    "pdf_y": y * 72 / dpi,
+                    "pdf_fontSize": font_size * 72 / dpi,
+                })
+                full_text.append(text)
+
+        # Get page dimensions in display pixels
+        page_width = pix.width
+        page_height = pix.height
+
+        pages_data.append({
+            "page": page_num + 1,
+            "width": page_width,
+            "height": page_height,
+            "pdf_width": page.rect.width,
+            "pdf_height": page.rect.height,
+            "blocks": blocks,
+            "text": " ".join(full_text),
+        })
+
+    doc.close()
+    return pages_data
+
+
+def extract_text_with_positions(pdf_bytes: bytes) -> List[Dict]:
+    """
+    Extract text using OCR as the primary method.
+    Falls back to PyMuPDF extraction if OCR fails.
+    """
+    try:
+        # Use OCR as the core method
+        return extract_text_with_ocr(pdf_bytes)
+    except Exception as e:
+        print(f"OCR failed, falling back to PyMuPDF: {e}")
+        # Fallback to original method
+        return extract_text_pymupdf(pdf_bytes)
+
+
+def extract_text_pymupdf(pdf_bytes: bytes) -> List[Dict]:
+    """Original PyMuPDF-based text extraction (fallback)"""
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    pages_data = []
+    scale = 150 / 72  # Scale to match display DPI
+
     for page_num, page in enumerate(doc):
         page_dict = page.get_text("dict")
         blocks = []
-        
+
         for block in page_dict.get("blocks", []):
             if block.get("type") == 0:
                 for line in block.get("lines", []):
@@ -1022,24 +1119,29 @@ def extract_text_with_positions(pdf_bytes: bytes) -> List[Dict]:
                             bbox = span.get("bbox", [0, 0, 0, 0])
                             blocks.append({
                                 "text": text,
-                                "x": bbox[0],
-                                "y": bbox[1],
-                                "width": bbox[2] - bbox[0],
-                                "height": bbox[3] - bbox[1],
-                                "fontSize": span.get("size", 12),
+                                "x": bbox[0] * scale,
+                                "y": bbox[1] * scale,
+                                "width": (bbox[2] - bbox[0]) * scale,
+                                "height": (bbox[3] - bbox[1]) * scale,
+                                "fontSize": span.get("size", 12) * scale,
                                 "color": span.get("color", 0),
                                 "font": span.get("font", "helv"),
                                 "flags": span.get("flags", 0),
+                                "pdf_x": bbox[0],
+                                "pdf_y": bbox[1],
+                                "pdf_fontSize": span.get("size", 12),
                             })
-        
+
         pages_data.append({
             "page": page_num + 1,
-            "width": page_dict.get("width", 612),
-            "height": page_dict.get("height", 792),
+            "width": page_dict.get("width", 612) * scale,
+            "height": page_dict.get("height", 792) * scale,
+            "pdf_width": page_dict.get("width", 612),
+            "pdf_height": page_dict.get("height", 792),
             "blocks": blocks,
             "text": page.get_text("text"),
         })
-    
+
     doc.close()
     return pages_data
 
@@ -1613,7 +1715,7 @@ async def get_page(doc_id: str, page_num: int):
 
 @app.get("/api/document/{doc_id}/page/{page_num}/text")
 async def get_page_text(doc_id: str, page_num: int):
-    """Get text blocks with positions for overlay rendering"""
+    """Get text blocks with positions for overlay rendering (OCR-based)"""
     if doc_id not in documents:
         raise HTTPException(404, "Document not found")
 
@@ -1625,33 +1727,32 @@ async def get_page_text(doc_id: str, page_num: int):
 
     page_data = text_data[page_num - 1]
 
-    # Scale factor: PDF points (72 dpi) to display pixels (150 dpi)
-    scale = 150 / 72
-
-    # Scale coordinates for overlay positioning
-    scaled_blocks = []
+    # OCR returns coordinates already in display pixels (150 DPI)
+    # No additional scaling needed - just pass through the blocks
+    blocks = []
     for block in page_data.get("blocks", []):
-        scaled_blocks.append({
+        blocks.append({
             "text": block["text"],
-            "x": block["x"] * scale,
-            "y": block["y"] * scale,
-            "width": block["width"] * scale,
-            "height": block["height"] * scale,
-            "fontSize": block["fontSize"] * scale,
+            "x": block["x"],
+            "y": block["y"],
+            "width": block["width"],
+            "height": block["height"],
+            "fontSize": block["fontSize"],
             "color": block.get("color", 0),
             "font": block.get("font", "helv"),
             "flags": block.get("flags", 0),
-            # Original PDF coordinates for editing
-            "pdf_x": block["x"],
-            "pdf_y": block["y"],
-            "pdf_fontSize": block["fontSize"],
+            "confidence": block.get("confidence", 100),
+            # PDF coordinates for editing
+            "pdf_x": block.get("pdf_x", block["x"] * 72 / 150),
+            "pdf_y": block.get("pdf_y", block["y"] * 72 / 150),
+            "pdf_fontSize": block.get("pdf_fontSize", block["fontSize"] * 72 / 150),
         })
 
     return {
         "page": page_num,
-        "width": page_data.get("width", 612) * scale,
-        "height": page_data.get("height", 792) * scale,
-        "blocks": scaled_blocks,
+        "width": page_data.get("width", 918),  # 612 * 150/72
+        "height": page_data.get("height", 1188),  # 792 * 150/72
+        "blocks": blocks,
     }
 
 
