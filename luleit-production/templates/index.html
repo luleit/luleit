@@ -3,749 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luleit - Free Online PDF Editor | Edit, Merge, Compress PDFs</title>
-    <meta name="description" content="Edit PDF files online for free. Add text, images, signatures. Merge, split, compress PDFs. No installation required.">
-    <meta name="keywords" content="PDF editor, edit PDF online, merge PDF, compress PDF, free PDF editor">
-    <link rel="canonical" href="https://www.luleit.com">
-    <meta property="og:title" content="Luleit - Free Online PDF Editor">
-    <meta property="og:description" content="Edit PDF files online. Add text, images, signatures. Merge, split, compress.">
-    <meta property="og:type" content="website">
+    <title>Luleit AI - Edit PDFs with AI | India's Smartest PDF Editor</title>
+    <meta name="description" content="Edit any PDF using AI. Just tell it what to change in English or Hindi. Change dates, names, text instantly. Starting at ₹29.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #dbeafe;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            --font: 'Inter', -apple-system, sans-serif;
-        }
-        
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff; --accent: #f472b6; --success: #10b981; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827; --font: 'Inter', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); color: var(--gray-900); line-height: 1.6; }
         
-        body {
-            font-family: var(--font);
-            color: var(--gray-900);
-            line-height: 1.6;
-        }
+        .header { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--gray-200); z-index: 1000; padding: 0 24px; height: 72px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--gray-900); }
+        .logo-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 20px; }
+        .logo-text { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 32px; font-size: 16px; font-weight: 600; font-family: var(--font); border-radius: 12px; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5); }
         
-        /* Header */
-        .header {
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .hero { padding: 140px 24px 80px; text-align: center; background: linear-gradient(180deg, var(--primary-light) 0%, #fff 100%); }
+        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--gray-200); padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 500; color: var(--gray-600); margin-bottom: 24px; }
+        .hero h1 { font-size: clamp(36px, 5vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .hero h1 .gradient { background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; color: var(--gray-600); max-width: 600px; margin: 0 auto 32px; }
+        .hero-price { font-size: 14px; color: var(--gray-500); margin-top: 16px; }
+        .hero-price strong { color: var(--primary); font-size: 18px; }
         
-        .header-inner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 72px;
-        }
+        .demo { max-width: 800px; margin: -20px auto 60px; padding: 0 24px; }
+        .demo-window { background: var(--gray-900); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.25); }
+        .demo-header { background: var(--gray-800); padding: 12px 16px; display: flex; gap: 8px; }
+        .demo-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .demo-dot.red { background: #ff5f57; } .demo-dot.yellow { background: #febc2e; } .demo-dot.green { background: #28c840; }
+        .demo-content { padding: 20px; }
+        .demo-msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 14px; margin-bottom: 12px; }
+        .demo-msg.user { background: var(--primary); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+        .demo-msg.ai { background: var(--gray-700); color: #fff; border-bottom-left-radius: 4px; }
+        .demo-msg .check { color: var(--success); }
         
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--gray-900);
-        }
+        .features { padding: 80px 24px; background: #fff; }
+        .features h2 { text-align: center; font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1000px; margin: 0 auto; }
+        .feature { background: var(--gray-50); border-radius: 16px; padding: 28px; }
+        .feature-icon { width: 48px; height: 48px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--primary); }
+        .feature h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .feature p { color: var(--gray-600); font-size: 14px; }
         
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 18px;
-        }
+        .examples { padding: 80px 24px; background: var(--gray-900); color: #fff; }
+        .examples h2 { text-align: center; font-size: 36px; font-weight: 700; margin-bottom: 16px; }
+        .examples > p { text-align: center; color: var(--gray-400); margin-bottom: 48px; }
+        .examples-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+        .example { background: var(--gray-800); border-radius: 12px; padding: 20px; border: 1px solid var(--gray-700); }
+        .example .cmd { font-family: monospace; font-size: 13px; color: var(--accent); margin-bottom: 8px; }
+        .example p { color: var(--gray-400); font-size: 13px; }
         
-        .logo-text {
-            font-size: 24px;
-            font-weight: 700;
-        }
+        .cta { padding: 80px 24px; text-align: center; background: linear-gradient(180deg, #fff, var(--primary-light)); }
+        .cta h2 { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
+        .cta p { color: var(--gray-600); margin-bottom: 32px; }
         
-        .nav { display: flex; align-items: center; gap: 32px; }
-        .nav a { color: var(--gray-600); text-decoration: none; font-size: 15px; font-weight: 500; }
-        .nav a:hover { color: var(--primary); }
+        .footer { padding: 32px 24px; background: var(--gray-900); color: var(--gray-400); text-align: center; font-size: 14px; }
         
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            font-family: var(--font);
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-primary:hover { background: var(--primary-dark); }
-        
-        .btn-secondary {
-            background: white;
-            color: var(--gray-800);
-            border: 1px solid var(--gray-300);
-        }
-        
-        .btn-large { padding: 16px 32px; font-size: 16px; }
-        
-        /* Hero */
-        .hero {
-            padding: 80px 0 100px;
-            text-align: center;
-            background: linear-gradient(180deg, white 0%, var(--gray-50) 100%);
-        }
-        
-        .hero-title {
-            font-size: 56px;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 24px;
-            letter-spacing: -1px;
-        }
-        
-        .hero-title span { color: var(--primary); }
-        
-        .hero-subtitle {
-            font-size: 20px;
-            color: var(--gray-600);
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
-        
-        /* Upload Zone */
-        .upload-box {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 48px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-        }
-        
-        .upload-zone {
-            border: 2px dashed var(--gray-300);
-            border-radius: 16px;
-            padding: 48px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .upload-zone:hover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-        }
-        
-        .upload-zone svg { margin-bottom: 16px; }
-        .upload-zone p { margin-bottom: 8px; }
-        .upload-zone small { color: var(--gray-500); font-size: 13px; }
-        
-        /* Tools */
-        .tools {
-            padding: 100px 0;
-            background: white;
-        }
-        
-        .section-title {
-            font-size: 40px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-        
-        .section-subtitle {
-            font-size: 18px;
-            color: var(--gray-600);
-            text-align: center;
-            margin-bottom: 60px;
-        }
-        
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-        
-        .tool-card {
-            background: var(--gray-50);
-            border-radius: 16px;
-            padding: 32px;
-            text-align: center;
-            transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
-        
-        .tool-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        
-        .tool-icon {
-            width: 64px;
-            height: 64px;
-            background: var(--primary-light);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-        }
-        
-        .tool-icon svg { color: var(--primary); }
-        
-        .tool-card h3 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .tool-card p {
-            font-size: 14px;
-            color: var(--gray-600);
-        }
-        
-        /* Features */
-        .features {
-            padding: 100px 0;
-            background: var(--gray-50);
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-        }
-        
-        .feature {
-            text-align: center;
-        }
-        
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            background: white;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        
-        .feature-icon svg { color: var(--primary); }
-        
-        .feature h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .feature p {
-            font-size: 14px;
-            color: var(--gray-600);
-        }
-        
-        /* Stats */
-        .stats {
-            padding: 60px 0;
-            background: var(--primary);
-            color: white;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 40px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 40px;
-            font-weight: 800;
-            margin-bottom: 4px;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        /* FAQ */
-        .faq {
-            padding: 100px 0;
-            background: white;
-        }
-        
-        .faq-list {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .faq-item {
-            border-bottom: 1px solid var(--gray-200);
-            padding: 24px 0;
-        }
-        
-        .faq-question {
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .faq-answer {
-            margin-top: 16px;
-            color: var(--gray-600);
-            display: none;
-        }
-        
-        .faq-item.open .faq-answer { display: block; }
-        
-        /* Footer */
-        .footer {
-            padding: 60px 0 40px;
-            background: var(--gray-900);
-            color: white;
-        }
-        
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 60px;
-            margin-bottom: 40px;
-        }
-        
-        .footer-brand p {
-            color: var(--gray-500);
-            margin-top: 16px;
-            font-size: 14px;
-        }
-        
-        .footer-col h4 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .footer-col a {
-            display: block;
-            color: var(--gray-500);
-            text-decoration: none;
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-        
-        .footer-col a:hover { color: white; }
-        
-        .footer-bottom {
-            padding-top: 24px;
-            border-top: 1px solid var(--gray-800);
-            text-align: center;
-            color: var(--gray-500);
-            font-size: 14px;
-        }
-        
-        /* Loading */
-        .loading {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(255,255,255,0.95);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .loading.show { display: flex; }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--gray-200);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .tools-grid { grid-template-columns: repeat(2, 1fr); }
-            .features-grid { grid-template-columns: repeat(2, 1fr); }
-            .footer-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        
-        @media (max-width: 768px) {
-            .nav { display: none; }
-            .hero-title { font-size: 36px; }
-            .tools-grid { grid-template-columns: 1fr; }
-            .features-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .footer-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 600px) { .hero h1 { font-size: 32px; } .features-grid, .examples-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
-        <div class="container header-inner">
-            <a href="/" class="logo">
-                <div class="logo-icon">L</div>
-                <span class="logo-text">Luleit</span>
-            </a>
-            <nav class="nav">
-                <a href="/edit">Edit PDF</a>
-                <a href="/merge">Merge</a>
-                <a href="/compress">Compress</a>
-                <a href="/sign">Sign</a>
-                <a href="/convert">Full Edit</a>
-            </nav>
-            <a href="/edit" class="btn btn-primary">Get Started</a>
-        </div>
+        <a href="/" class="logo">
+            <div class="logo-icon">L</div>
+            <span class="logo-text">Luleit AI</span>
+        </a>
+        <a href="/edit" class="btn btn-primary">Start Editing</a>
     </header>
     
-    <!-- Hero -->
     <section class="hero">
-        <div class="container">
-            <h1 class="hero-title">Edit PDFs <span>Online Free</span></h1>
-            <p class="hero-subtitle">Add text, images, signatures, and annotations to your PDF files. No installation required.</p>
-            
-            <div class="upload-box">
-                <div class="upload-zone" id="uploadZone">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <p><strong>Click to upload</strong> or drag and drop</p>
-                    <small>PDF files up to 100MB</small>
-                </div>
-                <input type="file" id="fileInput" accept=".pdf" hidden>
+        <div class="hero-badge">🇮🇳 Made for India</div>
+        <h1>Edit PDFs with <span class="gradient">AI Magic</span></h1>
+        <p>Just tell the AI what to change - in English or Hindi. No complex tools, no learning curve.</p>
+        <a href="/edit" class="btn btn-primary" style="padding: 18px 48px; font-size: 18px;">
+            Upload PDF & Start Free
+        </a>
+        <p class="hero-price">Pay only when you download • Starting at <strong>₹29</strong></p>
+    </section>
+    
+    <section class="demo">
+        <div class="demo-window">
+            <div class="demo-header">
+                <div class="demo-dot red"></div>
+                <div class="demo-dot yellow"></div>
+                <div class="demo-dot green"></div>
+            </div>
+            <div class="demo-content">
+                <div class="demo-msg user">Change the date to 15 March 2025</div>
+                <div class="demo-msg ai"><span class="check">✓</span> Done! Changed date on page 1</div>
+                <div class="demo-msg user">Replace "Sharma" with "Patel" everywhere</div>
+                <div class="demo-msg ai"><span class="check">✓</span> Replaced 5 instances across 3 pages</div>
+                <div class="demo-msg user">Mujhe signature add karna hai last page pe</div>
+                <div class="demo-msg ai"><span class="check">✓</span> Signature area ready. Click to sign.</div>
             </div>
         </div>
     </section>
     
-    <!-- Tools -->
-    <section class="tools">
-        <div class="container">
-            <h2 class="section-title">All PDF Tools</h2>
-            <p class="section-subtitle">Everything you need to work with PDFs</p>
-            
-            <div class="tools-grid">
-                <a href="/edit" class="tool-card">
-                    <div class="tool-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </div>
-                    <h3>Edit PDF</h3>
-                    <p>Add text, images, and annotations</p>
-                </a>
-                
-                <a href="/merge" class="tool-card">
-                    <div class="tool-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8" y="14" width="8" height="7"/></svg>
-                    </div>
-                    <h3>Merge PDF</h3>
-                    <p>Combine multiple PDFs into one</p>
-                </a>
-                
-                <a href="/compress" class="tool-card">
-                    <div class="tool-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                    </div>
-                    <h3>Compress PDF</h3>
-                    <p>Reduce file size while keeping quality</p>
-                </a>
-                
-                <a href="/sign" class="tool-card">
-                    <div class="tool-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-                    </div>
-                    <h3>Sign PDF</h3>
-                    <p>Add your signature to documents</p>
-                </a>
-                
-                <a href="/edit" class="tool-card">
-                    <div class="tool-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    </div>
-                    <h3>Add Image</h3>
-                    <p>Insert images into your PDF</p>
-                </a>
-                
-                <a href="/edit" class="tool-card">
-                    <div class="tool-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-                    </div>
-                    <h3>Add Text</h3>
-                    <p>Type text anywhere on your PDF</p>
-                </a>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Features -->
     <section class="features">
-        <div class="container">
-            <h2 class="section-title">Why Choose Luleit?</h2>
-            <p class="section-subtitle">Professional PDF editing made simple</p>
-            
-            <div class="features-grid">
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <h3>Secure & Private</h3>
-                    <p>Your files are encrypted and automatically deleted after processing</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <h3>Fast Processing</h3>
-                    <p>Edit and download your PDFs in seconds</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                    </div>
-                    <h3>Works Everywhere</h3>
-                    <p>Use on any device with a web browser</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <h3>High Quality</h3>
-                    <p>Maintain original PDF quality with no degradation</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    </div>
-                    <h3>No Installation</h3>
-                    <p>Edit PDFs directly in your browser</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                    </div>
-                    <h3>All-in-One</h3>
-                    <p>Edit, merge, compress, and sign in one place</p>
-                </div>
+        <h2>Why Luleit AI?</h2>
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                <h3>Natural Language</h3>
+                <p>Just type what you want to change. Works in English and Hindi.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                <h3>Instant Results</h3>
+                <p>AI makes changes in seconds. No waiting, no complex menus.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <h3>100% Private</h3>
+                <p>Your documents are never stored. Deleted after download.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                <h3>Pay Per Use</h3>
+                <p>No subscription. Pay only when you download. UPI supported.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                <h3>Any PDF Works</h3>
+                <p>Scanned documents, forms, contracts - AI handles them all.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <h3>Batch Edits</h3>
+                <p>"Replace all 2023 with 2024" - change hundreds at once.</p>
             </div>
         </div>
     </section>
     
-    <!-- Stats -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div>
-                    <div class="stat-value">2M+</div>
-                    <div class="stat-label">Users</div>
-                </div>
-                <div>
-                    <div class="stat-value">10M+</div>
-                    <div class="stat-label">PDFs Edited</div>
-                </div>
-                <div>
-                    <div class="stat-value">150+</div>
-                    <div class="stat-label">Countries</div>
-                </div>
-                <div>
-                    <div class="stat-value">99.9%</div>
-                    <div class="stat-label">Uptime</div>
-                </div>
+    <section class="examples">
+        <h2>Just Say What You Want</h2>
+        <p>Real commands that work</p>
+        <div class="examples-grid">
+            <div class="example">
+                <div class="cmd">"Change the date to 20 January 2025"</div>
+                <p>AI finds and updates dates</p>
+            </div>
+            <div class="example">
+                <div class="cmd">"Replace Amit with Rahul"</div>
+                <p>Changes all instances</p>
+            </div>
+            <div class="example">
+                <div class="cmd">"Update phone to 9876543210"</div>
+                <p>Finds phone numbers</p>
+            </div>
+            <div class="example">
+                <div class="cmd">"Fix the address to Mumbai"</div>
+                <p>Updates location info</p>
+            </div>
+            <div class="example">
+                <div class="cmd">"Is amount kitna hai?"</div>
+                <p>Ask questions in Hindi</p>
+            </div>
+            <div class="example">
+                <div class="cmd">"Summarize this document"</div>
+                <p>Get quick overview</p>
             </div>
         </div>
     </section>
     
-    <!-- FAQ -->
-    <section class="faq">
-        <div class="container">
-            <h2 class="section-title">Frequently Asked Questions</h2>
-            <p class="section-subtitle">Got questions? We've got answers</p>
-            
-            <div class="faq-list">
-                <div class="faq-item">
-                    <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">
-                        Is Luleit free to use?
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="faq-answer">You can edit PDFs for free. A small fee applies for downloading the final edited document, with pricing adjusted based on your region.</div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">
-                        Is my data secure?
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="faq-answer">Yes! All files are encrypted during transfer and automatically deleted from our servers after processing. We never share or sell your data.</div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">
-                        What can I do with Luleit?
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="faq-answer">You can add text, images, and signatures to PDFs. Draw and highlight. Merge multiple PDFs. Compress files. Split pages. And much more!</div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">
-                        What file formats are supported?
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="faq-answer">We support PDF files up to 100MB. For images within PDFs, we support PNG, JPG, and other common formats.</div>
-                </div>
-            </div>
-        </div>
+    <section class="cta">
+        <h2>Ready to Edit Your PDF?</h2>
+        <p>Upload free. Pay only when you download.</p>
+        <a href="/edit" class="btn btn-primary" style="padding: 18px 48px; font-size: 18px;">
+            Start Now - It's Free to Try
+        </a>
     </section>
     
-    <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="/" class="logo" style="color:white">
-                        <div class="logo-icon">L</div>
-                        <span class="logo-text">Luleit</span>
-                    </a>
-                    <p>Professional PDF editing made simple. Edit, merge, compress, and sign your PDFs online.</p>
-                </div>
-                
-                <div class="footer-col">
-                    <h4>Tools</h4>
-                    <a href="/edit">Edit PDF</a>
-                    <a href="/merge">Merge PDF</a>
-                    <a href="/compress">Compress PDF</a>
-                    <a href="/sign">Sign PDF</a>
-                </div>
-                
-                <div class="footer-col">
-                    <h4>Company</h4>
-                    <a href="#">About</a>
-                    <a href="#">Privacy</a>
-                    <a href="#">Terms</a>
-                    <a href="#">Contact</a>
-                </div>
-                
-                <div class="footer-col">
-                    <h4>Support</h4>
-                    <a href="#">Help Center</a>
-                    <a href="#">FAQ</a>
-                    <a href="#">Feedback</a>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                &copy; 2026 Luleit. All rights reserved.
-            </div>
-        </div>
+        <p>© 2025 Luleit AI. Made with ❤️ in India.</p>
     </footer>
-    
-    <!-- Loading -->
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <div>Uploading...</div>
-    </div>
-    
-    <script>
-        const uploadZone = document.getElementById('uploadZone');
-        const fileInput = document.getElementById('fileInput');
-        const loading = document.getElementById('loading');
-        
-        uploadZone.addEventListener('click', () => fileInput.click());
-        
-        uploadZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            uploadZone.style.borderColor = 'var(--primary)';
-            uploadZone.style.background = 'var(--primary-light)';
-        });
-        
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.style.borderColor = '';
-            uploadZone.style.background = '';
-        });
-        
-        uploadZone.addEventListener('drop', e => {
-            e.preventDefault();
-            uploadZone.style.borderColor = '';
-            uploadZone.style.background = '';
-            
-            const file = e.dataTransfer.files[0];
-            if (file && file.type === 'application/pdf') {
-                handleFile(file);
-            }
-        });
-        
-        fileInput.addEventListener('change', e => {
-            if (e.target.files[0]) handleFile(e.target.files[0]);
-        });
-        
-        async function handleFile(file) {
-            loading.classList.add('show');
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                const response = await fetch('/api/upload', { method: 'POST', body: formData });
-                const data = await response.json();
-                
-                if (data.fileId) {
-                    sessionStorage.setItem('fileId', data.fileId);
-                    sessionStorage.setItem('fileName', file.name);
-                    window.location.href = '/edit';
-                } else {
-                    alert('Upload failed. Please try again.');
-                }
-            } catch (error) {
-                alert('Upload failed. Please try again.');
-            }
-            
-            loading.classList.remove('show');
-        }
-    </script>
 </body>
 </html>

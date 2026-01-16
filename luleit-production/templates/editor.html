@@ -3,711 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit PDF - Luleit</title>
+    <title>AI PDF Editor - Luleit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://js.stripe.com/v3/"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        :root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#dbeafe;--danger:#dc2626;--success:#16a34a;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-500:#6b7280;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;--font:'Inter',sans-serif}
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:var(--font);background:var(--gray-100);height:100vh;display:flex;flex-direction:column;overflow:hidden}
-        .header{background:#fff;border-bottom:1px solid var(--gray-200);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
-        .header-left,.header-center,.header-right{display:flex;align-items:center;gap:12px}
-        .logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--gray-900);font-weight:600;font-size:18px}
-        .logo-icon{width:32px;height:32px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
-        .filename{font-size:13px;color:var(--gray-500);background:var(--gray-100);padding:6px 12px;border-radius:6px}
-        .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px;font-weight:500;font-family:var(--font);border-radius:8px;border:none;cursor:pointer;transition:all .15s}
-        .btn-primary{background:var(--primary);color:#fff}
-        .btn-primary:hover{background:var(--primary-dark)}
-        .btn-secondary{background:#fff;color:var(--gray-700);border:1px solid var(--gray-300)}
-        .btn-icon{padding:8px;background:transparent;color:var(--gray-500)}
-        .btn-icon:hover{background:var(--gray-100)}
-        .btn-icon svg{width:18px;height:18px}
-        .zoom-ctrl{display:flex;align-items:center;background:#fff;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden}
-        .zoom-ctrl button{width:32px;height:32px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-500)}
-        .zoom-ctrl button:hover{background:var(--gray-100)}
-        .zoom-ctrl span{font-size:12px;padding:0 8px;min-width:50px;text-align:center}
-        .main{display:flex;flex:1;overflow:hidden}
-        .toolbar{width:56px;background:#fff;border-right:1px solid var(--gray-200);padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px}
-        .tool-btn{width:40px;height:40px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-500);transition:all .15s;position:relative}
-        .tool-btn:hover{background:var(--gray-100);color:var(--gray-700)}
-        .tool-btn.active{background:var(--primary-light);color:var(--primary)}
-        .tool-btn svg{width:20px;height:20px}
-        .tool-btn::after{content:attr(data-tip);position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:8px;padding:4px 8px;background:var(--gray-800);color:#fff;font-size:11px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none}
-        .tool-btn:hover::after{opacity:1}
-        .tool-div{width:24px;height:1px;background:var(--gray-200);margin:8px 0}
-        .sidebar{width:180px;background:#fff;border-right:1px solid var(--gray-200);display:flex;flex-direction:column}
-        .sidebar-header{padding:12px 16px;font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;border-bottom:1px solid var(--gray-200)}
-        .sidebar-content{flex:1;overflow-y:auto;padding:12px}
-        .thumb{border:2px solid transparent;border-radius:8px;margin-bottom:12px;cursor:pointer;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-        .thumb:hover{border-color:var(--gray-300)}
-        .thumb.active{border-color:var(--primary)}
-        .thumb canvas{width:100%;display:block}
-        .thumb-label{padding:4px;font-size:10px;color:var(--gray-500);text-align:center;background:var(--gray-50)}
-        .canvas-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px;background:var(--gray-100)}
-        .pdf-wrap{position:relative;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.12);transform-origin:top center}
-        #pdfCanvas{display:block}
-        #overlayCanvas{position:absolute;top:0;left:0;pointer-events:none}
-        #overlayCanvas.drawing{pointer-events:auto;cursor:crosshair}
-        .edit-layer{position:absolute;top:0;left:0;width:100%;height:100%}
-        .text-block{position:absolute;cursor:pointer;background:transparent;border:1px solid transparent}
-        .text-block:hover{background:rgba(37,99,235,.05);border-color:rgba(37,99,235,.3)}
-        .text-block.editing{background:#fff;border:2px solid var(--primary);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:100}
-        .text-block-input{width:100%;height:100%;border:none;outline:none;background:transparent;resize:none;padding:2px}
-        .edit-el{position:absolute;cursor:move}
-        .edit-el.selected{outline:2px solid var(--primary);outline-offset:2px}
-        .edit-el-text{padding:4px;background:transparent;border:1px dashed transparent;outline:none;white-space:pre-wrap;min-width:20px}
-        .edit-el-text:focus{border-color:var(--primary);background:rgba(255,255,255,.95)}
-        .edit-el-image{border:2px solid var(--primary)}
-        .edit-el-image img{width:100%;height:100%;object-fit:contain;pointer-events:none}
-        .resize-handle{position:absolute;width:10px;height:10px;background:var(--primary);border:2px solid #fff;border-radius:2px;cursor:se-resize;right:-5px;bottom:-5px}
-        .properties{width:260px;background:#fff;border-left:1px solid var(--gray-200);display:flex;flex-direction:column}
-        .props-header{padding:12px 16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--gray-200)}
-        .props-content{flex:1;overflow-y:auto;padding:16px}
-        .prop-group{margin-bottom:16px}
-        .prop-label{font-size:11px;font-weight:500;color:var(--gray-500);margin-bottom:6px;text-transform:uppercase}
-        .prop-input{width:100%;padding:8px 12px;font-size:13px;font-family:var(--font);border:1px solid var(--gray-300);border-radius:8px}
-        .prop-input:focus{outline:none;border-color:var(--primary)}
-        .color-row{display:flex;align-items:center;gap:8px}
-        .color-row input[type="color"]{width:40px;height:36px;border:1px solid var(--gray-300);border-radius:8px;cursor:pointer;padding:2px}
-        input[type="range"]{width:100%;height:4px;border-radius:2px;background:var(--gray-200);-webkit-appearance:none;margin:8px 0}
-        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--primary);cursor:pointer}
-        .search-panel{padding:16px;border-bottom:1px solid var(--gray-200);background:var(--gray-50)}
-        .search-panel h4{font-size:12px;font-weight:600;margin-bottom:12px}
-        .search-row{display:flex;gap:8px;margin-bottom:8px}
-        .search-row input{flex:1}
-        .search-results{font-size:12px;color:var(--gray-500);margin-top:8px}
-        .upload-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px}
-        .upload-icon{width:80px;height:80px;background:var(--primary-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
-        .upload-icon svg{width:40px;height:40px;color:var(--primary)}
-        .upload-title{font-size:24px;font-weight:600;margin-bottom:8px}
-        .upload-subtitle{font-size:14px;color:var(--gray-500);margin-bottom:24px}
-        .upload-zone{border:2px dashed var(--gray-300);border-radius:16px;padding:48px;text-align:center;cursor:pointer;max-width:500px}
-        .upload-zone:hover{border-color:var(--primary);background:var(--primary-light)}
-        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
-        .modal-overlay.show{display:flex}
-        .modal{background:#fff;border-radius:16px;padding:32px;max-width:440px;width:90%;position:relative}
-        .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--gray-500)}
-        .modal-title{font-size:20px;font-weight:600;margin-bottom:8px}
-        .modal-desc{font-size:14px;color:var(--gray-500);margin-bottom:24px}
-        .modal-price{font-size:40px;font-weight:700;color:var(--primary);margin-bottom:24px}
-        .modal-features{list-style:none;margin-bottom:24px}
-        .modal-features li{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--gray-700);margin-bottom:8px}
-        .modal-features li svg{color:var(--success)}
-        #cardElement{padding:12px;border:1px solid var(--gray-300);border-radius:8px;margin-bottom:12px}
-        #cardErrors{color:var(--danger);font-size:12px;margin-bottom:12px}
-        .modal-actions{display:flex;flex-direction:column;gap:12px}
-        .modal-actions .btn{width:100%;padding:12px}
-        .sig-canvas{border:1px solid var(--gray-300);border-radius:8px;margin-bottom:16px;background:#fff;cursor:crosshair}
-        .sig-actions{display:flex;gap:12px}
-        .sig-actions .btn{flex:1}
-        .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:var(--gray-800);color:#fff;border-radius:8px;font-size:14px;z-index:9999;display:flex;align-items:center;gap:8px;animation:slideUp .3s}
-        .toast.success{background:var(--success)}
-        .toast.error{background:var(--danger)}
-        @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-        .loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,.95);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-        .loading-overlay.show{display:flex}
-        .spinner{width:40px;height:40px;border:3px solid var(--gray-200);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @media(max-width:1024px){.sidebar{display:none}.properties{width:220px}}
-        @media(max-width:768px){.properties{display:none}.toolbar{width:48px}}
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff; --accent: #f472b6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827; --font: 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); background: var(--gray-100); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: #fff; border-bottom: 1px solid var(--gray-200); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--gray-900); }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; }
+        .logo-text { font-size: 20px; font-weight: 700; }
+        .doc-name { font-size: 14px; color: var(--gray-500); background: var(--gray-100); padding: 6px 12px; border-radius: 6px; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font); border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+        .btn-secondary { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 240px; background: #fff; border-right: 1px solid var(--gray-200); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-section { padding: 16px; border-bottom: 1px solid var(--gray-200); }
+        .sidebar-title { font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; }
+        .pages-list { flex: 1; overflow-y: auto; padding: 12px; }
+        .page-thumb { background: #fff; border: 2px solid transparent; border-radius: 8px; margin-bottom: 12px; cursor: pointer; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .page-thumb:hover { border-color: var(--gray-300); }
+        .page-thumb.active { border-color: var(--primary); }
+        .page-thumb img { width: 100%; display: block; }
+        .page-thumb-label { padding: 6px; font-size: 11px; color: var(--gray-500); text-align: center; background: var(--gray-50); }
+        .canvas-area { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 40px; background: var(--gray-100); }
+        .pdf-container { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); }
+        .pdf-container img { display: block; max-width: 100%; }
+        .upload-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; }
+        .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary-light), #fff); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+        .upload-icon svg { width: 48px; height: 48px; color: var(--primary); }
+        .upload-state h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .upload-state p { font-size: 16px; color: var(--gray-500); margin-bottom: 32px; }
+        .upload-zone { border: 2px dashed var(--gray-300); border-radius: 16px; padding: 48px 64px; cursor: pointer; transition: all 0.2s; }
+        .upload-zone:hover, .upload-zone.dragover { border-color: var(--primary); background: var(--primary-light); }
+        .ai-panel { width: 360px; background: #fff; border-left: 1px solid var(--gray-200); display: flex; flex-direction: column; flex-shrink: 0; }
+        .ai-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 12px; }
+        .ai-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+        .ai-header-text h3 { font-size: 15px; font-weight: 600; }
+        .ai-header-text p { font-size: 12px; color: var(--gray-500); }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .ai-msg { max-width: 90%; padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+        .ai-msg.user { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .ai-msg.assistant { background: var(--gray-100); color: var(--gray-800); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .ai-msg.success { background: #d1fae5; color: #065f46; }
+        .ai-msg.error { background: #fee2e2; color: #991b1b; }
+        .ai-input-area { padding: 16px; border-top: 1px solid var(--gray-200); }
+        .ai-input-wrap { display: flex; gap: 8px; }
+        .ai-input { flex: 1; padding: 14px 18px; font-size: 14px; font-family: var(--font); border: 2px solid var(--gray-200); border-radius: 12px; outline: none; }
+        .ai-input:focus { border-color: var(--primary); }
+        .ai-send { width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; border-radius: 12px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .ai-send:disabled { opacity: 0.5; }
+        .quick-actions { padding: 12px 16px; border-top: 1px solid var(--gray-200); display: flex; flex-wrap: wrap; gap: 8px; }
+        .quick-btn { padding: 8px 14px; font-size: 12px; font-weight: 500; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; cursor: pointer; }
+        .quick-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 20px; padding: 32px; max-width: 420px; width: 90%; text-align: center; }
+        .modal h3 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .modal p { color: var(--gray-500); margin-bottom: 24px; }
+        .price-display { font-size: 48px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+        .price-usd { font-size: 14px; color: var(--gray-400); margin-bottom: 24px; }
+        .price-features { list-style: none; text-align: left; margin-bottom: 24px; }
+        .price-features li { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; color: var(--gray-600); }
+        .price-features li svg { color: var(--success); }
+        .modal-actions { display: flex; flex-direction: column; gap: 12px; }
+        .modal-actions .btn { width: 100%; padding: 14px; }
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        .loading-overlay.show { display: flex; }
+        .spinner { width: 48px; height: 48px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; background: var(--gray-800); color: #fff; border-radius: 12px; font-size: 14px; z-index: 9999; }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        @media (max-width: 1000px) { .sidebar { display: none; } }
+        @media (max-width: 700px) { .ai-panel { position: fixed; inset: 0; width: 100%; display: none; } .ai-panel.show { display: flex; } }
     </style>
 </head>
 <body>
     <header class="header">
         <div class="header-left">
-            <a href="/" class="logo"><div class="logo-icon">L</div><span>Luleit</span></a>
-            <div class="filename" id="filename">No file loaded</div>
-        </div>
-        <div class="header-center">
-            <div class="zoom-ctrl">
-                <button id="zoomOut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-                <span id="zoomLevel">100%</span>
-                <button id="zoomIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-            </div>
+            <a href="/" class="logo"><div class="logo-icon">L</div><span class="logo-text">Luleit AI</span></a>
+            <span class="doc-name" id="docName">No document</span>
         </div>
         <div class="header-right">
-            <button class="btn-icon" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 7"/></svg></button>
-            <button class="btn-icon" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 7"/></svg></button>
-            <button class="btn btn-secondary" id="saveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg>Save</button>
-            <button class="btn btn-primary" id="downloadBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+            <button class="btn btn-secondary" id="newDocBtn">New</button>
+            <button class="btn btn-primary" id="downloadBtn" disabled>Download</button>
         </div>
     </header>
     <div class="main">
-        <div class="toolbar">
-            <button class="tool-btn active" data-tool="select" data-tip="Select"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg></button>
-            <button class="tool-btn" data-tool="edit-text" data-tip="Edit Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-            <button class="tool-btn" data-tool="text" data-tip="Add Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></button>
-            <button class="tool-btn" data-tool="image" data-tip="Image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
-            <button class="tool-btn" data-tool="draw" data-tip="Draw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></button>
-            <button class="tool-btn" data-tool="highlight" data-tip="Highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>
-            <div class="tool-div"></div>
-            <button class="tool-btn" data-tool="signature" data-tip="Sign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 19c-2 1-4 1-6-1-2 2-4 2-6 1s-3-2-3-3"/></svg></button>
-            <button class="tool-btn" data-tool="redact" data-tip="Redact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="3" x2="21" y2="21"/></svg></button>
-            <div class="tool-div"></div>
-            <button class="tool-btn" data-tool="erase" data-tip="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
-        </div>
-        <div class="sidebar">
-            <div class="sidebar-header">Pages</div>
-            <div class="sidebar-content" id="pageList"></div>
-        </div>
+        <aside class="sidebar" id="sidebar" style="display:none"><div class="sidebar-section"><div class="sidebar-title">Pages</div></div><div class="pages-list" id="pagesList"></div></aside>
         <div class="canvas-area" id="canvasArea">
-            <div class="upload-area" id="uploadArea">
+            <div class="upload-state" id="uploadState">
                 <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-                <h2 class="upload-title">Upload PDF to Edit</h2>
-                <p class="upload-subtitle">Drag & drop or click to browse</p>
-                <div class="upload-zone" id="uploadZone">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="32" height="32" style="margin-bottom:12px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <p style="font-weight:500">Select PDF file</p>
-                    <p style="font-size:13px;color:var(--gray-500)">Max 100MB</p>
-                </div>
+                <h2>Upload Your PDF</h2>
+                <p>AI will analyze and help you edit it</p>
+                <div class="upload-zone" id="uploadZone"><p style="font-weight:600">Drop PDF here or click to browse</p></div>
                 <input type="file" id="fileInput" accept=".pdf" hidden>
             </div>
-            <div class="pdf-wrap" id="pdfWrap" style="display:none">
-                <canvas id="pdfCanvas"></canvas>
-                <canvas id="overlayCanvas"></canvas>
-                <div class="edit-layer" id="editLayer"></div>
-            </div>
+            <div class="pdf-container" id="pdfContainer" style="display:none"><img id="pageImage" alt="PDF"></div>
         </div>
-        <div class="properties">
-            <div class="props-header">Properties</div>
-            <div class="props-content">
-                <div class="search-panel">
-                    <h4>Find & Replace</h4>
-                    <div class="search-row"><input type="text" class="prop-input" id="searchText" placeholder="Find text..."></div>
-                    <div class="search-row"><input type="text" class="prop-input" id="replaceText" placeholder="Replace with..."></div>
-                    <div class="search-row"><button class="btn btn-secondary" id="replaceAllBtn" style="flex:1">Replace All</button></div>
-                    <div class="search-results" id="searchResults"></div>
+        <aside class="ai-panel" id="aiPanel">
+            <div class="ai-header"><div class="ai-avatar">AI</div><div class="ai-header-text"><h3>AI Assistant</h3><p>Tell me what to edit</p></div></div>
+            <div class="ai-messages" id="aiMessages"><div class="ai-msg assistant">👋 Namaste! Upload a PDF and tell me what to change.</div></div>
+            <div class="quick-actions" id="quickActions" style="display:none">
+                <button class="quick-btn" data-cmd="Find all dates">Dates</button>
+                <button class="quick-btn" data-cmd="Find all names">Names</button>
+                <button class="quick-btn" data-cmd="Summarize">Summary</button>
+            </div>
+            <div class="ai-input-area">
+                <div class="ai-input-wrap">
+                    <input type="text" class="ai-input" id="aiInput" placeholder="Tell me what to change..." disabled>
+                    <button class="ai-send" id="aiSend" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
                 </div>
-                <div class="prop-group"><div class="prop-label">Font Size</div><input type="number" class="prop-input" id="propFontSize" value="14" min="6" max="120"></div>
-                <div class="prop-group"><div class="prop-label">Text Color</div><div class="color-row"><input type="color" id="propTextColor" value="#000000"><input type="text" class="prop-input" id="propTextColorHex" value="#000000"></div></div>
-                <div class="prop-group"><div class="prop-label">Font</div><select class="prop-input" id="propFont"><option>Helvetica</option><option>Arial</option><option>Times New Roman</option><option>Courier</option></select></div>
-                <div class="prop-group" style="border-top:1px solid var(--gray-200);padding-top:16px"><div class="prop-label">Stroke Color</div><div class="color-row"><input type="color" id="propStrokeColor" value="#2563eb"></div></div>
-                <div class="prop-group"><div class="prop-label">Stroke Width: <span id="propStrokeWidthVal">3</span>px</div><input type="range" id="propStrokeWidth" min="1" max="20" value="3"></div>
-                <div class="prop-group"><div class="prop-label">Highlight Color</div><input type="color" id="propHighlightColor" value="#ffff00"></div>
             </div>
-        </div>
+        </aside>
     </div>
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
-            <button class="modal-close" id="closePayment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            <h3 class="modal-title">Download Your PDF</h3>
-            <p class="modal-desc">One-time payment</p>
-            <div class="modal-price" id="priceDisplay">$2.99</div>
-            <ul class="modal-features">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg> Full quality PDF</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg> All edits included</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg> No watermarks</li>
+            <h3>Download Your PDF</h3>
+            <p>One-time payment</p>
+            <div class="price-display" id="priceDisplay">₹79</div>
+            <div class="price-usd" id="priceUsd">≈ $0.95</div>
+            <ul class="price-features">
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Full quality PDF</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> All edits included</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> No watermarks</li>
             </ul>
-            <div id="cardElement"></div>
-            <div id="cardErrors"></div>
             <div class="modal-actions">
-                <button class="btn btn-primary" id="payBtn">Pay & Download</button>
-                <button class="btn btn-secondary" id="cancelPay">Cancel</button>
-            </div>
-        </div>
-    </div>
-    <div class="modal-overlay" id="sigModal">
-        <div class="modal">
-            <button class="modal-close" id="closeSig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            <h3 class="modal-title">Create Signature</h3>
-            <p class="modal-desc">Draw your signature</p>
-            <canvas id="sigCanvas" class="sig-canvas" width="380" height="150"></canvas>
-            <div class="sig-actions">
-                <button class="btn btn-secondary" id="clearSig">Clear</button>
-                <button class="btn btn-primary" id="useSig">Use Signature</button>
+                <button class="btn btn-success" id="payUpiBtn">Pay with UPI</button>
+                <button class="btn btn-primary" id="payCardBtn">Pay with Card</button>
+                <button class="btn btn-secondary" id="cancelPayBtn">Cancel</button>
             </div>
         </div>
     </div>
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Processing...</div></div>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        
-        let pdfDoc = null, pdfBytes = null, currentPage = 1, totalPages = 0, scale = 1.5, displayScale = 1.0;
-        let fileId = null, fileName = '', currentTool = 'select';
-        let pageEdits = {}, textBlocks = {}, textReplacements = [];
-        let undoStack = [], redoStack = [];
-        let isDrawing = false, currentPath = [];
-        let dragEl = null, dragOffset = {x:0,y:0};
-        let editCount = 0;
-        let stripe = null, cardElement = null, clientSecret = null;
-        
-        const $ = id => document.getElementById(id);
-        const uploadArea = $('uploadArea'), uploadZone = $('uploadZone'), fileInput = $('fileInput');
-        const pdfWrap = $('pdfWrap'), pdfCanvas = $('pdfCanvas'), overlayCanvas = $('overlayCanvas'), editLayer = $('editLayer');
-        const pageList = $('pageList'), loadingOverlay = $('loadingOverlay'), loadingText = $('loadingText');
-        const paymentModal = $('paymentModal'), sigModal = $('sigModal'), sigCanvas = $('sigCanvas');
-        
-        async function init() {
-            try {
-                const cfg = await fetch('/api/config').then(r => r.json());
-                if (cfg.stripe_enabled) {
-                    stripe = Stripe(cfg.stripe_publishable_key);
-                    cardElement = stripe.elements().create('card');
-                    cardElement.mount('#cardElement');
-                }
-            } catch(e) {}
-            
-            uploadZone.onclick = () => fileInput.click();
-            fileInput.onchange = e => { if(e.target.files[0]) handleFile(e.target.files[0]); };
-            uploadZone.ondragover = e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--primary)'; };
-            uploadZone.ondragleave = () => uploadZone.style.borderColor = '';
-            uploadZone.ondrop = e => { e.preventDefault(); uploadZone.style.borderColor = ''; if(e.dataTransfer.files[0]?.type === 'application/pdf') handleFile(e.dataTransfer.files[0]); };
-            
-            document.querySelectorAll('.tool-btn').forEach(btn => btn.onclick = () => selectTool(btn.dataset.tool));
-            $('zoomIn').onclick = () => setZoom(displayScale + 0.25);
-            $('zoomOut').onclick = () => setZoom(displayScale - 0.25);
-            $('undoBtn').onclick = undo;
-            $('redoBtn').onclick = redo;
-            $('saveBtn').onclick = saveEdits;
-            $('downloadBtn').onclick = initiateDownload;
-            $('closePayment').onclick = () => paymentModal.classList.remove('show');
-            $('cancelPay').onclick = () => paymentModal.classList.remove('show');
-            $('payBtn').onclick = processPayment;
-            $('closeSig').onclick = () => sigModal.classList.remove('show');
-            $('clearSig').onclick = clearSigPad;
-            $('useSig').onclick = useSignature;
-            setupSigPad();
-            
-            $('propTextColor').oninput = e => $('propTextColorHex').value = e.target.value;
-            $('propStrokeWidth').oninput = e => $('propStrokeWidthVal').textContent = e.target.value;
-            
-            overlayCanvas.onmousedown = startDraw;
-            overlayCanvas.onmousemove = draw;
-            overlayCanvas.onmouseup = endDraw;
-            overlayCanvas.onmouseleave = endDraw;
-            editLayer.onclick = handleLayerClick;
-            $('replaceAllBtn').onclick = searchAndReplaceAll;
-            
-            document.onkeydown = e => {
-                if((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
-                if((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
-                if(e.key === 'Delete' && dragEl) deleteSelected();
-            };
+    // Data Collection for Pricing AI
+    const DC={sid:null,start:Date.now(),
+        getData(){return{screen_width:screen.width,screen_height:screen.height,device_memory:navigator.deviceMemory||4,pixel_ratio:devicePixelRatio,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,is_mobile:/Android|iPhone|iPad/i.test(navigator.userAgent),language:navigator.language}},
+        async startSession(){const d=this.getData();try{const f=new FormData();f.append('data',JSON.stringify(d));const r=await fetch('/api/session/start',{method:'POST',body:f});const j=await r.json();this.sid=j.session_id;this.getGeo()}catch(e){}},
+        async getGeo(){try{const r=await fetch('https://ipapi.co/json/');const g=await r.json();if(g&&this.sid){const f=new FormData();f.append('city',g.city||'');f.append('state',g.region||'');f.append('country',g.country_code||'IN');await fetch(`/api/session/${this.sid}/geo`,{method:'POST',body:f})}}catch(e){}},
+        async update(d={}){if(!this.sid)return;d.time_on_site=Math.floor((Date.now()-this.start)/1000);const f=new FormData();f.append('data',JSON.stringify(d));try{await fetch(`/api/session/${this.sid}/update`,{method:'POST',body:f})}catch(e){}}
+    };
+    
+    let docId=null,currentPage=1,totalPages=0,isProcessing=false,currentPrice=null,pricingShownAt=null;
+    const $=id=>document.getElementById(id);
+    
+    function init(){
+        DC.startSession();
+        $('uploadZone').onclick=()=>$('fileInput').click();
+        $('fileInput').onchange=e=>{if(e.target.files[0])handleUpload(e.target.files[0])};
+        $('uploadZone').ondragover=e=>{e.preventDefault();$('uploadZone').classList.add('dragover')};
+        $('uploadZone').ondragleave=()=>$('uploadZone').classList.remove('dragover');
+        $('uploadZone').ondrop=e=>{e.preventDefault();$('uploadZone').classList.remove('dragover');if(e.dataTransfer.files[0]?.type==='application/pdf')handleUpload(e.dataTransfer.files[0])};
+        $('aiInput').onkeypress=e=>{if(e.key==='Enter')sendMessage()};
+        $('aiSend').onclick=sendMessage;
+        document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>{$('aiInput').value=b.dataset.cmd;sendMessage()});
+        $('newDocBtn').onclick=()=>{if(confirm('Start new?'))location.reload()};
+        $('downloadBtn').onclick=showPricing;
+        $('cancelPayBtn').onclick=()=>closePricing(false);
+        $('payUpiBtn').onclick=()=>processPayment('upi');
+        $('payCardBtn').onclick=()=>processPayment('card');
+    }
+    
+    async function handleUpload(file){
+        showLoading('Uploading...');
+        const f=new FormData();f.append('file',file);f.append('session_id',DC.sid||'');
+        try{
+            const r=await fetch('/api/upload',{method:'POST',body:f});
+            const d=await r.json();
+            if(!r.ok)throw new Error(d.detail);
+            docId=d.docId;totalPages=d.pageCount;
+            $('docName').textContent=d.filename;
+            $('uploadState').style.display='none';
+            $('pdfContainer').style.display='block';
+            $('sidebar').style.display='flex';
+            $('quickActions').style.display='flex';
+            $('aiInput').disabled=false;
+            $('aiSend').disabled=false;
+            $('downloadBtn').disabled=false;
+            await loadPage(1);
+            await genThumbs();
+            addMsg('assistant','📄 Uploaded! Analyzing...');
+            await analyze();
+            DC.update({doc_id:docId,page_count:totalPages});
+        }catch(e){toast(e.message,'error')}
+        hideLoading();
+    }
+    
+    async function loadPage(n){
+        try{const r=await fetch(`/api/document/${docId}/page/${n}`);const d=await r.json();$('pageImage').src='data:image/png;base64,'+d.image;currentPage=n;document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n))}catch(e){}
+    }
+    
+    async function genThumbs(){
+        $('pagesList').innerHTML='';
+        for(let i=1;i<=totalPages;i++){
+            try{const r=await fetch(`/api/document/${docId}/page/${i}`);const d=await r.json();
+            const t=document.createElement('div');t.className='page-thumb'+(i===1?' active':'');
+            t.innerHTML=`<img src="data:image/png;base64,${d.image}"><div class="page-thumb-label">Page ${i}</div>`;
+            t.onclick=()=>loadPage(i);$('pagesList').appendChild(t)}catch(e){}
         }
-        
-        async function handleFile(file) {
-            if(file.size > 100*1024*1024) return toast('File too large', 'error');
-            showLoading('Uploading...');
-            fileName = file.name;
-            
-            const form = new FormData();
-            form.append('file', file);
-            
-            try {
-                const res = await fetch('/api/upload', { method: 'POST', body: form });
-                const data = await res.json();
-                if(!res.ok) throw new Error(data.detail || 'Upload failed');
-                
-                fileId = data.fileId;
-                $('filename').textContent = fileName;
-                
-                pdfBytes = await file.arrayBuffer();
-                pdfDoc = await pdfjsLib.getDocument({data: pdfBytes}).promise;
-                totalPages = pdfDoc.numPages;
-                
-                for(let i=1; i<=totalPages; i++) { pageEdits[i] = []; textBlocks[i] = []; }
-                
-                uploadArea.style.display = 'none';
-                pdfWrap.style.display = 'block';
-                
-                await renderThumbs();
-                await renderPage(1);
-                await loadTextBlocks(1);
-            } catch(e) { toast(e.message, 'error'); }
-            hideLoading();
-        }
-        
-        async function loadTextBlocks(pageNum) {
-            try {
-                const res = await fetch(`/api/get-text-blocks/${fileId}/${pageNum}`, { method: 'POST' });
-                const data = await res.json();
-                if(data.success) {
-                    textBlocks[pageNum] = data.blocks;
-                    if(currentTool === 'edit-text') renderTextBlocks();
-                }
-            } catch(e) { console.error('Failed to load text blocks:', e); }
-        }
-        
-        function renderTextBlocks() {
-            editLayer.querySelectorAll('.text-block').forEach(el => el.remove());
-            if(currentTool !== 'edit-text') return;
-            
-            const blocks = textBlocks[currentPage] || [];
-            blocks.forEach((block, idx) => {
-                const el = document.createElement('div');
-                el.className = 'text-block';
-                el.dataset.idx = idx;
-                el.style.left = (block.x * scale) + 'px';
-                el.style.top = (block.y * scale) + 'px';
-                el.style.width = (block.width * scale) + 'px';
-                el.style.height = (block.height * scale) + 'px';
-                el.title = 'Click to edit: "' + block.text.substring(0, 30) + '"';
-                el.onclick = e => { e.stopPropagation(); startEditingTextBlock(el, block, idx); };
-                editLayer.appendChild(el);
-            });
-        }
-        
-        function startEditingTextBlock(el, block, idx) {
-            editLayer.querySelectorAll('.text-block.editing').forEach(b => { b.classList.remove('editing'); b.innerHTML = ''; });
-            el.classList.add('editing');
-            
-            const input = document.createElement('textarea');
-            input.className = 'text-block-input';
-            input.value = block.text;
-            input.style.fontSize = (block.fontSize * scale) + 'px';
-            input.style.color = block.color;
-            el.innerHTML = '';
-            el.appendChild(input);
-            input.focus();
-            input.select();
-            
-            input.onblur = () => {
-                const newText = input.value;
-                if(newText !== block.text) {
-                    textReplacements.push({
-                        page: currentPage, x: block.x, y: block.y, width: block.width, height: block.height,
-                        oldText: block.text, newText: newText, fontSize: block.fontSize, color: block.color
-                    });
-                    block.text = newText;
-                    editCount++;
-                    saveUndo();
-                    toast('Text edited - save to apply', 'success');
-                }
-                el.classList.remove('editing');
-                el.innerHTML = '';
-            };
-            
-            input.onkeydown = e => {
-                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); input.blur(); }
-                if(e.key === 'Escape') { input.value = block.text; input.blur(); }
-            };
-        }
-        
-        async function searchAndReplaceAll() {
-            const search = $('searchText').value.trim();
-            const replace = $('replaceText').value;
-            if(!search) return toast('Enter search text', 'error');
-            if(!fileId) return toast('No file loaded', 'error');
-            
-            showLoading('Replacing text...');
-            const form = new FormData();
-            form.append('file_id', fileId);
-            form.append('search', search);
-            form.append('replace', replace);
-            
-            try {
-                const res = await fetch('/api/search-replace', { method: 'POST', body: form });
-                const data = await res.json();
-                if(data.success) {
-                    fileId = data.fileId;
-                    $('searchResults').textContent = `Replaced ${data.replacements} instance(s)`;
-                    toast(`Replaced ${data.replacements} instance(s)`, 'success');
-                }
-            } catch(e) { toast('Replace failed', 'error'); }
-            hideLoading();
-        }
-        
-        async function renderPage(num) {
-            currentPage = num;
-            const page = await pdfDoc.getPage(num);
-            const vp = page.getViewport({ scale });
-            pdfCanvas.width = vp.width; pdfCanvas.height = vp.height;
-            overlayCanvas.width = vp.width; overlayCanvas.height = vp.height;
-            await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport: vp }).promise;
-            document.querySelectorAll('.thumb').forEach((t,i) => t.classList.toggle('active', i+1 === num));
-            renderEdits();
-            renderDrawings();
-            if(!textBlocks[num]?.length) await loadTextBlocks(num);
-            if(currentTool === 'edit-text') renderTextBlocks();
-        }
-        
-        async function renderThumbs() {
-            pageList.innerHTML = '';
-            for(let i=1; i<=totalPages; i++) {
-                const page = await pdfDoc.getPage(i);
-                const vp = page.getViewport({ scale: 0.2 });
-                const div = document.createElement('div');
-                div.className = 'thumb' + (i===1?' active':'');
-                const c = document.createElement('canvas');
-                c.width = vp.width; c.height = vp.height;
-                await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-                const lbl = document.createElement('div');
-                lbl.className = 'thumb-label';
-                lbl.textContent = 'Page ' + i;
-                div.appendChild(c); div.appendChild(lbl);
-                div.onclick = () => renderPage(i);
-                pageList.appendChild(div);
+    }
+    
+    async function analyze(){
+        try{const r=await fetch(`/api/analyze/${docId}`,{method:'POST'});const d=await r.json();
+        if(d.success&&d.analysis){addMsg('assistant',`✅ This is a <b>${d.analysis.documentType||'document'}</b>. What would you like to change?`)}
+        else{addMsg('assistant','Ready! What would you like to edit?')}}catch(e){addMsg('assistant','Ready!')}
+    }
+    
+    async function sendMessage(){
+        const text=$('aiInput').value.trim();
+        if(!text||!docId||isProcessing)return;
+        isProcessing=true;$('aiInput').value='';$('aiSend').disabled=true;
+        addMsg('user',text);
+        const isQ=text.match(/^(what|who|when|where|how|why|is|are|summarize|kya|kaun)/i);
+        try{
+            if(isQ){addMsg('assistant','🤔 Checking...');
+                const f=new FormData();f.append('question',text);
+                const r=await fetch(`/api/ask/${docId}`,{method:'POST',body:f});const d=await r.json();
+                removeLastMsg();addMsg('assistant',d.answer||'Could not find answer.');
+            }else{addMsg('assistant','✏️ Making changes...');
+                const f=new FormData();f.append('instruction',text);f.append('session_id',DC.sid||'');
+                const r=await fetch(`/api/edit/${docId}`,{method:'POST',body:f});const d=await r.json();
+                removeLastMsg();
+                if(d.success){addMsg('success',`✅ Done! ${d.changes} change(s).`);await loadPage(currentPage);await genThumbs();DC.update({edit_count:d.changes})}
+                else{addMsg('error',d.message||'Could not make changes.')}
             }
-        }
-        
-        function renderEdits() {
-            editLayer.querySelectorAll('.edit-el').forEach(el => el.remove());
-            const edits = pageEdits[currentPage] || [];
-            edits.forEach((ed, idx) => {
-                if(ed.type === 'text') createTextEl(ed, idx);
-                else if(ed.type === 'image') createImageEl(ed, idx);
-                else if(ed.type === 'highlight') createHighlightEl(ed, idx);
-                else if(ed.type === 'redact') createRedactEl(ed, idx);
-            });
-        }
-        
-        function renderDrawings() {
-            const ctx = overlayCanvas.getContext('2d');
-            ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-            const edits = pageEdits[currentPage] || [];
-            edits.filter(e => e.type === 'draw').forEach(ed => {
-                (ed.paths || []).forEach(p => {
-                    if(p.points?.length > 1) {
-                        ctx.beginPath();
-                        ctx.moveTo(p.points[0].x * scale, p.points[0].y * scale);
-                        for(let i=1; i<p.points.length; i++) ctx.lineTo(p.points[i].x * scale, p.points[i].y * scale);
-                        ctx.strokeStyle = p.color || '#2563eb';
-                        ctx.lineWidth = (p.width || 3) * scale;
-                        ctx.lineCap = 'round';
-                        ctx.stroke();
-                    }
-                });
-            });
-        }
-        
-        function createTextEl(ed, idx) {
-            const el = document.createElement('div');
-            el.className = 'edit-el edit-el-text';
-            el.contentEditable = true;
-            el.dataset.idx = idx;
-            el.textContent = ed.text || 'Type here...';
-            el.style.cssText = `left:${ed.x*scale}px;top:${ed.y*scale}px;font-size:${ed.fontSize*scale}px;color:${ed.color||'#000'};font-family:${ed.fontFamily||'Arial'}`;
-            el.onfocus = () => { if(el.textContent === 'Type here...') el.textContent = ''; };
-            el.onblur = () => { ed.text = el.textContent || 'Type here...'; };
-            el.onmousedown = e => startDrag(e, el, ed);
-            editLayer.appendChild(el);
-        }
-        
-        function createImageEl(ed, idx) {
-            const el = document.createElement('div');
-            el.className = 'edit-el edit-el-image';
-            el.dataset.idx = idx;
-            el.style.cssText = `left:${ed.x*scale}px;top:${ed.y*scale}px;width:${ed.width*scale}px;height:${ed.height*scale}px`;
-            const img = document.createElement('img'); img.src = ed.data; el.appendChild(img);
-            const handle = document.createElement('div'); handle.className = 'resize-handle';
-            handle.onmousedown = e => startResize(e, el, ed); el.appendChild(handle);
-            el.onmousedown = e => { if(e.target !== handle) startDrag(e, el, ed); };
-            editLayer.appendChild(el);
-        }
-        
-        function createHighlightEl(ed, idx) {
-            const el = document.createElement('div');
-            el.className = 'edit-el';
-            el.dataset.idx = idx;
-            el.style.cssText = `left:${ed.x*scale}px;top:${ed.y*scale}px;width:${ed.width*scale}px;height:${ed.height*scale}px;background:${ed.color||'rgba(255,255,0,0.4)'};opacity:0.4`;
-            el.onmousedown = e => startDrag(e, el, ed);
-            editLayer.appendChild(el);
-        }
-        
-        function createRedactEl(ed, idx) {
-            const el = document.createElement('div');
-            el.className = 'edit-el';
-            el.dataset.idx = idx;
-            el.style.cssText = `left:${ed.x*scale}px;top:${ed.y*scale}px;width:${ed.width*scale}px;height:${ed.height*scale}px;background:#000`;
-            el.onmousedown = e => startDrag(e, el, ed);
-            editLayer.appendChild(el);
-        }
-        
-        function selectTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
-            overlayCanvas.classList.toggle('drawing', tool === 'draw');
-            if(tool === 'edit-text') { renderTextBlocks(); toast('Click on any text to edit it', 'success'); }
-            else editLayer.querySelectorAll('.text-block').forEach(el => el.remove());
-            if(tool === 'image') { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.onchange = e => { if(e.target.files[0]) addImage(e.target.files[0]); }; inp.click(); }
-            else if(tool === 'signature') { sigModal.classList.add('show'); clearSigPad(); }
-        }
-        
-        function handleLayerClick(e) {
-            if(e.target !== editLayer) return;
-            const rect = editLayer.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / scale, y = (e.clientY - rect.top) / scale;
-            if(currentTool === 'text') addText(x, y);
-            else if(currentTool === 'highlight') addHighlight(x, y);
-            else if(currentTool === 'redact') addRedact(x, y);
-        }
-        
-        function addText(x, y) {
-            const ed = { type: 'text', x, y, text: 'Type here...', fontSize: parseInt($('propFontSize').value) || 14, color: $('propTextColor').value, fontFamily: $('propFont').value };
-            pushEdit(ed); renderEdits();
-            setTimeout(() => { const els = editLayer.querySelectorAll('.edit-el-text'); const last = els[els.length-1]; if(last) { last.focus(); document.execCommand('selectAll',false,null); } }, 50);
-        }
-        
-        function addImage(file) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const img = new Image();
-                img.onload = () => {
-                    const ratio = Math.min(200 / img.width, 1);
-                    pushEdit({ type: 'image', x: 50, y: 50, width: img.width * ratio, height: img.height * ratio, data: e.target.result });
-                    renderEdits();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        function addHighlight(x, y) { pushEdit({ type: 'highlight', x, y, width: 150, height: 20, color: $('propHighlightColor').value }); renderEdits(); }
-        function addRedact(x, y) { pushEdit({ type: 'redact', x, y, width: 100, height: 20 }); renderEdits(); }
-        
-        function startDraw(e) { if(currentTool !== 'draw') return; isDrawing = true; const rect = overlayCanvas.getBoundingClientRect(); currentPath = [{ x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale }]; }
-        function draw(e) {
-            if(!isDrawing) return;
-            const rect = overlayCanvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / scale, y = (e.clientY - rect.top) / scale;
-            currentPath.push({x, y});
-            const ctx = overlayCanvas.getContext('2d');
-            if(currentPath.length > 1) {
-                const p = currentPath;
-                ctx.beginPath(); ctx.moveTo(p[p.length-2].x * scale, p[p.length-2].y * scale);
-                ctx.lineTo(x * scale, y * scale);
-                ctx.strokeStyle = $('propStrokeColor').value;
-                ctx.lineWidth = parseInt($('propStrokeWidth').value) * scale;
-                ctx.lineCap = 'round'; ctx.stroke();
-            }
-        }
-        function endDraw() {
-            if(!isDrawing) return; isDrawing = false;
-            if(currentPath.length > 1) {
-                let drawEd = pageEdits[currentPage].find(e => e.type === 'draw');
-                if(!drawEd) { drawEd = { type: 'draw', paths: [] }; pageEdits[currentPage].push(drawEd); }
-                drawEd.paths.push({ points: [...currentPath], color: $('propStrokeColor').value, width: parseInt($('propStrokeWidth').value) });
-                saveUndo(); editCount++;
-            }
-            currentPath = [];
-        }
-        
-        let sigDrawing = false;
-        function setupSigPad() {
-            const ctx = sigCanvas.getContext('2d');
-            sigCanvas.onmousedown = e => { sigDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-            sigCanvas.onmousemove = e => { if(!sigDrawing) return; ctx.lineTo(e.offsetX, e.offsetY); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke(); };
-            sigCanvas.onmouseup = () => sigDrawing = false;
-            sigCanvas.onmouseleave = () => sigDrawing = false;
-        }
-        function clearSigPad() { const ctx = sigCanvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, sigCanvas.width, sigCanvas.height); }
-        function useSignature() { pushEdit({ type: 'image', x: 50, y: 50, width: 150, height: 60, data: sigCanvas.toDataURL('image/png') }); renderEdits(); sigModal.classList.remove('show'); selectTool('select'); }
-        
-        function startDrag(e, el, ed) {
-            if(currentTool === 'erase') { deleteEdit(ed); return; }
-            if(currentTool !== 'select') return;
-            e.preventDefault(); dragEl = el;
-            editLayer.querySelectorAll('.edit-el.selected').forEach(x => x.classList.remove('selected'));
-            el.classList.add('selected');
-            const rect = editLayer.getBoundingClientRect();
-            dragOffset = { x: e.clientX - rect.left - parseFloat(el.style.left), y: e.clientY - rect.top - parseFloat(el.style.top) };
-            document.onmousemove = e => {
-                const rect = editLayer.getBoundingClientRect();
-                const x = e.clientX - rect.left - dragOffset.x, y = e.clientY - rect.top - dragOffset.y;
-                el.style.left = x + 'px'; el.style.top = y + 'px';
-                ed.x = x / scale; ed.y = y / scale;
-            };
-            document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; saveUndo(); };
-        }
-        
-        function startResize(e, el, ed) {
-            e.preventDefault(); e.stopPropagation();
-            const startX = e.clientX, startY = e.clientY;
-            const startW = parseFloat(el.style.width), startH = parseFloat(el.style.height);
-            document.onmousemove = e => {
-                const w = Math.max(30, startW + (e.clientX - startX)), h = Math.max(30, startH + (e.clientY - startY));
-                el.style.width = w + 'px'; el.style.height = h + 'px';
-                ed.width = w / scale; ed.height = h / scale;
-            };
-            document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; saveUndo(); };
-        }
-        
-        function deleteEdit(ed) { const idx = pageEdits[currentPage].indexOf(ed); if(idx > -1) { pageEdits[currentPage].splice(idx, 1); saveUndo(); renderEdits(); renderDrawings(); } }
-        function deleteSelected() { if(dragEl) { const idx = parseInt(dragEl.dataset.idx); if(pageEdits[currentPage][idx]) { pageEdits[currentPage].splice(idx, 1); saveUndo(); renderEdits(); renderDrawings(); } dragEl = null; } }
-        
-        function pushEdit(ed) { if(!pageEdits[currentPage]) pageEdits[currentPage] = []; pageEdits[currentPage].push(ed); editCount++; saveUndo(); }
-        function saveUndo() { undoStack.push(JSON.stringify({ pageEdits, textReplacements })); if(undoStack.length > 50) undoStack.shift(); redoStack = []; }
-        function undo() { if(!undoStack.length) return; redoStack.push(JSON.stringify({ pageEdits, textReplacements })); const state = JSON.parse(undoStack.pop()); pageEdits = state.pageEdits; textReplacements = state.textReplacements || []; renderEdits(); renderDrawings(); }
-        function redo() { if(!redoStack.length) return; undoStack.push(JSON.stringify({ pageEdits, textReplacements })); const state = JSON.parse(redoStack.pop()); pageEdits = state.pageEdits; textReplacements = state.textReplacements || []; renderEdits(); renderDrawings(); }
-        
-        function setZoom(val) { displayScale = Math.max(0.25, Math.min(2, val)); $('zoomLevel').textContent = Math.round(displayScale * 100) + '%'; pdfWrap.style.transform = `scale(${displayScale})`; }
-        
-        async function saveEdits() {
-            if(!fileId) return toast('No file loaded', 'error');
-            showLoading('Saving...');
-            
-            if(textReplacements.length > 0) {
-                const replForm = new FormData();
-                replForm.append('file_id', fileId);
-                replForm.append('replacements', JSON.stringify(textReplacements));
-                try {
-                    const replRes = await fetch('/api/replace-text', { method: 'POST', body: replForm });
-                    const replData = await replRes.json();
-                    if(replData.success) { fileId = replData.fileId; textReplacements = []; }
-                } catch(e) { console.error('Text replacement error:', e); }
-            }
-            
-            const allEdits = [];
-            for(const [pg, eds] of Object.entries(pageEdits)) eds.forEach(ed => allEdits.push({ ...ed, page: parseInt(pg) }));
-            
-            if(allEdits.length > 0) {
-                const form = new FormData();
-                form.append('file_id', fileId);
-                form.append('edits', JSON.stringify(allEdits));
-                try {
-                    const res = await fetch('/api/apply-edits', { method: 'POST', body: form });
-                    const data = await res.json();
-                    if(data.success) { fileId = data.fileId; toast('Saved!', 'success'); }
-                } catch(e) { toast('Save failed', 'error'); }
-            } else { toast('Saved!', 'success'); }
-            hideLoading();
-        }
-        
-        async function initiateDownload() {
-            if(!fileId) return toast('No file loaded', 'error');
-            await saveEdits();
-            const form = new FormData(); form.append('edit_count', editCount);
-            try {
-                const priceData = await fetch('/api/price', { method: 'POST', body: form }).then(r => r.json());
-                $('priceDisplay').textContent = '$' + priceData.price.toFixed(2);
-                if(!stripe) {
-                    const tokenForm = new FormData(); tokenForm.append('file_id', fileId); tokenForm.append('payment_intent_id', 'free');
-                    const tokenRes = await fetch('/api/verify-payment', { method: 'POST', body: tokenForm }).then(r => r.json());
-                    if(tokenRes.token) window.location.href = '/api/download/' + tokenRes.token;
-                    return;
-                }
-                const payForm = new FormData(); payForm.append('file_id', fileId); payForm.append('edit_count', editCount);
-                const payData = await fetch('/api/create-payment', { method: 'POST', body: payForm }).then(r => r.json());
-                clientSecret = payData.clientSecret;
-                paymentModal.classList.add('show');
-            } catch(e) { toast('Error: ' + e.message, 'error'); }
-        }
-        
-        async function processPayment() {
-            if(!stripe || !clientSecret) return;
-            const btn = $('payBtn'); btn.disabled = true; btn.textContent = 'Processing...';
-            const {error, paymentIntent} = await stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardElement } });
-            if(error) { $('cardErrors').textContent = error.message; btn.disabled = false; btn.textContent = 'Pay & Download'; }
-            else if(paymentIntent.status === 'succeeded') {
-                const form = new FormData(); form.append('payment_intent_id', paymentIntent.id); form.append('file_id', fileId);
-                const tokenRes = await fetch('/api/verify-payment', { method: 'POST', body: form }).then(r => r.json());
-                paymentModal.classList.remove('show');
-                window.location.href = '/api/download/' + tokenRes.token;
-            }
-        }
-        
-        function showLoading(msg) { loadingText.textContent = msg || 'Processing...'; loadingOverlay.classList.add('show'); }
-        function hideLoading() { loadingOverlay.classList.remove('show'); }
-        function toast(msg, type = 'success') {
-            document.querySelector('.toast')?.remove();
-            const t = document.createElement('div'); t.className = 'toast ' + type;
-            t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">${type === 'success' ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/>'}</svg> ${msg}`;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
-        }
-        
-        init();
+        }catch(e){removeLastMsg();addMsg('error','Error: '+e.message)}
+        isProcessing=false;$('aiSend').disabled=false;
+    }
+    
+    function addMsg(type,content){const m=document.createElement('div');m.className=`ai-msg ${type}`;m.innerHTML=content;$('aiMessages').appendChild(m);$('aiMessages').scrollTop=$('aiMessages').scrollHeight}
+    function removeLastMsg(){const msgs=$('aiMessages').querySelectorAll('.ai-msg.assistant,.ai-msg.success,.ai-msg.error');if(msgs.length)msgs[msgs.length-1].remove()}
+    
+    async function showPricing(){
+        if(!docId)return;showLoading('Calculating price...');await DC.update();
+        try{const f=new FormData();f.append('session_id',DC.sid||'');f.append('doc_id',docId);
+            const r=await fetch('/api/pricing/calculate',{method:'POST',body:f});currentPrice=await r.json();
+            $('priceDisplay').textContent=`₹${currentPrice.price_inr}`;$('priceUsd').textContent=`≈ $${currentPrice.price_usd}`;
+            pricingShownAt=Date.now();
+            fetch('/api/pricing/shown',{method:'POST',body:new URLSearchParams({session_id:DC.sid})});
+            hideLoading();$('paymentModal').classList.add('show');
+        }catch(e){hideLoading();toast('Error','error')}
+    }
+    
+    async function closePricing(converted){
+        const t=pricingShownAt?Math.floor((Date.now()-pricingShownAt)/1000):0;
+        try{await fetch('/api/pricing/outcome',{method:'POST',body:new URLSearchParams({session_id:DC.sid,converted,time_on_pricing:t})})}catch(e){}
+        $('paymentModal').classList.remove('show');
+    }
+    
+    async function processPayment(method){
+        showLoading('Processing...');
+        setTimeout(async()=>{hideLoading();await closePricing(true);
+            try{const s=JSON.parse(localStorage.getItem('luleit_user')||'{}');s.conversions=(s.conversions||0)+1;localStorage.setItem('luleit_user',JSON.stringify(s))}catch(e){}
+            window.location.href=`/api/download/${docId}`;toast('Success!','success');
+        },1500);
+    }
+    
+    function showLoading(t){$('loadingText').textContent=t;$('loadingOverlay').classList.add('show')}
+    function hideLoading(){$('loadingOverlay').classList.remove('show')}
+    function toast(m,type='success'){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast '+type;t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4000)}
+    
+    init();
     </script>
 </body>
 </html>
