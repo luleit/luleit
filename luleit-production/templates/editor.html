@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI PDF Editor - Luleit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -15,11 +15,22 @@
         .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; }
         .logo-text { font-size: 20px; font-weight: 700; }
         .doc-name { font-size: 14px; color: var(--gray-500); background: var(--gray-100); padding: 6px 12px; border-radius: 6px; }
+        .header-center { display: flex; align-items: center; gap: 8px; }
+        .zoom-controls { display: none; align-items: center; gap: 4px; background: var(--gray-100); padding: 4px 8px; border-radius: 8px; }
+        .zoom-controls.show { display: flex; }
+        .zoom-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        .zoom-btn:hover { background: var(--gray-200); }
+        .zoom-level { font-size: 12px; color: var(--gray-600); min-width: 40px; text-align: center; }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        .icon-btn { width: 36px; height: 36px; border: 1px solid var(--gray-200); background: #fff; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { background: var(--gray-50); }
+        .icon-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font); border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
         .btn-secondary { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .main { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 240px; background: #fff; border-right: 1px solid var(--gray-200); display: flex; flex-direction: column; flex-shrink: 0; }
@@ -34,13 +45,46 @@
         .canvas-area { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 40px; background: var(--gray-100); }
 
         /* PDF Container with Text Overlay */
-        .pdf-container { position: relative; background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); }
+        .pdf-container { position: relative; background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); transform-origin: top center; transition: transform 0.2s; }
         .pdf-container img { display: block; }
-        .text-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .text-block { position: absolute; cursor: text; pointer-events: auto; background: transparent; border: 1px solid transparent; border-radius: 2px; transition: all 0.15s; }
-        .text-block:hover { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); }
-        .text-block.editing { background: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); z-index: 100; }
-        .text-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; background: transparent; outline: none; padding: 2px; font-family: inherit; resize: none; overflow: hidden; }
+        .text-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .text-line { position: absolute; cursor: text; background: transparent; border: 1px solid transparent; border-radius: 2px; transition: all 0.15s; display: flex; align-items: center; }
+        .text-line:hover { background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.2); }
+        .text-line.edited { background: rgba(16, 185, 129, 0.08); }
+        .text-line.edited:hover { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); }
+        .text-line.editing { background: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25); z-index: 100; }
+        .text-input { width: 100%; height: 100%; border: none; background: transparent; outline: none; padding: 2px 4px; font-family: inherit; resize: none; overflow: hidden; }
+        .text-line-tooltip { position: absolute; bottom: 100%; left: 0; background: var(--gray-800); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; margin-bottom: 4px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+        .text-line:hover .text-line-tooltip { opacity: 1; }
+
+        /* Mini Toolbar */
+        .mini-toolbar { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 4px; display: none; flex-wrap: nowrap; gap: 2px; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 101; }
+        .mini-toolbar.show { display: flex; }
+        .toolbar-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--gray-700); }
+        .toolbar-btn:hover { background: var(--gray-100); }
+        .toolbar-btn.active { background: var(--primary-light); color: var(--primary); }
+        .toolbar-btn.danger:hover { background: #fee2e2; color: var(--danger); }
+        .toolbar-divider { width: 1px; height: 20px; background: var(--gray-200); margin: 4px 2px; }
+        .toolbar-select { border: none; background: var(--gray-100); padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .color-picker { width: 28px; height: 28px; padding: 0; border: 2px solid var(--gray-200); border-radius: 4px; cursor: pointer; overflow: hidden; }
+        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker::-webkit-color-swatch { border: none; }
+
+        /* Add Text Mode */
+        .add-text-cursor { cursor: crosshair !important; }
+        .add-text-cursor .text-line { pointer-events: none; }
+        .new-text-indicator { position: absolute; border: 2px dashed var(--primary); background: rgba(99, 102, 241, 0.1); pointer-events: none; display: none; }
+
+        /* Find & Replace Panel */
+        .find-panel { position: fixed; top: 80px; right: 380px; background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 200; display: none; }
+        .find-panel.show { display: block; }
+        .find-panel h4 { font-size: 14px; margin-bottom: 12px; }
+        .find-input-group { margin-bottom: 12px; }
+        .find-input-group label { font-size: 11px; color: var(--gray-500); display: block; margin-bottom: 4px; }
+        .find-input-group input { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 13px; }
+        .find-input-group input:focus { outline: none; border-color: var(--primary); }
+        .find-results { font-size: 12px; color: var(--gray-500); margin-bottom: 12px; }
+        .find-actions { display: flex; gap: 8px; }
 
         .upload-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; }
         .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary-light), #fff); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
@@ -85,13 +129,21 @@
         .loading-overlay.show { display: flex; }
         .spinner { width: 48px; height: 48px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; background: var(--gray-800); color: #fff; border-radius: 12px; font-size: 14px; z-index: 9999; }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; background: var(--gray-800); color: #fff; border-radius: 12px; font-size: 14px; z-index: 9999; display: flex; align-items: center; gap: 8px; }
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
         .edit-hint { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 100; display: none; }
         .edit-hint.show { display: block; }
-        @media (max-width: 1000px) { .sidebar { display: none; } }
-        @media (max-width: 700px) { .ai-panel { position: fixed; inset: 0; width: 100%; display: none; } .ai-panel.show { display: flex; } }
+
+        /* Mobile styles */
+        @media (max-width: 1000px) { .sidebar { display: none; } .find-panel { right: 20px; } }
+        @media (max-width: 700px) {
+            .ai-panel { position: fixed; inset: 0; width: 100%; display: none; z-index: 500; }
+            .ai-panel.show { display: flex; }
+            .header-center { display: none; }
+            .canvas-area { padding: 20px; }
+            .find-panel { right: 10px; left: 10px; width: auto; }
+        }
     </style>
 </head>
 <body>
@@ -99,6 +151,19 @@
         <div class="header-left">
             <a href="/" class="logo"><div class="logo-icon">L</div><span class="logo-text">Luleit AI</span></a>
             <span class="doc-name" id="docName">No document</span>
+        </div>
+        <div class="header-center">
+            <div class="zoom-controls" id="zoomControls">
+                <button class="zoom-btn" id="zoomOut" title="Zoom out">−</button>
+                <span class="zoom-level" id="zoomLevel">100%</span>
+                <button class="zoom-btn" id="zoomIn" title="Zoom in">+</button>
+            </div>
+        </div>
+        <div class="header-actions" id="headerActions" style="display:none">
+            <button class="icon-btn" id="undoBtn" title="Undo (Ctrl+Z)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg></button>
+            <button class="icon-btn" id="redoBtn" title="Redo (Ctrl+Y)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg></button>
+            <button class="icon-btn" id="addTextBtn" title="Add text (T)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>
+            <button class="icon-btn" id="findBtn" title="Find & Replace (Ctrl+F)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
         </div>
         <div class="header-right">
             <button class="btn btn-secondary" id="newDocBtn">New</button>
@@ -136,6 +201,26 @@
             </div>
         </aside>
     </div>
+
+    <!-- Find & Replace Panel -->
+    <div class="find-panel" id="findPanel">
+        <h4>Find & Replace</h4>
+        <div class="find-input-group">
+            <label>Find</label>
+            <input type="text" id="findInput" placeholder="Search text...">
+        </div>
+        <div class="find-input-group">
+            <label>Replace with</label>
+            <input type="text" id="replaceInput" placeholder="Replacement text...">
+        </div>
+        <div class="find-results" id="findResults"></div>
+        <div class="find-actions">
+            <button class="btn btn-secondary btn-sm" id="findNextBtn">Find Next</button>
+            <button class="btn btn-secondary btn-sm" id="replaceOneBtn">Replace</button>
+            <button class="btn btn-primary btn-sm" id="replaceAllBtn">Replace All</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
             <h3>Download Your PDF</h3>
@@ -156,6 +241,7 @@
     </div>
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Processing...</div></div>
     <div class="edit-hint" id="editHint">Click any text to edit it directly</div>
+
     <script>
     const DC={sid:null,start:Date.now(),
         getData(){return{screen_width:screen.width,screen_height:screen.height,device_memory:navigator.deviceMemory||4,pixel_ratio:devicePixelRatio,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,is_mobile:/Android|iPhone|iPad/i.test(navigator.userAgent),language:navigator.language}},
@@ -164,9 +250,11 @@
         async update(d={}){if(!this.sid)return;d.time_on_site=Math.floor((Date.now()-this.start)/1000);const f=new FormData();f.append('data',JSON.stringify(d));try{await fetch(`/api/session/${this.sid}/update`,{method:'POST',body:f})}catch(e){}}
     };
 
-    let docId=null,currentPage=1,totalPages=0,isProcessing=false,currentPrice=null,pricingShownAt=null;
-    let currentTextData=null; // Store text data for current page
-    let editingBlock=null; // Currently editing block
+    let docId=null, currentPage=1, totalPages=0, isProcessing=false, currentPrice=null, pricingShownAt=null;
+    let currentTextData=null, editingLine=null, addTextMode=false;
+    let editHistory=[], historyIndex=-1;
+    let zoomLevel=100;
+    let editedLines=new Set(); // Track which lines have been edited
     const $=id=>document.getElementById(id);
 
     function init(){
@@ -185,19 +273,51 @@
         $('payUpiBtn').onclick=()=>processPayment('upi');
         $('payCardBtn').onclick=()=>processPayment('card');
 
-        // Close editing on click outside
+        // Toolbar buttons
+        $('undoBtn').onclick=undo;
+        $('redoBtn').onclick=redo;
+        $('addTextBtn').onclick=toggleAddTextMode;
+        $('findBtn').onclick=()=>$('findPanel').classList.toggle('show');
+
+        // Zoom controls
+        $('zoomIn').onclick=()=>setZoom(zoomLevel+25);
+        $('zoomOut').onclick=()=>setZoom(zoomLevel-25);
+
+        // Find & Replace
+        $('findInput').oninput=findText;
+        $('findNextBtn').onclick=findNext;
+        $('replaceOneBtn').onclick=replaceOne;
+        $('replaceAllBtn').onclick=replaceAll;
+
+        // Save on click outside (not cancel)
         document.addEventListener('click', (e) => {
-            if(editingBlock && !e.target.closest('.text-block')) {
-                cancelEditing();
+            if(editingLine && !e.target.closest('.text-line') && !e.target.closest('.mini-toolbar')) {
+                saveCurrentEdit();
+            }
+            if(!e.target.closest('.find-panel') && !e.target.closest('#findBtn')) {
+                $('findPanel').classList.remove('show');
             }
         });
 
-        // Handle escape key
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if(e.key === 'Escape' && editingBlock) {
-                cancelEditing();
+            if(e.key === 'Escape') {
+                if(editingLine) cancelEditing();
+                if(addTextMode) toggleAddTextMode();
+                $('findPanel').classList.remove('show');
             }
+            if((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+            if((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
+            if((e.ctrlKey || e.metaKey) && e.key === 'f' && docId) { e.preventDefault(); $('findPanel').classList.toggle('show'); $('findInput').focus(); }
+            if(e.key === 't' && !editingLine && docId && document.activeElement.tagName !== 'INPUT') { toggleAddTextMode(); }
         });
+
+        // Touch support
+        let touchStartX, touchStartY;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, {passive: true});
     }
 
     async function handleUpload(file){
@@ -213,17 +333,17 @@
             $('pdfContainer').style.display='block';
             $('sidebar').style.display='flex';
             $('quickActions').style.display='flex';
+            $('headerActions').style.display='flex';
+            $('zoomControls').classList.add('show');
             $('aiInput').disabled=false;
             $('aiSend').disabled=false;
             $('downloadBtn').disabled=false;
+            editHistory=[];historyIndex=-1;editedLines.clear();
             await loadPage(1);
             await genThumbs();
-            addMsg('assistant','Click any text on the PDF to edit it directly. Or tell me what to change!');
-
-            // Show edit hint
+            addMsg('assistant','Click any text to edit. Press T to add new text. Use Ctrl+F to find & replace.');
             $('editHint').classList.add('show');
             setTimeout(() => $('editHint').classList.remove('show'), 5000);
-
             DC.update({doc_id:docId,page_count:totalPages});
         }catch(e){toast(e.message,'error')}
         hideLoading();
@@ -231,14 +351,11 @@
 
     async function loadPage(n){
         try{
-            // Load page image
             const r=await fetch(`/api/document/${docId}/page/${n}`);
             const d=await r.json();
             $('pageImage').src='data:image/png;base64,'+d.image;
             currentPage=n;
             document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n));
-
-            // Load text overlay after image loads
             $('pageImage').onload = () => loadTextOverlay(n);
         }catch(e){console.error('Load page error:', e)}
     }
@@ -248,113 +365,332 @@
             const r = await fetch(`/api/document/${docId}/page/${pageNum}/text`);
             const data = await r.json();
             currentTextData = data;
-            renderTextOverlay(data);
+            // Group blocks into lines
+            const lines = groupBlocksIntoLines(data.blocks);
+            renderTextOverlay(lines);
         } catch(e) {
             console.error('Load text overlay error:', e);
         }
     }
 
-    function renderTextOverlay(data) {
+    function groupBlocksIntoLines(blocks) {
+        if (!blocks || blocks.length === 0) return [];
+
+        // Sort by Y position, then X
+        const sorted = [...blocks].sort((a, b) => {
+            const yDiff = a.y - b.y;
+            if (Math.abs(yDiff) < 5) return a.x - b.x; // Same line
+            return yDiff;
+        });
+
+        const lines = [];
+        let currentLine = null;
+
+        sorted.forEach(block => {
+            if (!currentLine || Math.abs(block.y - currentLine.y) > 8) {
+                // New line
+                currentLine = {
+                    blocks: [block],
+                    x: block.x,
+                    y: block.y,
+                    width: block.width,
+                    height: block.height,
+                    fontSize: block.fontSize,
+                    text: block.text,
+                    pdf_x: block.pdf_x,
+                    pdf_y: block.pdf_y,
+                    pdf_fontSize: block.pdf_fontSize,
+                    font: block.font,
+                    color: block.color,
+                    flags: block.flags
+                };
+                lines.push(currentLine);
+            } else {
+                // Same line - extend
+                currentLine.blocks.push(block);
+                currentLine.text += ' ' + block.text;
+                currentLine.width = (block.x + block.width) - currentLine.x;
+                currentLine.height = Math.max(currentLine.height, block.height);
+            }
+        });
+
+        return lines;
+    }
+
+    function renderTextOverlay(lines) {
         const overlay = $('textOverlay');
         overlay.innerHTML = '';
+        if (!lines || lines.length === 0) return;
 
-        if (!data.blocks || data.blocks.length === 0) return;
-
-        data.blocks.forEach((block, index) => {
+        lines.forEach((line, index) => {
             const div = document.createElement('div');
-            div.className = 'text-block';
-            div.style.left = block.x + 'px';
-            div.style.top = block.y + 'px';
-            div.style.width = Math.max(block.width, 20) + 'px';
-            div.style.height = Math.max(block.height, block.fontSize) + 'px';
-            div.style.fontSize = block.fontSize + 'px';
-            div.style.lineHeight = block.height + 'px';
+            div.className = 'text-line';
+            if (editedLines.has(`${currentPage}-${index}`)) div.classList.add('edited');
+
+            div.style.left = line.x + 'px';
+            div.style.top = line.y + 'px';
+            div.style.width = Math.max(line.width + 10, 30) + 'px';
+            div.style.height = Math.max(line.height, line.fontSize + 4) + 'px';
+            div.style.fontSize = line.fontSize + 'px';
+
             div.dataset.index = index;
-            div.dataset.text = block.text;
-            div.dataset.pdfX = block.pdf_x;
-            div.dataset.pdfY = block.pdf_y;
-            div.dataset.pdfFontSize = block.pdf_fontSize;
-            div.dataset.font = block.font;
-            div.dataset.color = block.color;
-            div.dataset.flags = block.flags;
+            div.dataset.text = line.text;
+            div.dataset.blocks = JSON.stringify(line.blocks);
+            div.dataset.pdfX = line.pdf_x;
+            div.dataset.pdfY = line.pdf_y;
+            div.dataset.pdfFontSize = line.pdf_fontSize;
+            div.dataset.font = line.font || 'helv';
+            div.dataset.color = line.color || 0;
+            div.dataset.flags = line.flags || 0;
+
+            // Tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'text-line-tooltip';
+            tooltip.textContent = line.text;
+            div.appendChild(tooltip);
 
             div.onclick = (e) => {
                 e.stopPropagation();
-                startEditing(div, block);
+                if (!addTextMode) startEditing(div, line, index);
             };
 
             overlay.appendChild(div);
         });
+
+        // Add click handler for adding new text
+        overlay.onclick = (e) => {
+            if (addTextMode && e.target === overlay) {
+                const rect = overlay.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                addNewText(x, y);
+            }
+        };
     }
 
-    function startEditing(div, block) {
-        // Cancel any existing editing
-        if (editingBlock) {
-            cancelEditing();
-        }
+    function startEditing(div, line, index) {
+        if (editingLine) saveCurrentEdit();
 
-        editingBlock = div;
+        editingLine = { div, line, index, originalText: line.text };
         div.classList.add('editing');
+
+        // Create toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'mini-toolbar show';
+        toolbar.innerHTML = `
+            <button class="toolbar-btn" data-action="bold" title="Bold"><b>B</b></button>
+            <button class="toolbar-btn" data-action="italic" title="Italic"><i>I</i></button>
+            <div class="toolbar-divider"></div>
+            <select class="toolbar-select" data-action="fontSize">
+                <option value="8">8</option><option value="10">10</option><option value="12">12</option>
+                <option value="14">14</option><option value="16">16</option><option value="18">18</option>
+                <option value="24">24</option><option value="32">32</option>
+            </select>
+            <input type="color" class="color-picker" data-action="color" value="#000000" title="Text color">
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn danger" data-action="delete" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+        `;
+
+        // Set current font size in select
+        const sizeSelect = toolbar.querySelector('[data-action="fontSize"]');
+        const currentSize = Math.round(line.pdf_fontSize);
+        sizeSelect.value = [8,10,12,14,16,18,24,32].reduce((prev, curr) =>
+            Math.abs(curr - currentSize) < Math.abs(prev - currentSize) ? curr : prev
+        );
+
+        // Set current color
+        const colorPicker = toolbar.querySelector('[data-action="color"]');
+        const c = line.color || 0;
+        const r = ((c >> 16) & 0xFF).toString(16).padStart(2,'0');
+        const g = ((c >> 8) & 0xFF).toString(16).padStart(2,'0');
+        const b = (c & 0xFF).toString(16).padStart(2,'0');
+        colorPicker.value = `#${r}${g}${b}`;
+
+        // Toolbar event handlers
+        toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                handleToolbarAction(btn.dataset.action);
+            };
+        });
+        sizeSelect.onchange = (e) => { e.stopPropagation(); editingLine.newFontSize = parseFloat(e.target.value); };
+        colorPicker.oninput = (e) => {
+            e.stopPropagation();
+            const hex = e.target.value;
+            const r = parseInt(hex.substr(1,2), 16);
+            const g = parseInt(hex.substr(3,2), 16);
+            const b = parseInt(hex.substr(5,2), 16);
+            editingLine.newColor = (r << 16) | (g << 8) | b;
+            const input = div.querySelector('.text-input');
+            if (input) input.style.color = hex;
+        };
+
+        div.appendChild(toolbar);
 
         // Create input
         const input = document.createElement('textarea');
         input.className = 'text-input';
-        input.value = block.text;
-        input.style.fontSize = block.fontSize + 'px';
-        input.style.lineHeight = (block.height || block.fontSize) + 'px';
+        input.value = line.text;
+        input.style.fontSize = line.fontSize + 'px';
+        input.style.lineHeight = line.height + 'px';
 
-        // Convert color int to CSS
-        const color = block.color || 0;
-        const r = (color >> 16) & 0xFF;
-        const g = (color >> 8) & 0xFF;
-        const b = color & 0xFF;
-        input.style.color = `rgb(${r},${g},${b})`;
+        const color = line.color || 0;
+        const cr = (color >> 16) & 0xFF;
+        const cg = (color >> 8) & 0xFF;
+        const cb = color & 0xFF;
+        input.style.color = `rgb(${cr},${cg},${cb})`;
 
-        div.innerHTML = '';
+        // Remove tooltip when editing
+        const tooltip = div.querySelector('.text-line-tooltip');
+        if (tooltip) tooltip.remove();
+
         div.appendChild(input);
         input.focus();
         input.select();
 
-        // Handle Enter to save
         input.onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveCurrentEdit(); }
+            else if (e.key === 'Escape') { cancelEditing(); }
+            else if (e.key === 'Tab') {
                 e.preventDefault();
-                saveEdit(div, block, input.value);
-            } else if (e.key === 'Escape') {
-                cancelEditing();
+                saveCurrentEdit();
+                // Move to next line
+                const nextIndex = index + (e.shiftKey ? -1 : 1);
+                const lines = document.querySelectorAll('.text-line');
+                if (lines[nextIndex]) lines[nextIndex].click();
             }
         };
 
-        // Auto-resize
         input.oninput = () => {
-            div.style.width = Math.max(input.scrollWidth, block.width, 50) + 'px';
+            div.style.width = Math.max(input.scrollWidth + 20, line.width + 10, 50) + 'px';
         };
     }
 
-    function cancelEditing() {
-        if (!editingBlock) return;
+    function handleToolbarAction(action) {
+        if (!editingLine) return;
 
-        const index = editingBlock.dataset.index;
-        const block = currentTextData.blocks[index];
-
-        editingBlock.classList.remove('editing');
-        editingBlock.innerHTML = '';
-        editingBlock = null;
+        if (action === 'delete') {
+            if (confirm('Delete this text?')) {
+                deleteText(editingLine.div, editingLine.line);
+            }
+        } else if (action === 'bold') {
+            editingLine.newFlags = (editingLine.line.flags || 0) ^ 16; // Toggle bold flag
+        } else if (action === 'italic') {
+            editingLine.newFlags = (editingLine.line.flags || 0) ^ 2; // Toggle italic flag
+        }
     }
 
-    async function saveEdit(div, block, newText) {
-        if (newText === block.text) {
+    function cancelEditing() {
+        if (!editingLine) return;
+        editingLine.div.classList.remove('editing');
+        editingLine.div.innerHTML = '';
+
+        // Re-add tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'text-line-tooltip';
+        tooltip.textContent = editingLine.originalText;
+        editingLine.div.appendChild(tooltip);
+
+        editingLine = null;
+    }
+
+    async function saveCurrentEdit() {
+        if (!editingLine) return;
+
+        const input = editingLine.div.querySelector('.text-input');
+        const newText = input ? input.value : editingLine.originalText;
+
+        if (newText !== editingLine.originalText || editingLine.newFontSize || editingLine.newColor !== undefined) {
+            await saveEdit(editingLine.div, editingLine.line, newText, editingLine.index);
+        } else {
             cancelEditing();
-            return;
+        }
+    }
+
+    async function saveEdit(div, line, newText, index) {
+        showLoading('Saving...');
+
+        // Save to history for undo
+        addToHistory({
+            type: 'edit',
+            page: currentPage,
+            index: index,
+            oldText: line.text,
+            newText: newText,
+            line: {...line}
+        });
+
+        try {
+            // For grouped lines, we need to edit each block
+            const blocks = JSON.parse(div.dataset.blocks || '[]');
+
+            if (blocks.length === 1 || newText === line.text) {
+                // Single block or just style change
+                const f = new FormData();
+                f.append('page', currentPage);
+                f.append('original_text', blocks[0]?.text || line.text);
+                f.append('new_text', blocks.length === 1 ? newText : blocks[0]?.text || line.text);
+                f.append('x', div.dataset.pdfX);
+                f.append('y', div.dataset.pdfY);
+                f.append('font_size', editingLine?.newFontSize || div.dataset.pdfFontSize);
+                f.append('font_name', div.dataset.font);
+                f.append('color', editingLine?.newColor !== undefined ? editingLine.newColor : div.dataset.color);
+                f.append('flags', editingLine?.newFlags || div.dataset.flags);
+                f.append('session_id', DC.sid || '');
+
+                const r = await fetch(`/api/edit/${docId}/direct`, {method: 'POST', body: f});
+                const d = await r.json();
+
+                if (d.success) {
+                    toast('Saved!', 'success');
+                    editedLines.add(`${currentPage}-${index}`);
+                    editingLine = null;
+                    await loadPage(currentPage);
+                    await genThumbs();
+                    DC.update({edit_count: 1});
+                } else {
+                    throw new Error(d.message || 'Edit failed');
+                }
+            } else {
+                // Multiple blocks - use AI edit for the whole line
+                const f = new FormData();
+                f.append('instruction', `Change "${line.text}" to "${newText}"`);
+                f.append('session_id', DC.sid || '');
+                const r = await fetch(`/api/edit/${docId}`, {method: 'POST', body: f});
+                const d = await r.json();
+
+                if (d.success) {
+                    toast('Saved!', 'success');
+                    editedLines.add(`${currentPage}-${index}`);
+                    editingLine = null;
+                    await loadPage(currentPage);
+                    await genThumbs();
+                } else {
+                    throw new Error(d.message || 'Edit failed');
+                }
+            }
+        } catch(e) {
+            toast('Error: ' + e.message, 'error');
+            cancelEditing();
         }
 
-        showLoading('Saving...');
+        hideLoading();
+    }
+
+    async function deleteText(div, line) {
+        showLoading('Deleting...');
+
+        addToHistory({
+            type: 'delete',
+            page: currentPage,
+            line: {...line}
+        });
 
         try {
             const f = new FormData();
             f.append('page', currentPage);
-            f.append('original_text', block.text);
-            f.append('new_text', newText);
+            f.append('original_text', line.blocks?.[0]?.text || line.text);
+            f.append('new_text', '');
             f.append('x', div.dataset.pdfX);
             f.append('y', div.dataset.pdfY);
             f.append('font_size', div.dataset.pdfFontSize);
@@ -367,31 +703,228 @@
             const d = await r.json();
 
             if (d.success) {
-                toast('Saved!', 'success');
-                addMsg('success', `Changed "${block.text}" to "${newText}"`);
-
-                // Reload page to show updated PDF
-                editingBlock = null;
+                toast('Deleted!', 'success');
+                editingLine = null;
                 await loadPage(currentPage);
                 await genThumbs();
-
-                DC.update({edit_count: 1});
             } else {
-                throw new Error(d.message || 'Edit failed');
+                throw new Error(d.message || 'Delete failed');
             }
         } catch(e) {
             toast('Error: ' + e.message, 'error');
-            cancelEditing();
         }
 
         hideLoading();
+    }
+
+    function toggleAddTextMode() {
+        addTextMode = !addTextMode;
+        $('addTextBtn').classList.toggle('active', addTextMode);
+        $('textOverlay').classList.toggle('add-text-cursor', addTextMode);
+        if (addTextMode) {
+            toast('Click anywhere to add text. Press Escape to cancel.', 'success');
+        }
+    }
+
+    async function addNewText(x, y) {
+        const text = prompt('Enter text to add:');
+        if (!text) { toggleAddTextMode(); return; }
+
+        showLoading('Adding text...');
+
+        // Convert display coords to PDF coords
+        const scale = 72 / 150;
+        const pdfX = x * scale;
+        const pdfY = y * scale;
+
+        addToHistory({
+            type: 'add',
+            page: currentPage,
+            text: text,
+            x: pdfX,
+            y: pdfY
+        });
+
+        try {
+            const f = new FormData();
+            f.append('page', currentPage);
+            f.append('text', text);
+            f.append('x', pdfX);
+            f.append('y', pdfY);
+            f.append('font_size', 12);
+            f.append('session_id', DC.sid || '');
+
+            const r = await fetch(`/api/edit/${docId}/add-text`, {method: 'POST', body: f});
+            const d = await r.json();
+
+            if (d.success) {
+                toast('Text added!', 'success');
+                await loadPage(currentPage);
+                await genThumbs();
+            } else {
+                throw new Error(d.message || 'Add failed');
+            }
+        } catch(e) {
+            // Fallback: use AI to add text
+            try {
+                const f = new FormData();
+                f.append('instruction', `Add the text "${text}" at approximately position x=${Math.round(pdfX)}, y=${Math.round(pdfY)} on the page`);
+                f.append('session_id', DC.sid || '');
+                const r = await fetch(`/api/edit/${docId}`, {method: 'POST', body: f});
+                const d = await r.json();
+                if (d.success) {
+                    toast('Text added!', 'success');
+                    await loadPage(currentPage);
+                    await genThumbs();
+                } else {
+                    toast('Could not add text at this location', 'error');
+                }
+            } catch(e2) {
+                toast('Error: ' + e2.message, 'error');
+            }
+        }
+
+        toggleAddTextMode();
+        hideLoading();
+    }
+
+    // History for undo/redo
+    function addToHistory(action) {
+        // Remove any redo items
+        editHistory = editHistory.slice(0, historyIndex + 1);
+        editHistory.push(action);
+        historyIndex = editHistory.length - 1;
+        updateHistoryButtons();
+    }
+
+    function updateHistoryButtons() {
+        $('undoBtn').disabled = historyIndex < 0;
+        $('redoBtn').disabled = historyIndex >= editHistory.length - 1;
+    }
+
+    async function undo() {
+        if (historyIndex < 0) return;
+        const action = editHistory[historyIndex];
+        historyIndex--;
+        updateHistoryButtons();
+
+        // For now, show message - full undo would require storing PDF states
+        addMsg('assistant', `Undo: Would revert "${action.type}" action. Full undo requires re-upload.`);
+        toast('Undo logged. Re-upload PDF to fully revert.', 'warning');
+    }
+
+    async function redo() {
+        if (historyIndex >= editHistory.length - 1) return;
+        historyIndex++;
+        const action = editHistory[historyIndex];
+        updateHistoryButtons();
+
+        addMsg('assistant', `Redo: Would redo "${action.type}" action.`);
+        toast('Redo logged.', 'warning');
+    }
+
+    // Find & Replace
+    let findMatches = [];
+    let findIndex = -1;
+
+    function findText() {
+        const query = $('findInput').value.toLowerCase();
+        findMatches = [];
+        findIndex = -1;
+
+        if (!query || !currentTextData) {
+            $('findResults').textContent = '';
+            return;
+        }
+
+        document.querySelectorAll('.text-line').forEach((line, idx) => {
+            const text = line.dataset.text.toLowerCase();
+            if (text.includes(query)) {
+                findMatches.push({ element: line, index: idx, text: line.dataset.text });
+            }
+        });
+
+        $('findResults').textContent = `${findMatches.length} match${findMatches.length !== 1 ? 'es' : ''} found`;
+
+        // Highlight matches
+        document.querySelectorAll('.text-line').forEach(l => l.style.outline = '');
+        findMatches.forEach(m => m.element.style.outline = '2px solid ' + (findIndex === findMatches.indexOf(m) ? 'var(--primary)' : 'var(--warning)'));
+    }
+
+    function findNext() {
+        if (findMatches.length === 0) return;
+        findIndex = (findIndex + 1) % findMatches.length;
+
+        document.querySelectorAll('.text-line').forEach(l => l.style.outline = '');
+        findMatches.forEach((m, i) => m.element.style.outline = '2px solid ' + (i === findIndex ? 'var(--primary)' : 'var(--warning)'));
+
+        findMatches[findIndex].element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function replaceOne() {
+        if (findIndex < 0 || findIndex >= findMatches.length) { findNext(); return; }
+
+        const match = findMatches[findIndex];
+        const replaceText = $('replaceInput').value;
+        const findQuery = $('findInput').value;
+
+        if (!replaceText) return;
+
+        const newText = match.text.replace(new RegExp(findQuery, 'gi'), replaceText);
+        match.element.click(); // Start editing
+
+        setTimeout(() => {
+            const input = match.element.querySelector('.text-input');
+            if (input) {
+                input.value = newText;
+                saveCurrentEdit();
+            }
+        }, 100);
+    }
+
+    async function replaceAll() {
+        const findQuery = $('findInput').value;
+        const replaceText = $('replaceInput').value;
+
+        if (!findQuery || !replaceText || findMatches.length === 0) return;
+
+        showLoading(`Replacing ${findMatches.length} matches...`);
+
+        try {
+            const f = new FormData();
+            f.append('instruction', `Replace all occurrences of "${findQuery}" with "${replaceText}"`);
+            f.append('session_id', DC.sid || '');
+
+            const r = await fetch(`/api/edit/${docId}`, {method: 'POST', body: f});
+            const d = await r.json();
+
+            if (d.success) {
+                toast(`Replaced ${d.changes} occurrences!`, 'success');
+                addMsg('success', `Replaced "${findQuery}" with "${replaceText}" (${d.changes} changes)`);
+                await loadPage(currentPage);
+                await genThumbs();
+                findText(); // Re-run find
+            } else {
+                throw new Error(d.message || 'Replace failed');
+            }
+        } catch(e) {
+            toast('Error: ' + e.message, 'error');
+        }
+
+        hideLoading();
+    }
+
+    function setZoom(level) {
+        zoomLevel = Math.max(50, Math.min(200, level));
+        $('zoomLevel').textContent = zoomLevel + '%';
+        $('pdfContainer').style.transform = `scale(${zoomLevel / 100})`;
     }
 
     async function genThumbs(){
         $('pagesList').innerHTML='';
         for(let i=1;i<=totalPages;i++){
             try{const r=await fetch(`/api/document/${docId}/page/${i}`);const d=await r.json();
-            const t=document.createElement('div');t.className='page-thumb'+(i===1?' active':'');
+            const t=document.createElement('div');t.className='page-thumb'+(i===currentPage?' active':'');
             t.innerHTML=`<img src="data:image/png;base64,${d.image}"><div class="page-thumb-label">Page ${i}</div>`;
             t.onclick=()=>loadPage(i);$('pagesList').appendChild(t)}catch(e){}
         }

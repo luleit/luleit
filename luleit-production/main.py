@@ -1769,6 +1769,72 @@ async def direct_edit(
     }
 
 
+@app.post("/api/edit/{doc_id}/add-text")
+async def add_text(
+    doc_id: str,
+    page: int = Form(...),
+    text: str = Form(...),
+    x: float = Form(...),
+    y: float = Form(...),
+    font_size: float = Form(12),
+    font_name: str = Form("helv"),
+    color: int = Form(0),
+    session_id: str = Form(None),
+):
+    """Add new text at specific location"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc_data = documents[doc_id]
+    pdf_bytes = doc_data["pdf_bytes"]
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+    if page < 1 or page > len(doc):
+        doc.close()
+        raise HTTPException(400, "Invalid page")
+
+    pdf_page = doc[page - 1]
+
+    # Convert color int to RGB tuple
+    if isinstance(color, int):
+        r = ((color >> 16) & 0xFF) / 255
+        g = ((color >> 8) & 0xFF) / 255
+        b = (color & 0xFF) / 255
+        color_tuple = (r, g, b)
+    else:
+        color_tuple = (0, 0, 0)
+
+    # Insert text at position
+    pdf_page.insert_text(
+        fitz.Point(x, y),
+        text,
+        fontsize=font_size,
+        color=color_tuple,
+        fontname=font_name,
+    )
+
+    # Save updated PDF
+    output = io.BytesIO()
+    doc.save(output, garbage=4, deflate=True, clean=True)
+    doc.close()
+
+    new_bytes = output.getvalue()
+    documents[doc_id]["pdf_bytes"] = new_bytes
+    documents[doc_id]["pages"] = pdf_to_images(new_bytes)
+    documents[doc_id]["text_data"] = extract_text_with_positions(new_bytes)
+    documents[doc_id]["edit_count"] = documents[doc_id].get("edit_count", 0) + 1
+
+    if session_id and session_id in sessions:
+        sessions[session_id]["edit_count"] = sessions[session_id].get("edit_count", 0) + 1
+
+    return {
+        "success": True,
+        "message": "Text added",
+        "image": documents[doc_id]["pages"][page - 1],
+    }
+
+
 @app.post("/api/edit/{doc_id}")
 async def edit_document(doc_id: str, instruction: str = Form(...), session_id: str = Form(None)):
     """Apply AI edit"""
