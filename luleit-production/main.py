@@ -42,8 +42,11 @@ import json
 import uuid
 import base64
 import hashlib
+import asyncio
 import httpx
 import fitz
+import zipfile
+import re
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
@@ -75,6 +78,318 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 DATA_DIR.mkdir(exist_ok=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+
+# Adobe PDF Services API credentials (set via environment variables)
+ADOBE_CLIENT_ID = os.getenv("ADOBE_CLIENT_ID", "")
+ADOBE_CLIENT_SECRET = os.getenv("ADOBE_CLIENT_SECRET", "")
+
+# ============================================================================
+# ADOBE PDF SERVICES
+# ============================================================================
+
+class AdobePDFServices:
+    """Adobe PDF Services API client for PDF <-> Word conversion"""
+
+    TOKEN_URL = "https://pdf-services.adobe.io/token"
+    API_BASE = "https://pdf-services.adobe.io"
+
+    _access_token: Optional[str] = None
+    _token_expires: Optional[datetime] = None
+
+    @classmethod
+    async def get_access_token(cls) -> str:
+        """Get or refresh Adobe access token"""
+        # Return cached token if still valid
+        if cls._access_token and cls._token_expires and datetime.now() < cls._token_expires:
+            return cls._access_token
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                cls.TOKEN_URL,
+                data={
+                    "client_id": ADOBE_CLIENT_ID,
+                    "client_secret": ADOBE_CLIENT_SECRET,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+
+            if response.status_code != 200:
+                print(f"Adobe token error: {response.status_code} - {response.text}")
+                raise HTTPException(500, "Failed to authenticate with Adobe")
+
+            data = response.json()
+            cls._access_token = data["access_token"]
+            # Token expires in ~24 hours, refresh after 23 hours
+            cls._token_expires = datetime.now() + timedelta(hours=23)
+            return cls._access_token
+
+    @classmethod
+    async def upload_asset(cls, file_bytes: bytes, media_type: str = "application/pdf") -> tuple:
+        """Upload file to Adobe and get asset ID and upload URI"""
+        token = await cls.get_access_token()
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            # Step 1: Get upload URI
+            response = await client.post(
+                f"{cls.API_BASE}/assets",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "x-api-key": ADOBE_CLIENT_ID,
+                    "Content-Type": "application/json",
+                },
+                json={"mediaType": media_type}
+            )
+
+            if response.status_code != 200:
+                print(f"Adobe upload URI error: {response.status_code} - {response.text}")
+                raise HTTPException(500, "Failed to get Adobe upload URI")
+
+            data = response.json()
+            upload_uri = data["uploadUri"]
+            asset_id = data["assetID"]
+
+            # Step 2: Upload the file
+            response = await client.put(
+                upload_uri,
+                content=file_bytes,
+                headers={"Content-Type": media_type}
+            )
+
+            if response.status_code not in [200, 201]:
+                print(f"Adobe upload error: {response.status_code}")
+                raise HTTPException(500, "Failed to upload to Adobe")
+
+            return asset_id, upload_uri
+
+    @classmethod
+    async def export_pdf_to_word(cls, pdf_bytes: bytes) -> bytes:
+        """Convert PDF to Word document"""
+        token = await cls.get_access_token()
+        asset_id, _ = await cls.upload_asset(pdf_bytes, "application/pdf")
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            # Create export job
+            response = await client.post(
+                f"{cls.API_BASE}/operation/exportpdf",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "x-api-key": ADOBE_CLIENT_ID,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "assetID": asset_id,
+                    "targetFormat": "docx",
+                }
+            )
+
+            if response.status_code not in [200, 201, 202]:
+                print(f"Adobe export error: {response.status_code} - {response.text}")
+                raise HTTPException(500, "Failed to start PDF export")
+
+            # Get polling location
+            poll_url = response.headers.get("location") or response.headers.get("x-request-id")
+            if not poll_url:
+                # Response might contain the result directly
+                data = response.json()
+                if "asset" in data:
+                    download_uri = data["asset"]["downloadUri"]
+                    result = await client.get(download_uri)
+                    return result.content
+
+            # Poll for completion
+            for _ in range(60):  # Max 60 attempts (2 minutes)
+                await asyncio.sleep(2)
+
+                status_response = await client.get(
+                    poll_url if poll_url.startswith("http") else f"{cls.API_BASE}{poll_url}",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "x-api-key": ADOBE_CLIENT_ID,
+                    }
+                )
+
+                if status_response.status_code == 200:
+                    data = status_response.json()
+                    status = data.get("status", "")
+
+                    if status == "done":
+                        download_uri = data.get("asset", {}).get("downloadUri") or data.get("downloadUri")
+                        if download_uri:
+                            result = await client.get(download_uri)
+                            return result.content
+                    elif status == "failed":
+                        raise HTTPException(500, "Adobe PDF export failed")
+                elif status_response.status_code == 202:
+                    continue  # Still processing
+
+            raise HTTPException(500, "Adobe PDF export timed out")
+
+    @classmethod
+    async def create_pdf_from_word(cls, docx_bytes: bytes) -> bytes:
+        """Convert Word document to PDF"""
+        token = await cls.get_access_token()
+        asset_id, _ = await cls.upload_asset(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            # Create PDF job
+            response = await client.post(
+                f"{cls.API_BASE}/operation/createpdf",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "x-api-key": ADOBE_CLIENT_ID,
+                    "Content-Type": "application/json",
+                },
+                json={"assetID": asset_id}
+            )
+
+            if response.status_code not in [200, 201, 202]:
+                print(f"Adobe create PDF error: {response.status_code} - {response.text}")
+                raise HTTPException(500, "Failed to start PDF creation")
+
+            # Get polling location
+            poll_url = response.headers.get("location")
+
+            # Poll for completion
+            for _ in range(60):
+                await asyncio.sleep(2)
+
+                status_response = await client.get(
+                    poll_url if poll_url.startswith("http") else f"{cls.API_BASE}{poll_url}",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "x-api-key": ADOBE_CLIENT_ID,
+                    }
+                )
+
+                if status_response.status_code == 200:
+                    data = status_response.json()
+                    status = data.get("status", "")
+
+                    if status == "done":
+                        download_uri = data.get("asset", {}).get("downloadUri") or data.get("downloadUri")
+                        if download_uri:
+                            result = await client.get(download_uri)
+                            return result.content
+                    elif status == "failed":
+                        raise HTTPException(500, "Adobe PDF creation failed")
+                elif status_response.status_code == 202:
+                    continue
+
+            raise HTTPException(500, "Adobe PDF creation timed out")
+
+
+def docx_to_html(docx_bytes: bytes) -> str:
+    """Convert DOCX to editable HTML"""
+    html_parts = ['<div class="docx-content">']
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(docx_bytes)) as zf:
+            # Read the main document
+            if 'word/document.xml' in zf.namelist():
+                doc_xml = zf.read('word/document.xml').decode('utf-8')
+
+                # Simple XML to HTML conversion
+                # Remove namespaces for easier parsing
+                doc_xml = re.sub(r'<w:', '<', doc_xml)
+                doc_xml = re.sub(r'</w:', '</', doc_xml)
+                doc_xml = re.sub(r'\sw:\w+="[^"]*"', '', doc_xml)
+
+                # Extract paragraphs
+                paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', doc_xml, re.DOTALL)
+
+                for para in paragraphs:
+                    # Extract text runs
+                    text_content = ""
+                    runs = re.findall(r'<r[^>]*>(.*?)</r>', para, re.DOTALL)
+
+                    for run in runs:
+                        # Check for bold
+                        is_bold = '<b/>' in run or '<b ' in run
+                        # Check for italic
+                        is_italic = '<i/>' in run or '<i ' in run
+                        # Extract text
+                        texts = re.findall(r'<t[^>]*>([^<]*)</t>', run)
+                        text = ''.join(texts)
+
+                        if text:
+                            if is_bold:
+                                text = f'<strong>{text}</strong>'
+                            if is_italic:
+                                text = f'<em>{text}</em>'
+                            text_content += text
+
+                    if text_content.strip():
+                        html_parts.append(f'<p>{text_content}</p>')
+                    else:
+                        html_parts.append('<p><br></p>')
+
+    except Exception as e:
+        print(f"DOCX parse error: {e}")
+        # Fallback: return placeholder
+        html_parts.append('<p>Document content could not be parsed. Please use AI chat to make edits.</p>')
+
+    html_parts.append('</div>')
+    return '\n'.join(html_parts)
+
+
+def html_to_docx(html_content: str, original_docx_bytes: bytes) -> bytes:
+    """
+    Update DOCX with edited HTML content.
+    For now, we'll use a simple approach - recreate the document.xml
+    """
+    try:
+        # Parse HTML to extract paragraphs
+        paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', html_content, re.DOTALL | re.IGNORECASE)
+
+        # Build new document.xml content
+        doc_xml_parts = [
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">',
+            '<w:body>'
+        ]
+
+        for para in paragraphs:
+            # Clean HTML tags and convert to Word XML
+            para_xml = '<w:p><w:r>'
+
+            # Handle bold
+            if '<strong>' in para or '<b>' in para:
+                para_xml = '<w:p><w:r><w:rPr><w:b/></w:rPr>'
+
+            # Extract plain text
+            plain_text = re.sub(r'<[^>]+>', '', para)
+            plain_text = plain_text.replace('&nbsp;', ' ')
+            plain_text = plain_text.replace('&amp;', '&')
+            plain_text = plain_text.replace('&lt;', '<')
+            plain_text = plain_text.replace('&gt;', '>')
+
+            if plain_text.strip():
+                para_xml += f'<w:t xml:space="preserve">{plain_text}</w:t>'
+            else:
+                para_xml += '<w:t></w:t>'
+
+            para_xml += '</w:r></w:p>'
+            doc_xml_parts.append(para_xml)
+
+        doc_xml_parts.append('</w:body></w:document>')
+        new_doc_xml = '\n'.join(doc_xml_parts)
+
+        # Update the DOCX (ZIP) file
+        output = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(original_docx_bytes), 'r') as zf_in:
+            with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zf_out:
+                for item in zf_in.namelist():
+                    if item == 'word/document.xml':
+                        zf_out.writestr(item, new_doc_xml.encode('utf-8'))
+                    else:
+                        zf_out.writestr(item, zf_in.read(item))
+
+        return output.getvalue()
+
+    except Exception as e:
+        print(f"HTML to DOCX error: {e}")
+        return original_docx_bytes
+
 
 # ============================================================================
 # STORAGE
@@ -1117,18 +1432,18 @@ async def pricing_stats():
 
 @app.post("/api/upload")
 async def upload_pdf(request: Request, file: UploadFile = File(...), session_id: str = Form(None)):
-    """Upload and analyze PDF"""
+    """Upload and analyze PDF, convert to Word for editing"""
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(400, "Only PDF files allowed")
-    
+
     content = await file.read()
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(400, "File too large (max 50MB)")
-    
+
     doc_id = str(uuid.uuid4())
     images = pdf_to_images(content)
     text_data = extract_text_with_positions(content)
-    
+
     documents[doc_id] = {
         "pdf_bytes": content,
         "filename": file.filename,
@@ -1137,14 +1452,125 @@ async def upload_pdf(request: Request, file: UploadFile = File(...), session_id:
         "page_count": len(images),
         "edit_count": 0,
         "uploaded_at": datetime.now().isoformat(),
+        "docx_bytes": None,  # Will be populated after Adobe conversion
+        "html_content": None,  # Editable HTML content
+        "conversion_status": "pending",  # pending, converting, ready, failed
     }
-    
+
     # Link to session
     if session_id and session_id in sessions:
         sessions[session_id]["doc_id"] = doc_id
         sessions[session_id]["page_count"] = len(images)
-    
+
     return {"success": True, "docId": doc_id, "pageCount": len(images), "filename": file.filename}
+
+
+@app.post("/api/convert/{doc_id}")
+async def convert_to_word(doc_id: str):
+    """Convert PDF to Word using Adobe API (called after upload)"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc = documents[doc_id]
+
+    if doc.get("conversion_status") == "ready":
+        return {"success": True, "status": "ready", "message": "Already converted"}
+
+    if doc.get("conversion_status") == "converting":
+        return {"success": True, "status": "converting", "message": "Conversion in progress"}
+
+    try:
+        documents[doc_id]["conversion_status"] = "converting"
+
+        # Convert PDF to Word via Adobe
+        docx_bytes = await AdobePDFServices.export_pdf_to_word(doc["pdf_bytes"])
+
+        # Convert Word to HTML for editing
+        html_content = docx_to_html(docx_bytes)
+
+        documents[doc_id]["docx_bytes"] = docx_bytes
+        documents[doc_id]["html_content"] = html_content
+        documents[doc_id]["conversion_status"] = "ready"
+
+        return {"success": True, "status": "ready", "message": "Conversion complete"}
+
+    except Exception as e:
+        print(f"Conversion error: {e}")
+        documents[doc_id]["conversion_status"] = "failed"
+        return {"success": False, "status": "failed", "message": str(e)}
+
+
+@app.get("/api/document/{doc_id}/status")
+async def get_conversion_status(doc_id: str):
+    """Check conversion status"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc = documents[doc_id]
+    return {
+        "status": doc.get("conversion_status", "pending"),
+        "hasHtml": doc.get("html_content") is not None,
+    }
+
+
+@app.get("/api/document/{doc_id}/html")
+async def get_html_content(doc_id: str):
+    """Get editable HTML content"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc = documents[doc_id]
+
+    if doc.get("conversion_status") != "ready":
+        raise HTTPException(400, "Document not yet converted")
+
+    return {
+        "html": doc.get("html_content", ""),
+        "pageCount": doc.get("page_count", 1),
+    }
+
+
+@app.post("/api/document/{doc_id}/html")
+async def save_html_content(doc_id: str, html: str = Form(...), session_id: str = Form(None)):
+    """Save edited HTML content and regenerate PDF"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc = documents[doc_id]
+
+    if not doc.get("docx_bytes"):
+        raise HTTPException(400, "No Word document available")
+
+    try:
+        # Update HTML content
+        documents[doc_id]["html_content"] = html
+
+        # Convert HTML back to DOCX
+        new_docx = html_to_docx(html, doc["docx_bytes"])
+        documents[doc_id]["docx_bytes"] = new_docx
+
+        # Convert DOCX back to PDF via Adobe
+        new_pdf = await AdobePDFServices.create_pdf_from_word(new_docx)
+        documents[doc_id]["pdf_bytes"] = new_pdf
+
+        # Regenerate images
+        documents[doc_id]["pages"] = pdf_to_images(new_pdf)
+        documents[doc_id]["text_data"] = extract_text_with_positions(new_pdf)
+        documents[doc_id]["edit_count"] = doc.get("edit_count", 0) + 1
+
+        # Update session
+        if session_id and session_id in sessions:
+            sessions[session_id]["edit_count"] = sessions[session_id].get("edit_count", 0) + 1
+
+        return {
+            "success": True,
+            "message": "Document updated",
+            "pageCount": len(documents[doc_id]["pages"]),
+        }
+
+    except Exception as e:
+        print(f"Save error: {e}")
+        raise HTTPException(500, f"Failed to save: {str(e)}")
 
 
 @app.post("/api/analyze/{doc_id}")

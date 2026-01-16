@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI PDF Editor - Luleit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <style>
         :root { --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff; --accent: #f472b6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827; --font: 'Inter', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,6 +16,9 @@
         .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; }
         .logo-text { font-size: 20px; font-weight: 700; }
         .doc-name { font-size: 14px; color: var(--gray-500); background: var(--gray-100); padding: 6px 12px; border-radius: 6px; }
+        .header-center { display: flex; gap: 8px; }
+        .view-btn { padding: 8px 16px; font-size: 13px; font-weight: 500; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .view-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font); border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
@@ -35,6 +39,8 @@
         .canvas-area { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 40px; background: var(--gray-100); }
         .pdf-container { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); }
         .pdf-container img { display: block; max-width: 100%; }
+        .editor-container { display: none; flex: 1; background: #fff; padding: 40px; overflow: auto; }
+        .editor-container.active { display: block; }
         .upload-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; }
         .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary-light), #fff); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
         .upload-icon svg { width: 48px; height: 48px; color: var(--primary); }
@@ -81,16 +87,10 @@
         .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; background: var(--gray-800); color: #fff; border-radius: 12px; font-size: 14px; z-index: 9999; }
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
+        .conversion-status { padding: 12px 16px; background: var(--primary-light); border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: var(--primary-dark); display: none; }
+        .conversion-status.show { display: block; }
         @media (max-width: 1000px) { .sidebar { display: none; } }
         @media (max-width: 700px) { .ai-panel { position: fixed; inset: 0; width: 100%; display: none; } .ai-panel.show { display: flex; } }
-        /* Text overlay styles for click-to-edit */
-        .pdf-container { position: relative; }
-        .text-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .text-block { position: absolute; cursor: text; pointer-events: auto; border: 1px solid transparent; border-radius: 2px; transition: all 0.15s ease; }
-        .text-block:hover { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); }
-        .text-block.editing { background: rgba(99, 102, 241, 0.15); border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
-        .text-input { position: absolute; border: 2px solid var(--primary); border-radius: 4px; padding: 2px 4px; font-family: inherit; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); resize: none; overflow: hidden; min-width: 100px; outline: none; z-index: 100; }
-        .text-input:focus { border-color: var(--primary-dark); }
     </style>
 </head>
 <body>
@@ -99,7 +99,12 @@
             <a href="/" class="logo"><div class="logo-icon">L</div><span class="logo-text">Luleit AI</span></a>
             <span class="doc-name" id="docName">No document</span>
         </div>
+        <div class="header-center" id="viewToggle" style="display:none">
+            <button class="view-btn active" id="previewBtn">Preview</button>
+            <button class="view-btn" id="editBtn">Edit</button>
+        </div>
         <div class="header-right">
+            <button class="btn btn-success" id="saveBtn" style="display:none">Save Changes</button>
             <button class="btn btn-secondary" id="newDocBtn">New</button>
             <button class="btn btn-primary" id="downloadBtn" disabled>Download</button>
         </div>
@@ -110,18 +115,21 @@
             <div class="upload-state" id="uploadState">
                 <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
                 <h2>Upload Your PDF</h2>
-                <p>AI will analyze and help you edit it</p>
+                <p>AI-powered editing with Adobe technology</p>
                 <div class="upload-zone" id="uploadZone"><p style="font-weight:600">Drop PDF here or click to browse</p></div>
                 <input type="file" id="fileInput" accept=".pdf" hidden>
             </div>
             <div class="pdf-container" id="pdfContainer" style="display:none">
                 <img id="pageImage" alt="PDF">
-                <div id="textOverlay" class="text-overlay"></div>
+            </div>
+            <div class="editor-container" id="editorContainer">
+                <div class="conversion-status" id="conversionStatus">Converting document for editing...</div>
+                <textarea id="htmlEditor"></textarea>
             </div>
         </div>
         <aside class="ai-panel" id="aiPanel">
             <div class="ai-header"><div class="ai-avatar">AI</div><div class="ai-header-text"><h3>AI Assistant</h3><p>Tell me what to edit</p></div></div>
-            <div class="ai-messages" id="aiMessages"><div class="ai-msg assistant">👋 Namaste! Upload a PDF and tell me what to change.</div></div>
+            <div class="ai-messages" id="aiMessages"><div class="ai-msg assistant">Upload a PDF and I'll help you edit it. You can also click "Edit" to directly modify the text.</div></div>
             <div class="quick-actions" id="quickActions" style="display:none">
                 <button class="quick-btn" data-cmd="Find all dates">Dates</button>
                 <button class="quick-btn" data-cmd="Find all names">Names</button>
@@ -155,17 +163,20 @@
     </div>
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Processing...</div></div>
     <script>
-    // Data Collection for Pricing AI
+    // Data Collection
     const DC={sid:null,start:Date.now(),
         getData(){return{screen_width:screen.width,screen_height:screen.height,device_memory:navigator.deviceMemory||4,pixel_ratio:devicePixelRatio,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,is_mobile:/Android|iPhone|iPad/i.test(navigator.userAgent),language:navigator.language}},
         async startSession(){const d=this.getData();try{const f=new FormData();f.append('data',JSON.stringify(d));const r=await fetch('/api/session/start',{method:'POST',body:f});const j=await r.json();this.sid=j.session_id;this.getGeo()}catch(e){}},
         async getGeo(){try{const r=await fetch('https://ipapi.co/json/');const g=await r.json();if(g&&this.sid){const f=new FormData();f.append('city',g.city||'');f.append('state',g.region||'');f.append('country',g.country_code||'IN');await fetch(`/api/session/${this.sid}/geo`,{method:'POST',body:f})}}catch(e){}},
         async update(d={}){if(!this.sid)return;d.time_on_site=Math.floor((Date.now()-this.start)/1000);const f=new FormData();f.append('data',JSON.stringify(d));try{await fetch(`/api/session/${this.sid}/update`,{method:'POST',body:f})}catch(e){}}
     };
-    
+
     let docId=null,currentPage=1,totalPages=0,isProcessing=false,currentPrice=null,pricingShownAt=null;
+    let currentView='preview'; // 'preview' or 'edit'
+    let editorReady=false;
+    let hasUnsavedChanges=false;
     const $=id=>document.getElementById(id);
-    
+
     function init(){
         DC.startSession();
         $('uploadZone').onclick=()=>$('fileInput').click();
@@ -176,13 +187,35 @@
         $('aiInput').onkeypress=e=>{if(e.key==='Enter')sendMessage()};
         $('aiSend').onclick=sendMessage;
         document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>{$('aiInput').value=b.dataset.cmd;sendMessage()});
-        $('newDocBtn').onclick=()=>{if(confirm('Start new?'))location.reload()};
+        $('newDocBtn').onclick=()=>{if(!hasUnsavedChanges||confirm('Discard changes?'))location.reload()};
         $('downloadBtn').onclick=showPricing;
         $('cancelPayBtn').onclick=()=>closePricing(false);
         $('payUpiBtn').onclick=()=>processPayment('upi');
         $('payCardBtn').onclick=()=>processPayment('card');
+        $('previewBtn').onclick=()=>switchView('preview');
+        $('editBtn').onclick=()=>switchView('edit');
+        $('saveBtn').onclick=saveChanges;
+
+        // Initialize TinyMCE
+        tinymce.init({
+            selector: '#htmlEditor',
+            height: '100%',
+            menubar: false,
+            plugins: 'lists link image table code help wordcount',
+            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | removeformat | code',
+            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; padding: 20px; }',
+            setup: function(editor) {
+                editor.on('change', function() {
+                    hasUnsavedChanges = true;
+                    $('saveBtn').style.display = 'inline-flex';
+                });
+                editor.on('init', function() {
+                    editorReady = true;
+                });
+            }
+        });
     }
-    
+
     async function handleUpload(file){
         showLoading('Uploading...');
         const f=new FormData();f.append('file',file);f.append('session_id',DC.sid||'');
@@ -196,18 +229,148 @@
             $('pdfContainer').style.display='block';
             $('sidebar').style.display='flex';
             $('quickActions').style.display='flex';
+            $('viewToggle').style.display='flex';
             $('aiInput').disabled=false;
             $('aiSend').disabled=false;
             $('downloadBtn').disabled=false;
             await loadPage(1);
             await genThumbs();
-            addMsg('assistant','📄 Uploaded! Analyzing...');
-            await analyze();
+            addMsg('assistant','📄 Uploaded! Converting for editing...');
+
+            // Start Adobe conversion in background
+            startConversion();
+
             DC.update({doc_id:docId,page_count:totalPages});
         }catch(e){toast(e.message,'error')}
         hideLoading();
     }
-    
+
+    async function startConversion(){
+        $('conversionStatus').textContent = 'Converting document for editing...';
+        $('conversionStatus').classList.add('show');
+
+        try {
+            const r = await fetch(`/api/convert/${docId}`, {method: 'POST'});
+            const d = await r.json();
+
+            if(d.success && d.status === 'ready') {
+                $('conversionStatus').textContent = 'Ready for editing!';
+                setTimeout(() => $('conversionStatus').classList.remove('show'), 2000);
+                addMsg('success', '✅ Document ready! Click "Edit" to make changes directly.');
+            } else if(d.status === 'converting') {
+                // Poll for completion
+                pollConversionStatus();
+            } else {
+                throw new Error(d.message || 'Conversion failed');
+            }
+        } catch(e) {
+            $('conversionStatus').textContent = 'Conversion failed. Use AI chat for edits.';
+            addMsg('error', 'Could not convert for direct editing. You can still use AI chat to make changes.');
+        }
+    }
+
+    async function pollConversionStatus() {
+        for(let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            try {
+                const r = await fetch(`/api/document/${docId}/status`);
+                const d = await r.json();
+
+                if(d.status === 'ready') {
+                    $('conversionStatus').textContent = 'Ready for editing!';
+                    setTimeout(() => $('conversionStatus').classList.remove('show'), 2000);
+                    addMsg('success', '✅ Document ready! Click "Edit" to make changes directly.');
+                    return;
+                } else if(d.status === 'failed') {
+                    throw new Error('Conversion failed');
+                }
+            } catch(e) {
+                break;
+            }
+        }
+        $('conversionStatus').textContent = 'Conversion timed out.';
+    }
+
+    async function switchView(view) {
+        if(view === currentView) return;
+
+        currentView = view;
+        $('previewBtn').classList.toggle('active', view === 'preview');
+        $('editBtn').classList.toggle('active', view === 'edit');
+
+        if(view === 'preview') {
+            $('pdfContainer').style.display = 'block';
+            $('editorContainer').classList.remove('active');
+            $('sidebar').style.display = 'flex';
+        } else {
+            // Switch to edit mode
+            $('pdfContainer').style.display = 'none';
+            $('editorContainer').classList.add('active');
+            $('sidebar').style.display = 'none';
+
+            // Load HTML content
+            await loadHtmlContent();
+        }
+    }
+
+    async function loadHtmlContent() {
+        if(!docId) return;
+
+        try {
+            const r = await fetch(`/api/document/${docId}/html`);
+            if(!r.ok) {
+                const d = await r.json();
+                throw new Error(d.detail || 'Not ready');
+            }
+            const d = await r.json();
+
+            if(editorReady && tinymce.get('htmlEditor')) {
+                tinymce.get('htmlEditor').setContent(d.html || '<p>No content</p>');
+                hasUnsavedChanges = false;
+                $('saveBtn').style.display = 'none';
+            }
+        } catch(e) {
+            if(editorReady && tinymce.get('htmlEditor')) {
+                tinymce.get('htmlEditor').setContent('<p>Document is still being converted. Please wait...</p>');
+            }
+        }
+    }
+
+    async function saveChanges() {
+        if(!docId || !hasUnsavedChanges) return;
+
+        showLoading('Saving changes...');
+
+        try {
+            const html = tinymce.get('htmlEditor').getContent();
+            const f = new FormData();
+            f.append('html', html);
+            f.append('session_id', DC.sid || '');
+
+            const r = await fetch(`/api/document/${docId}/html`, {method: 'POST', body: f});
+            const d = await r.json();
+
+            if(d.success) {
+                hasUnsavedChanges = false;
+                $('saveBtn').style.display = 'none';
+                addMsg('success', '✅ Changes saved! PDF updated.');
+
+                // Reload preview images
+                await loadPage(currentPage);
+                await genThumbs();
+
+                toast('Saved!', 'success');
+            } else {
+                throw new Error(d.message || 'Save failed');
+            }
+        } catch(e) {
+            addMsg('error', 'Error: ' + e.message);
+            toast('Save failed', 'error');
+        }
+
+        hideLoading();
+    }
+
     async function loadPage(n){
         try{
             const r=await fetch(`/api/document/${docId}/page/${n}`);
@@ -215,162 +378,8 @@
             $('pageImage').src='data:image/png;base64,'+d.image;
             currentPage=n;
             document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n));
-            await loadTextOverlay(n);
         }catch(e){}
     }
-
-    // Click-to-edit functions
-    async function loadTextOverlay(pageNum){
-        if(!docId)return;
-        try{
-            const r=await fetch(`/api/document/${docId}/page/${pageNum}/text`);
-            const d=await r.json();
-            renderTextOverlay(d);
-        }catch(e){console.error('Failed to load text overlay:',e)}
-    }
-
-    function renderTextOverlay(data){
-        const overlay=$('textOverlay');
-        overlay.innerHTML='';
-        if(!data||!data.blocks)return;
-        data.blocks.forEach(block=>{
-            const div=document.createElement('div');
-            div.className='text-block';
-            div.style.left=block.x+'px';
-            div.style.top=block.y+'px';
-            div.style.width=Math.max(block.width,20)+'px';
-            div.style.height=Math.max(block.height,block.fontSize)+'px';
-            div.dataset.text=block.text;
-            div.dataset.pdfX=block.pdf_x;
-            div.dataset.pdfY=block.pdf_y;
-            div.dataset.pdfFontSize=block.pdf_fontSize;
-            div.dataset.fontSize=block.fontSize;
-            div.dataset.font=block.font;
-            div.dataset.flags=block.flags;
-            div.dataset.color=block.color;
-            div.title='Click to edit: '+block.text;
-            div.onclick=()=>startEditing(div,block);
-            overlay.appendChild(div);
-        });
-    }
-
-    let currentEditDiv=null;
-    let currentEditBlock=null;
-
-    function startEditing(div,block){
-        // Cancel any existing edit
-        if(currentEditDiv)cancelEditing(currentEditDiv);
-
-        div.classList.add('editing');
-        currentEditDiv=div;
-        currentEditBlock=block;
-
-        // Create textarea for editing
-        const textarea=document.createElement('textarea');
-        textarea.className='text-input';
-        textarea.value=block.text;
-        textarea.style.left=block.x+'px';
-        textarea.style.top=block.y+'px';
-        textarea.style.fontSize=block.fontSize+'px';
-        textarea.style.minWidth=Math.max(block.width+20,100)+'px';
-        textarea.style.height=Math.max(block.height+10,block.fontSize+10)+'px';
-
-        textarea.onkeydown=e=>{
-            if(e.key==='Enter'&&!e.shiftKey){
-                e.preventDefault();
-                saveEdit(div,block,textarea.value);
-            }else if(e.key==='Escape'){
-                cancelEditing(div);
-            }
-        };
-
-        textarea.onblur=e=>{
-            // Small delay to allow button clicks
-            setTimeout(()=>{
-                if(currentEditDiv===div&&textarea.parentNode){
-                    saveEdit(div,block,textarea.value);
-                }
-            },200);
-        };
-
-        $('textOverlay').appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-    }
-
-    async function saveEdit(div,block,newText){
-        if(!div||!block)return;
-        const originalText=block.text;
-        if(newText===originalText){
-            cancelEditing(div);
-            return;
-        }
-
-        // Remove textarea
-        const textarea=div.parentNode?.querySelector('.text-input');
-        if(textarea)textarea.remove();
-        div.classList.remove('editing');
-
-        // Show saving indicator
-        addMsg('assistant','✏️ Saving edit...');
-
-        try{
-            const f=new FormData();
-            f.append('page',currentPage);
-            f.append('original_text',originalText);
-            f.append('new_text',newText);
-            f.append('x',block.pdf_x);
-            f.append('y',block.pdf_y);
-            f.append('font_size',block.pdf_fontSize);
-            f.append('font_name',block.font);
-            f.append('color',block.color);
-            f.append('flags',block.flags);
-            f.append('session_id',DC.sid||'');
-
-            const r=await fetch(`/api/edit/${docId}/direct`,{method:'POST',body:f});
-            const d=await r.json();
-
-            removeLastMsg();
-            if(d.success){
-                addMsg('success',`✅ Changed "${originalText}" → "${newText}"`);
-                // Update page image
-                if(d.image){
-                    $('pageImage').src='data:image/png;base64,'+d.image;
-                }
-                // Reload text overlay
-                await loadTextOverlay(currentPage);
-                // Regenerate thumbnails
-                await genThumbs();
-                DC.update({edit_count:d.changes});
-            }else{
-                addMsg('error',d.message||'Could not save edit');
-            }
-        }catch(e){
-            removeLastMsg();
-            addMsg('error','Error: '+e.message);
-        }
-
-        currentEditDiv=null;
-        currentEditBlock=null;
-    }
-
-    function cancelEditing(div){
-        if(!div)return;
-        const textarea=div.parentNode?.querySelector('.text-input');
-        if(textarea)textarea.remove();
-        div.classList.remove('editing');
-        if(currentEditDiv===div){
-            currentEditDiv=null;
-            currentEditBlock=null;
-        }
-    }
-
-    // Cancel editing when clicking outside
-    document.addEventListener('click',e=>{
-        if(currentEditDiv&&!e.target.closest('.text-block')&&!e.target.closest('.text-input')){
-            cancelEditing(currentEditDiv);
-        }
-    });
 
     async function genThumbs(){
         $('pagesList').innerHTML='';
@@ -381,13 +390,7 @@
             t.onclick=()=>loadPage(i);$('pagesList').appendChild(t)}catch(e){}
         }
     }
-    
-    async function analyze(){
-        try{const r=await fetch(`/api/analyze/${docId}`,{method:'POST'});const d=await r.json();
-        if(d.success&&d.analysis){addMsg('assistant',`✅ This is a <b>${d.analysis.documentType||'document'}</b>. What would you like to change?`)}
-        else{addMsg('assistant','Ready! What would you like to edit?')}}catch(e){addMsg('assistant','Ready!')}
-    }
-    
+
     async function sendMessage(){
         const text=$('aiInput').value.trim();
         if(!text||!docId||isProcessing)return;
@@ -403,18 +406,29 @@
                 const f=new FormData();f.append('instruction',text);f.append('session_id',DC.sid||'');
                 const r=await fetch(`/api/edit/${docId}`,{method:'POST',body:f});const d=await r.json();
                 removeLastMsg();
-                if(d.success){addMsg('success',`✅ Done! ${d.changes} change(s).`);await loadPage(currentPage);await genThumbs();DC.update({edit_count:d.changes})}
+                if(d.success){
+                    addMsg('success',`✅ Done! ${d.changes} change(s).`);
+                    await loadPage(currentPage);
+                    await genThumbs();
+                    // Re-trigger conversion for updated content
+                    startConversion();
+                    DC.update({edit_count:d.changes});
+                }
                 else{addMsg('error',d.message||'Could not make changes.')}
             }
         }catch(e){removeLastMsg();addMsg('error','Error: '+e.message)}
         isProcessing=false;$('aiSend').disabled=false;
     }
-    
+
     function addMsg(type,content){const m=document.createElement('div');m.className=`ai-msg ${type}`;m.innerHTML=content;$('aiMessages').appendChild(m);$('aiMessages').scrollTop=$('aiMessages').scrollHeight}
     function removeLastMsg(){const msgs=$('aiMessages').querySelectorAll('.ai-msg.assistant,.ai-msg.success,.ai-msg.error');if(msgs.length)msgs[msgs.length-1].remove()}
-    
+
     async function showPricing(){
-        if(!docId)return;showLoading('Calculating price...');await DC.update();
+        if(!docId)return;
+        if(hasUnsavedChanges && !confirm('Save changes before downloading?')) {
+            await saveChanges();
+        }
+        showLoading('Calculating price...');await DC.update();
         try{const f=new FormData();f.append('session_id',DC.sid||'');f.append('doc_id',docId);
             const r=await fetch('/api/pricing/calculate',{method:'POST',body:f});currentPrice=await r.json();
             $('priceDisplay').textContent=`₹${currentPrice.price_inr}`;$('priceUsd').textContent=`≈ $${currentPrice.price_usd}`;
@@ -423,13 +437,13 @@
             hideLoading();$('paymentModal').classList.add('show');
         }catch(e){hideLoading();toast('Error','error')}
     }
-    
+
     async function closePricing(converted){
         const t=pricingShownAt?Math.floor((Date.now()-pricingShownAt)/1000):0;
         try{await fetch('/api/pricing/outcome',{method:'POST',body:new URLSearchParams({session_id:DC.sid,converted,time_on_pricing:t})})}catch(e){}
         $('paymentModal').classList.remove('show');
     }
-    
+
     async function processPayment(method){
         showLoading('Processing...');
         setTimeout(async()=>{hideLoading();await closePricing(true);
@@ -437,11 +451,11 @@
             window.location.href=`/api/download/${docId}`;toast('Success!','success');
         },1500);
     }
-    
+
     function showLoading(t){$('loadingText').textContent=t;$('loadingOverlay').classList.add('show')}
     function hideLoading(){$('loadingOverlay').classList.remove('show')}
     function toast(m,type='success'){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast '+type;t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4000)}
-    
+
     init();
     </script>
 </body>
