@@ -19,6 +19,11 @@
         .header-center { display: flex; gap: 8px; }
         .view-btn { padding: 8px 16px; font-size: 13px; font-weight: 500; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .view-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .view-btn.edit-ready { background: var(--success); color: #fff; border-color: var(--success); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } }
+        .edit-banner { display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--success), #059669); color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); cursor: pointer; }
+        .edit-banner.show { display: flex; align-items: center; gap: 10px; }
+        .edit-banner:hover { transform: translateX(-50%) scale(1.02); }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font); border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
@@ -162,6 +167,10 @@
         </div>
     </div>
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Processing...</div></div>
+    <div class="edit-banner" id="editBanner" onclick="switchView('edit')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Click here to edit your document
+    </div>
     <script>
     // Data Collection
     const DC={sid:null,start:Date.now(),
@@ -257,6 +266,7 @@
                 $('conversionStatus').textContent = 'Ready for editing!';
                 setTimeout(() => $('conversionStatus').classList.remove('show'), 2000);
                 addMsg('success', '✅ Document ready! Click "Edit" to make changes directly.');
+                showEditReady();
             } else if(d.status === 'converting') {
                 // Poll for completion
                 pollConversionStatus();
@@ -280,6 +290,7 @@
                     $('conversionStatus').textContent = 'Ready for editing!';
                     setTimeout(() => $('conversionStatus').classList.remove('show'), 2000);
                     addMsg('success', '✅ Document ready! Click "Edit" to make changes directly.');
+                    showEditReady();
                     return;
                 } else if(d.status === 'failed') {
                     throw new Error('Conversion failed');
@@ -291,7 +302,19 @@
         $('conversionStatus').textContent = 'Conversion timed out.';
     }
 
+    function showEditReady() {
+        // Highlight the Edit button with pulsing animation
+        $('editBtn').classList.add('edit-ready');
+        // Show the banner
+        $('editBanner').classList.add('show');
+        // Auto-hide banner after 10 seconds (but keep button highlighted)
+        setTimeout(() => $('editBanner').classList.remove('show'), 10000);
+    }
+
     async function switchView(view) {
+        // Hide the edit banner when switching
+        $('editBanner').classList.remove('show');
+        $('editBtn').classList.remove('edit-ready');
         if(view === currentView) return;
 
         currentView = view;
