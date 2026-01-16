@@ -83,6 +83,14 @@
         .toast.error { background: var(--danger); }
         @media (max-width: 1000px) { .sidebar { display: none; } }
         @media (max-width: 700px) { .ai-panel { position: fixed; inset: 0; width: 100%; display: none; } .ai-panel.show { display: flex; } }
+        /* Text overlay styles for click-to-edit */
+        .pdf-container { position: relative; }
+        .text-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .text-block { position: absolute; cursor: text; pointer-events: auto; border: 1px solid transparent; border-radius: 2px; transition: all 0.15s ease; }
+        .text-block:hover { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); }
+        .text-block.editing { background: rgba(99, 102, 241, 0.15); border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        .text-input { position: absolute; border: 2px solid var(--primary); border-radius: 4px; padding: 2px 4px; font-family: inherit; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); resize: none; overflow: hidden; min-width: 100px; outline: none; z-index: 100; }
+        .text-input:focus { border-color: var(--primary-dark); }
     </style>
 </head>
 <body>
@@ -106,7 +114,10 @@
                 <div class="upload-zone" id="uploadZone"><p style="font-weight:600">Drop PDF here or click to browse</p></div>
                 <input type="file" id="fileInput" accept=".pdf" hidden>
             </div>
-            <div class="pdf-container" id="pdfContainer" style="display:none"><img id="pageImage" alt="PDF"></div>
+            <div class="pdf-container" id="pdfContainer" style="display:none">
+                <img id="pageImage" alt="PDF">
+                <div id="textOverlay" class="text-overlay"></div>
+            </div>
         </div>
         <aside class="ai-panel" id="aiPanel">
             <div class="ai-header"><div class="ai-avatar">AI</div><div class="ai-header-text"><h3>AI Assistant</h3><p>Tell me what to edit</p></div></div>
@@ -198,9 +209,169 @@
     }
     
     async function loadPage(n){
-        try{const r=await fetch(`/api/document/${docId}/page/${n}`);const d=await r.json();$('pageImage').src='data:image/png;base64,'+d.image;currentPage=n;document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n))}catch(e){}
+        try{
+            const r=await fetch(`/api/document/${docId}/page/${n}`);
+            const d=await r.json();
+            $('pageImage').src='data:image/png;base64,'+d.image;
+            currentPage=n;
+            document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n));
+            await loadTextOverlay(n);
+        }catch(e){}
     }
-    
+
+    // Click-to-edit functions
+    async function loadTextOverlay(pageNum){
+        if(!docId)return;
+        try{
+            const r=await fetch(`/api/document/${docId}/page/${pageNum}/text`);
+            const d=await r.json();
+            renderTextOverlay(d);
+        }catch(e){console.error('Failed to load text overlay:',e)}
+    }
+
+    function renderTextOverlay(data){
+        const overlay=$('textOverlay');
+        overlay.innerHTML='';
+        if(!data||!data.blocks)return;
+        data.blocks.forEach(block=>{
+            const div=document.createElement('div');
+            div.className='text-block';
+            div.style.left=block.x+'px';
+            div.style.top=block.y+'px';
+            div.style.width=Math.max(block.width,20)+'px';
+            div.style.height=Math.max(block.height,block.fontSize)+'px';
+            div.dataset.text=block.text;
+            div.dataset.pdfX=block.pdf_x;
+            div.dataset.pdfY=block.pdf_y;
+            div.dataset.pdfFontSize=block.pdf_fontSize;
+            div.dataset.fontSize=block.fontSize;
+            div.dataset.font=block.font;
+            div.dataset.flags=block.flags;
+            div.dataset.color=block.color;
+            div.title='Click to edit: '+block.text;
+            div.onclick=()=>startEditing(div,block);
+            overlay.appendChild(div);
+        });
+    }
+
+    let currentEditDiv=null;
+    let currentEditBlock=null;
+
+    function startEditing(div,block){
+        // Cancel any existing edit
+        if(currentEditDiv)cancelEditing(currentEditDiv);
+
+        div.classList.add('editing');
+        currentEditDiv=div;
+        currentEditBlock=block;
+
+        // Create textarea for editing
+        const textarea=document.createElement('textarea');
+        textarea.className='text-input';
+        textarea.value=block.text;
+        textarea.style.left=block.x+'px';
+        textarea.style.top=block.y+'px';
+        textarea.style.fontSize=block.fontSize+'px';
+        textarea.style.minWidth=Math.max(block.width+20,100)+'px';
+        textarea.style.height=Math.max(block.height+10,block.fontSize+10)+'px';
+
+        textarea.onkeydown=e=>{
+            if(e.key==='Enter'&&!e.shiftKey){
+                e.preventDefault();
+                saveEdit(div,block,textarea.value);
+            }else if(e.key==='Escape'){
+                cancelEditing(div);
+            }
+        };
+
+        textarea.onblur=e=>{
+            // Small delay to allow button clicks
+            setTimeout(()=>{
+                if(currentEditDiv===div&&textarea.parentNode){
+                    saveEdit(div,block,textarea.value);
+                }
+            },200);
+        };
+
+        $('textOverlay').appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+    }
+
+    async function saveEdit(div,block,newText){
+        if(!div||!block)return;
+        const originalText=block.text;
+        if(newText===originalText){
+            cancelEditing(div);
+            return;
+        }
+
+        // Remove textarea
+        const textarea=div.parentNode?.querySelector('.text-input');
+        if(textarea)textarea.remove();
+        div.classList.remove('editing');
+
+        // Show saving indicator
+        addMsg('assistant','✏️ Saving edit...');
+
+        try{
+            const f=new FormData();
+            f.append('page',currentPage);
+            f.append('original_text',originalText);
+            f.append('new_text',newText);
+            f.append('x',block.pdf_x);
+            f.append('y',block.pdf_y);
+            f.append('font_size',block.pdf_fontSize);
+            f.append('font_name',block.font);
+            f.append('color',block.color);
+            f.append('flags',block.flags);
+            f.append('session_id',DC.sid||'');
+
+            const r=await fetch(`/api/edit/${docId}/direct`,{method:'POST',body:f});
+            const d=await r.json();
+
+            removeLastMsg();
+            if(d.success){
+                addMsg('success',`✅ Changed "${originalText}" → "${newText}"`);
+                // Update page image
+                if(d.image){
+                    $('pageImage').src='data:image/png;base64,'+d.image;
+                }
+                // Reload text overlay
+                await loadTextOverlay(currentPage);
+                // Regenerate thumbnails
+                await genThumbs();
+                DC.update({edit_count:d.changes});
+            }else{
+                addMsg('error',d.message||'Could not save edit');
+            }
+        }catch(e){
+            removeLastMsg();
+            addMsg('error','Error: '+e.message);
+        }
+
+        currentEditDiv=null;
+        currentEditBlock=null;
+    }
+
+    function cancelEditing(div){
+        if(!div)return;
+        const textarea=div.parentNode?.querySelector('.text-input');
+        if(textarea)textarea.remove();
+        div.classList.remove('editing');
+        if(currentEditDiv===div){
+            currentEditDiv=null;
+            currentEditBlock=null;
+        }
+    }
+
+    // Cancel editing when clicking outside
+    document.addEventListener('click',e=>{
+        if(currentEditDiv&&!e.target.closest('.text-block')&&!e.target.closest('.text-input')){
+            cancelEditing(currentEditDiv);
+        }
+    });
+
     async function genThumbs(){
         $('pagesList').innerHTML='';
         for(let i=1;i<=totalPages;i++){

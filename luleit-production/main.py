@@ -713,6 +713,8 @@ def extract_text_with_positions(pdf_bytes: bytes) -> List[Dict]:
                                 "height": bbox[3] - bbox[1],
                                 "fontSize": span.get("size", 12),
                                 "color": span.get("color", 0),
+                                "font": span.get("font", "helv"),
+                                "flags": span.get("flags", 0),
                             })
         
         pages_data.append({
@@ -725,6 +727,49 @@ def extract_text_with_positions(pdf_bytes: bytes) -> List[Dict]:
     
     doc.close()
     return pages_data
+
+
+def map_font_name(original_font: str, flags: int = 0) -> str:
+    """
+    Map original PDF fonts to PyMuPDF Base-14 fonts.
+    Base-14 fonts are always available without embedding.
+
+    Flags: 1=superscript, 2=italic, 4=serif, 8=monospace, 16=bold
+    """
+    font_lower = original_font.lower()
+    is_bold = bool(flags & 16) or "bold" in font_lower or "black" in font_lower
+    is_italic = bool(flags & 2) or "italic" in font_lower or "oblique" in font_lower
+    is_mono = bool(flags & 8) or "courier" in font_lower or "mono" in font_lower or "consol" in font_lower
+    is_serif = bool(flags & 4) or "times" in font_lower or "roman" in font_lower or "georgia" in font_lower or "serif" in font_lower
+
+    # Monospace fonts -> Courier family
+    if is_mono:
+        if is_bold and is_italic:
+            return "cobi"
+        elif is_bold:
+            return "cobo"
+        elif is_italic:
+            return "coit"
+        return "cour"
+
+    # Serif fonts -> Times family
+    if is_serif:
+        if is_bold and is_italic:
+            return "tibi"
+        elif is_bold:
+            return "tibo"
+        elif is_italic:
+            return "tiit"
+        return "tiro"
+
+    # Default: Sans-serif -> Helvetica family
+    if is_bold and is_italic:
+        return "hebi"
+    elif is_bold:
+        return "hebo"
+    elif is_italic:
+        return "heit"
+    return "helv"
 
 
 async def analyze_document_with_ai(images: List[str], text_data: List[Dict]) -> Dict:
@@ -865,20 +910,27 @@ Return ONLY valid JSON."""
                 text_dict = page.get_text("dict", clip=rect)
                 font_size = 11
                 color = (0, 0, 0)
-                
+                original_font = "helv"
+                font_flags = 0
+
                 for block in text_dict.get("blocks", []):
                     if block.get("type") == 0:
                         for line in block.get("lines", []):
                             for span in line.get("spans", []):
                                 font_size = span.get("size", 11)
+                                original_font = span.get("font", "helv")
+                                font_flags = span.get("flags", 0)
                                 c = span.get("color", 0)
                                 if isinstance(c, int):
                                     color = (((c >> 16) & 0xFF) / 255, ((c >> 8) & 0xFF) / 255, (c & 0xFF) / 255)
                                 break
-                
+
+                # Map original font to Base-14
+                mapped_font = map_font_name(original_font, font_flags)
+
                 page.add_redact_annot(rect, fill=(1, 1, 1))
                 page.apply_redactions()
-                page.insert_text(fitz.Point(rect.x0, rect.y0 + font_size * 0.82), replace_text, fontsize=font_size, color=color, fontname="helv")
+                page.insert_text(fitz.Point(rect.x0, rect.y0 + font_size * 0.82), replace_text, fontsize=font_size, color=color, fontname=mapped_font)
                 changes += 1
     
     output = io.BytesIO()
@@ -1131,6 +1183,164 @@ async def get_page(doc_id: str, page_num: int):
     if page_num < 1 or page_num > len(pages):
         raise HTTPException(400, "Invalid page")
     return {"page": page_num, "totalPages": len(pages), "image": pages[page_num - 1]}
+
+
+@app.get("/api/document/{doc_id}/page/{page_num}/text")
+async def get_page_text(doc_id: str, page_num: int):
+    """Get text blocks with positions for overlay rendering"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc = documents[doc_id]
+    text_data = doc.get("text_data", [])
+
+    if page_num < 1 or page_num > len(text_data):
+        raise HTTPException(400, "Invalid page")
+
+    page_data = text_data[page_num - 1]
+
+    # Scale factor: PDF points (72 dpi) to display pixels (150 dpi)
+    scale = 150 / 72
+
+    # Scale coordinates for overlay positioning
+    scaled_blocks = []
+    for block in page_data.get("blocks", []):
+        scaled_blocks.append({
+            "text": block["text"],
+            "x": block["x"] * scale,
+            "y": block["y"] * scale,
+            "width": block["width"] * scale,
+            "height": block["height"] * scale,
+            "fontSize": block["fontSize"] * scale,
+            "color": block.get("color", 0),
+            "font": block.get("font", "helv"),
+            "flags": block.get("flags", 0),
+            # Original PDF coordinates for editing
+            "pdf_x": block["x"],
+            "pdf_y": block["y"],
+            "pdf_fontSize": block["fontSize"],
+        })
+
+    return {
+        "page": page_num,
+        "width": page_data.get("width", 612) * scale,
+        "height": page_data.get("height", 792) * scale,
+        "blocks": scaled_blocks,
+    }
+
+
+@app.post("/api/edit/{doc_id}/direct")
+async def direct_edit(
+    doc_id: str,
+    page: int = Form(...),
+    original_text: str = Form(...),
+    new_text: str = Form(...),
+    x: float = Form(...),
+    y: float = Form(...),
+    font_size: float = Form(...),
+    font_name: str = Form("helv"),
+    color: int = Form(0),
+    flags: int = Form(0),
+    session_id: str = Form(None),
+):
+    """Direct text replacement at specific location with font preservation"""
+    if doc_id not in documents:
+        raise HTTPException(404, "Document not found")
+
+    doc_data = documents[doc_id]
+    pdf_bytes = doc_data["pdf_bytes"]
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+    if page < 1 or page > len(doc):
+        doc.close()
+        raise HTTPException(400, "Invalid page")
+
+    pdf_page = doc[page - 1]
+    changes = 0
+
+    # Search for the text and replace at matching location
+    for rect in pdf_page.search_for(original_text):
+        # Check if this rect matches our target location (within tolerance)
+        if abs(rect.x0 - x) < 5 and abs(rect.y0 - y) < 5:
+            # Convert color int to RGB tuple
+            if isinstance(color, int):
+                r = ((color >> 16) & 0xFF) / 255
+                g = ((color >> 8) & 0xFF) / 255
+                b = (color & 0xFF) / 255
+                color_tuple = (r, g, b)
+            else:
+                color_tuple = (0, 0, 0)
+
+            # Map font to Base-14
+            mapped_font = map_font_name(font_name, flags)
+
+            # Redact original text
+            pdf_page.add_redact_annot(rect, fill=(1, 1, 1))
+            pdf_page.apply_redactions()
+
+            # Insert new text with preserved styling
+            pdf_page.insert_text(
+                fitz.Point(rect.x0, rect.y0 + font_size * 0.82),
+                new_text,
+                fontsize=font_size,
+                color=color_tuple,
+                fontname=mapped_font,
+            )
+            changes += 1
+            break
+
+    # If no exact location match, try simple search and replace
+    if changes == 0:
+        for rect in pdf_page.search_for(original_text):
+            if isinstance(color, int):
+                r = ((color >> 16) & 0xFF) / 255
+                g = ((color >> 8) & 0xFF) / 255
+                b = (color & 0xFF) / 255
+                color_tuple = (r, g, b)
+            else:
+                color_tuple = (0, 0, 0)
+
+            mapped_font = map_font_name(font_name, flags)
+
+            pdf_page.add_redact_annot(rect, fill=(1, 1, 1))
+            pdf_page.apply_redactions()
+
+            pdf_page.insert_text(
+                fitz.Point(rect.x0, rect.y0 + font_size * 0.82),
+                new_text,
+                fontsize=font_size,
+                color=color_tuple,
+                fontname=mapped_font,
+            )
+            changes += 1
+            break
+
+    if changes == 0:
+        doc.close()
+        return {"success": False, "message": "Text not found on page"}
+
+    # Save updated PDF
+    output = io.BytesIO()
+    doc.save(output, garbage=4, deflate=True, clean=True)
+    doc.close()
+
+    new_bytes = output.getvalue()
+    documents[doc_id]["pdf_bytes"] = new_bytes
+    documents[doc_id]["pages"] = pdf_to_images(new_bytes)
+    documents[doc_id]["text_data"] = extract_text_with_positions(new_bytes)
+    documents[doc_id]["edit_count"] = documents[doc_id].get("edit_count", 0) + changes
+
+    # Update session
+    if session_id and session_id in sessions:
+        sessions[session_id]["edit_count"] = sessions[session_id].get("edit_count", 0) + changes
+
+    # Return updated page image
+    return {
+        "success": True,
+        "changes": changes,
+        "image": documents[doc_id]["pages"][page - 1],
+    }
 
 
 @app.post("/api/edit/{doc_id}")
