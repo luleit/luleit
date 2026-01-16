@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI PDF Editor - Luleit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tiny.cloud/1/lpkwk3l46sacty6u0v9e9iwfjrdxgyqbimn28o72kgkyydgb/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <style>
         :root { --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff; --accent: #f472b6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827; --font: 'Inter', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -16,20 +15,11 @@
         .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; }
         .logo-text { font-size: 20px; font-weight: 700; }
         .doc-name { font-size: 14px; color: var(--gray-500); background: var(--gray-100); padding: 6px 12px; border-radius: 6px; }
-        .header-center { display: flex; gap: 8px; }
-        .view-btn { padding: 8px 16px; font-size: 13px; font-weight: 500; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .view-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .view-btn.edit-ready { background: var(--success); color: #fff; border-color: var(--success); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } }
-        .edit-banner { display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--success), #059669); color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; z-index: 100; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); cursor: pointer; }
-        .edit-banner.show { display: flex; align-items: center; gap: 10px; }
-        .edit-banner:hover { transform: translateX(-50%) scale(1.02); }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font); border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
         .btn-secondary { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
-        .btn-success { background: var(--success); color: #fff; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .main { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 240px; background: #fff; border-right: 1px solid var(--gray-200); display: flex; flex-direction: column; flex-shrink: 0; }
@@ -42,10 +32,16 @@
         .page-thumb img { width: 100%; display: block; }
         .page-thumb-label { padding: 6px; font-size: 11px; color: var(--gray-500); text-align: center; background: var(--gray-50); }
         .canvas-area { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 40px; background: var(--gray-100); }
-        .pdf-container { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); }
-        .pdf-container img { display: block; max-width: 100%; }
-        .editor-container { display: none; flex: 1; background: #fff; padding: 40px; overflow: auto; }
-        .editor-container.active { display: block; }
+
+        /* PDF Container with Text Overlay */
+        .pdf-container { position: relative; background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); }
+        .pdf-container img { display: block; }
+        .text-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .text-block { position: absolute; cursor: text; pointer-events: auto; background: transparent; border: 1px solid transparent; border-radius: 2px; transition: all 0.15s; }
+        .text-block:hover { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); }
+        .text-block.editing { background: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); z-index: 100; }
+        .text-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; background: transparent; outline: none; padding: 2px; font-family: inherit; resize: none; overflow: hidden; }
+
         .upload-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; }
         .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary-light), #fff); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
         .upload-icon svg { width: 48px; height: 48px; color: var(--primary); }
@@ -92,8 +88,8 @@
         .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; background: var(--gray-800); color: #fff; border-radius: 12px; font-size: 14px; z-index: 9999; }
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
-        .conversion-status { padding: 12px 16px; background: var(--primary-light); border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: var(--primary-dark); display: none; }
-        .conversion-status.show { display: block; }
+        .edit-hint { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 100; display: none; }
+        .edit-hint.show { display: block; }
         @media (max-width: 1000px) { .sidebar { display: none; } }
         @media (max-width: 700px) { .ai-panel { position: fixed; inset: 0; width: 100%; display: none; } .ai-panel.show { display: flex; } }
     </style>
@@ -104,12 +100,7 @@
             <a href="/" class="logo"><div class="logo-icon">L</div><span class="logo-text">Luleit AI</span></a>
             <span class="doc-name" id="docName">No document</span>
         </div>
-        <div class="header-center" id="viewToggle" style="display:none">
-            <button class="view-btn active" id="previewBtn">Preview</button>
-            <button class="view-btn" id="editBtn">Edit</button>
-        </div>
         <div class="header-right">
-            <button class="btn btn-success" id="saveBtn" style="display:none">Save Changes</button>
             <button class="btn btn-secondary" id="newDocBtn">New</button>
             <button class="btn btn-primary" id="downloadBtn" disabled>Download</button>
         </div>
@@ -120,21 +111,18 @@
             <div class="upload-state" id="uploadState">
                 <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
                 <h2>Upload Your PDF</h2>
-                <p>AI-powered editing with Adobe technology</p>
+                <p>Click any text to edit it directly</p>
                 <div class="upload-zone" id="uploadZone"><p style="font-weight:600">Drop PDF here or click to browse</p></div>
                 <input type="file" id="fileInput" accept=".pdf" hidden>
             </div>
             <div class="pdf-container" id="pdfContainer" style="display:none">
-                <img id="pageImage" alt="PDF">
-            </div>
-            <div class="editor-container" id="editorContainer">
-                <div class="conversion-status" id="conversionStatus">Converting document for editing...</div>
-                <textarea id="htmlEditor"></textarea>
+                <img id="pageImage" alt="PDF Page">
+                <div class="text-overlay" id="textOverlay"></div>
             </div>
         </div>
         <aside class="ai-panel" id="aiPanel">
-            <div class="ai-header"><div class="ai-avatar">AI</div><div class="ai-header-text"><h3>AI Assistant</h3><p>Tell me what to edit</p></div></div>
-            <div class="ai-messages" id="aiMessages"><div class="ai-msg assistant">Upload a PDF and I'll help you edit it. You can also click "Edit" to directly modify the text.</div></div>
+            <div class="ai-header"><div class="ai-avatar">AI</div><div class="ai-header-text"><h3>AI Assistant</h3><p>Click text to edit or ask me</p></div></div>
+            <div class="ai-messages" id="aiMessages"><div class="ai-msg assistant">Upload a PDF and click any text to edit it. Or tell me what changes to make!</div></div>
             <div class="quick-actions" id="quickActions" style="display:none">
                 <button class="quick-btn" data-cmd="Find all dates">Dates</button>
                 <button class="quick-btn" data-cmd="Find all names">Names</button>
@@ -142,7 +130,7 @@
             </div>
             <div class="ai-input-area">
                 <div class="ai-input-wrap">
-                    <input type="text" class="ai-input" id="aiInput" placeholder="Tell me what to change..." disabled>
+                    <input type="text" class="ai-input" id="aiInput" placeholder="e.g. Change John to Jane..." disabled>
                     <button class="ai-send" id="aiSend" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
                 </div>
             </div>
@@ -167,12 +155,8 @@
         </div>
     </div>
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Processing...</div></div>
-    <div class="edit-banner" id="editBanner" onclick="switchView('edit')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Click here to edit your document
-    </div>
+    <div class="edit-hint" id="editHint">Click any text to edit it directly</div>
     <script>
-    // Data Collection
     const DC={sid:null,start:Date.now(),
         getData(){return{screen_width:screen.width,screen_height:screen.height,device_memory:navigator.deviceMemory||4,pixel_ratio:devicePixelRatio,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,is_mobile:/Android|iPhone|iPad/i.test(navigator.userAgent),language:navigator.language}},
         async startSession(){const d=this.getData();try{const f=new FormData();f.append('data',JSON.stringify(d));const r=await fetch('/api/session/start',{method:'POST',body:f});const j=await r.json();this.sid=j.session_id;this.getGeo()}catch(e){}},
@@ -181,9 +165,8 @@
     };
 
     let docId=null,currentPage=1,totalPages=0,isProcessing=false,currentPrice=null,pricingShownAt=null;
-    let currentView='preview'; // 'preview' or 'edit'
-    let editorReady=false;
-    let hasUnsavedChanges=false;
+    let currentTextData=null; // Store text data for current page
+    let editingBlock=null; // Currently editing block
     const $=id=>document.getElementById(id);
 
     function init(){
@@ -196,31 +179,23 @@
         $('aiInput').onkeypress=e=>{if(e.key==='Enter')sendMessage()};
         $('aiSend').onclick=sendMessage;
         document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>{$('aiInput').value=b.dataset.cmd;sendMessage()});
-        $('newDocBtn').onclick=()=>{if(!hasUnsavedChanges||confirm('Discard changes?'))location.reload()};
+        $('newDocBtn').onclick=()=>location.reload();
         $('downloadBtn').onclick=showPricing;
         $('cancelPayBtn').onclick=()=>closePricing(false);
         $('payUpiBtn').onclick=()=>processPayment('upi');
         $('payCardBtn').onclick=()=>processPayment('card');
-        $('previewBtn').onclick=()=>switchView('preview');
-        $('editBtn').onclick=()=>switchView('edit');
-        $('saveBtn').onclick=saveChanges;
 
-        // Initialize TinyMCE
-        tinymce.init({
-            selector: '#htmlEditor',
-            height: '100%',
-            menubar: false,
-            plugins: 'lists link image table code help wordcount',
-            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | removeformat | code',
-            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; padding: 20px; }',
-            setup: function(editor) {
-                editor.on('change', function() {
-                    hasUnsavedChanges = true;
-                    $('saveBtn').style.display = 'inline-flex';
-                });
-                editor.on('init', function() {
-                    editorReady = true;
-                });
+        // Close editing on click outside
+        document.addEventListener('click', (e) => {
+            if(editingBlock && !e.target.closest('.text-block')) {
+                cancelEditing();
+            }
+        });
+
+        // Handle escape key
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape' && editingBlock) {
+                cancelEditing();
             }
         });
     }
@@ -238,170 +213,178 @@
             $('pdfContainer').style.display='block';
             $('sidebar').style.display='flex';
             $('quickActions').style.display='flex';
-            $('viewToggle').style.display='flex';
             $('aiInput').disabled=false;
             $('aiSend').disabled=false;
             $('downloadBtn').disabled=false;
             await loadPage(1);
             await genThumbs();
-            addMsg('assistant','📄 Uploaded! Converting for editing...');
+            addMsg('assistant','Click any text on the PDF to edit it directly. Or tell me what to change!');
 
-            // Start Adobe conversion in background
-            startConversion();
+            // Show edit hint
+            $('editHint').classList.add('show');
+            setTimeout(() => $('editHint').classList.remove('show'), 5000);
 
             DC.update({doc_id:docId,page_count:totalPages});
         }catch(e){toast(e.message,'error')}
         hideLoading();
     }
 
-    async function startConversion(){
-        $('conversionStatus').textContent = 'Converting document for editing...';
-        $('conversionStatus').classList.add('show');
-
-        try {
-            const r = await fetch(`/api/convert/${docId}`, {method: 'POST'});
-            const d = await r.json();
-
-            if(d.success && d.status === 'ready') {
-                $('conversionStatus').textContent = 'Ready for editing!';
-                setTimeout(() => $('conversionStatus').classList.remove('show'), 2000);
-                addMsg('success', '✅ Document ready! Click "Edit" to make changes directly.');
-                showEditReady();
-            } else if(d.status === 'converting') {
-                // Poll for completion
-                pollConversionStatus();
-            } else {
-                throw new Error(d.message || 'Conversion failed');
-            }
-        } catch(e) {
-            $('conversionStatus').textContent = 'Conversion failed. Use AI chat for edits.';
-            addMsg('error', 'Could not convert for direct editing. You can still use AI chat to make changes.');
-        }
-    }
-
-    async function pollConversionStatus() {
-        for(let i = 0; i < 30; i++) {
-            await new Promise(r => setTimeout(r, 2000));
-            try {
-                const r = await fetch(`/api/document/${docId}/status`);
-                const d = await r.json();
-
-                if(d.status === 'ready') {
-                    $('conversionStatus').textContent = 'Ready for editing!';
-                    setTimeout(() => $('conversionStatus').classList.remove('show'), 2000);
-                    addMsg('success', '✅ Document ready! Click "Edit" to make changes directly.');
-                    showEditReady();
-                    return;
-                } else if(d.status === 'failed') {
-                    throw new Error('Conversion failed');
-                }
-            } catch(e) {
-                break;
-            }
-        }
-        $('conversionStatus').textContent = 'Conversion timed out.';
-    }
-
-    function showEditReady() {
-        // Highlight the Edit button with pulsing animation
-        $('editBtn').classList.add('edit-ready');
-        // Show the banner
-        $('editBanner').classList.add('show');
-        // Auto-hide banner after 10 seconds (but keep button highlighted)
-        setTimeout(() => $('editBanner').classList.remove('show'), 10000);
-    }
-
-    async function switchView(view) {
-        // Hide the edit banner when switching
-        $('editBanner').classList.remove('show');
-        $('editBtn').classList.remove('edit-ready');
-        if(view === currentView) return;
-
-        currentView = view;
-        $('previewBtn').classList.toggle('active', view === 'preview');
-        $('editBtn').classList.toggle('active', view === 'edit');
-
-        if(view === 'preview') {
-            $('pdfContainer').style.display = 'block';
-            $('editorContainer').classList.remove('active');
-            $('sidebar').style.display = 'flex';
-        } else {
-            // Switch to edit mode
-            $('pdfContainer').style.display = 'none';
-            $('editorContainer').classList.add('active');
-            $('sidebar').style.display = 'none';
-
-            // Load HTML content
-            await loadHtmlContent();
-        }
-    }
-
-    async function loadHtmlContent() {
-        if(!docId) return;
-
-        try {
-            const r = await fetch(`/api/document/${docId}/html`);
-            if(!r.ok) {
-                const d = await r.json();
-                throw new Error(d.detail || 'Not ready');
-            }
-            const d = await r.json();
-
-            if(editorReady && tinymce.get('htmlEditor')) {
-                tinymce.get('htmlEditor').setContent(d.html || '<p>No content</p>');
-                hasUnsavedChanges = false;
-                $('saveBtn').style.display = 'none';
-            }
-        } catch(e) {
-            if(editorReady && tinymce.get('htmlEditor')) {
-                tinymce.get('htmlEditor').setContent('<p>Document is still being converted. Please wait...</p>');
-            }
-        }
-    }
-
-    async function saveChanges() {
-        if(!docId || !hasUnsavedChanges) return;
-
-        showLoading('Saving changes...');
-
-        try {
-            const html = tinymce.get('htmlEditor').getContent();
-            const f = new FormData();
-            f.append('html', html);
-            f.append('session_id', DC.sid || '');
-
-            const r = await fetch(`/api/document/${docId}/html`, {method: 'POST', body: f});
-            const d = await r.json();
-
-            if(d.success) {
-                hasUnsavedChanges = false;
-                $('saveBtn').style.display = 'none';
-                addMsg('success', '✅ Changes saved! PDF updated.');
-
-                // Reload preview images
-                await loadPage(currentPage);
-                await genThumbs();
-
-                toast('Saved!', 'success');
-            } else {
-                throw new Error(d.message || 'Save failed');
-            }
-        } catch(e) {
-            addMsg('error', 'Error: ' + e.message);
-            toast('Save failed', 'error');
-        }
-
-        hideLoading();
-    }
-
     async function loadPage(n){
         try{
+            // Load page image
             const r=await fetch(`/api/document/${docId}/page/${n}`);
             const d=await r.json();
             $('pageImage').src='data:image/png;base64,'+d.image;
             currentPage=n;
             document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n));
-        }catch(e){}
+
+            // Load text overlay after image loads
+            $('pageImage').onload = () => loadTextOverlay(n);
+        }catch(e){console.error('Load page error:', e)}
+    }
+
+    async function loadTextOverlay(pageNum) {
+        try {
+            const r = await fetch(`/api/document/${docId}/page/${pageNum}/text`);
+            const data = await r.json();
+            currentTextData = data;
+            renderTextOverlay(data);
+        } catch(e) {
+            console.error('Load text overlay error:', e);
+        }
+    }
+
+    function renderTextOverlay(data) {
+        const overlay = $('textOverlay');
+        overlay.innerHTML = '';
+
+        if (!data.blocks || data.blocks.length === 0) return;
+
+        data.blocks.forEach((block, index) => {
+            const div = document.createElement('div');
+            div.className = 'text-block';
+            div.style.left = block.x + 'px';
+            div.style.top = block.y + 'px';
+            div.style.width = Math.max(block.width, 20) + 'px';
+            div.style.height = Math.max(block.height, block.fontSize) + 'px';
+            div.style.fontSize = block.fontSize + 'px';
+            div.style.lineHeight = block.height + 'px';
+            div.dataset.index = index;
+            div.dataset.text = block.text;
+            div.dataset.pdfX = block.pdf_x;
+            div.dataset.pdfY = block.pdf_y;
+            div.dataset.pdfFontSize = block.pdf_fontSize;
+            div.dataset.font = block.font;
+            div.dataset.color = block.color;
+            div.dataset.flags = block.flags;
+
+            div.onclick = (e) => {
+                e.stopPropagation();
+                startEditing(div, block);
+            };
+
+            overlay.appendChild(div);
+        });
+    }
+
+    function startEditing(div, block) {
+        // Cancel any existing editing
+        if (editingBlock) {
+            cancelEditing();
+        }
+
+        editingBlock = div;
+        div.classList.add('editing');
+
+        // Create input
+        const input = document.createElement('textarea');
+        input.className = 'text-input';
+        input.value = block.text;
+        input.style.fontSize = block.fontSize + 'px';
+        input.style.lineHeight = (block.height || block.fontSize) + 'px';
+
+        // Convert color int to CSS
+        const color = block.color || 0;
+        const r = (color >> 16) & 0xFF;
+        const g = (color >> 8) & 0xFF;
+        const b = color & 0xFF;
+        input.style.color = `rgb(${r},${g},${b})`;
+
+        div.innerHTML = '';
+        div.appendChild(input);
+        input.focus();
+        input.select();
+
+        // Handle Enter to save
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                saveEdit(div, block, input.value);
+            } else if (e.key === 'Escape') {
+                cancelEditing();
+            }
+        };
+
+        // Auto-resize
+        input.oninput = () => {
+            div.style.width = Math.max(input.scrollWidth, block.width, 50) + 'px';
+        };
+    }
+
+    function cancelEditing() {
+        if (!editingBlock) return;
+
+        const index = editingBlock.dataset.index;
+        const block = currentTextData.blocks[index];
+
+        editingBlock.classList.remove('editing');
+        editingBlock.innerHTML = '';
+        editingBlock = null;
+    }
+
+    async function saveEdit(div, block, newText) {
+        if (newText === block.text) {
+            cancelEditing();
+            return;
+        }
+
+        showLoading('Saving...');
+
+        try {
+            const f = new FormData();
+            f.append('page', currentPage);
+            f.append('original_text', block.text);
+            f.append('new_text', newText);
+            f.append('x', div.dataset.pdfX);
+            f.append('y', div.dataset.pdfY);
+            f.append('font_size', div.dataset.pdfFontSize);
+            f.append('font_name', div.dataset.font);
+            f.append('color', div.dataset.color);
+            f.append('flags', div.dataset.flags);
+            f.append('session_id', DC.sid || '');
+
+            const r = await fetch(`/api/edit/${docId}/direct`, {method: 'POST', body: f});
+            const d = await r.json();
+
+            if (d.success) {
+                toast('Saved!', 'success');
+                addMsg('success', `Changed "${block.text}" to "${newText}"`);
+
+                // Reload page to show updated PDF
+                editingBlock = null;
+                await loadPage(currentPage);
+                await genThumbs();
+
+                DC.update({edit_count: 1});
+            } else {
+                throw new Error(d.message || 'Edit failed');
+            }
+        } catch(e) {
+            toast('Error: ' + e.message, 'error');
+            cancelEditing();
+        }
+
+        hideLoading();
     }
 
     async function genThumbs(){
@@ -421,20 +404,18 @@
         addMsg('user',text);
         const isQ=text.match(/^(what|who|when|where|how|why|is|are|summarize|kya|kaun)/i);
         try{
-            if(isQ){addMsg('assistant','🤔 Checking...');
+            if(isQ){addMsg('assistant','Checking...');
                 const f=new FormData();f.append('question',text);
                 const r=await fetch(`/api/ask/${docId}`,{method:'POST',body:f});const d=await r.json();
                 removeLastMsg();addMsg('assistant',d.answer||'Could not find answer.');
-            }else{addMsg('assistant','✏️ Making changes...');
+            }else{addMsg('assistant','Making changes...');
                 const f=new FormData();f.append('instruction',text);f.append('session_id',DC.sid||'');
                 const r=await fetch(`/api/edit/${docId}`,{method:'POST',body:f});const d=await r.json();
                 removeLastMsg();
                 if(d.success){
-                    addMsg('success',`✅ Done! ${d.changes} change(s).`);
+                    addMsg('success',`Done! ${d.changes} change(s) made.`);
                     await loadPage(currentPage);
                     await genThumbs();
-                    // Re-trigger conversion for updated content
-                    startConversion();
                     DC.update({edit_count:d.changes});
                 }
                 else{addMsg('error',d.message||'Could not make changes.')}
@@ -448,9 +429,6 @@
 
     async function showPricing(){
         if(!docId)return;
-        if(hasUnsavedChanges && !confirm('Save changes before downloading?')) {
-            await saveChanges();
-        }
         showLoading('Calculating price...');await DC.update();
         try{const f=new FormData();f.append('session_id',DC.sid||'');f.append('doc_id',docId);
             const r=await fetch('/api/pricing/calculate',{method:'POST',body:f});currentPrice=await r.json();
