@@ -5,87 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI PDF Editor - Luleit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tiny.cloud/1/qagffr3pkuv17a8on1afax661ez1j0a0z73fqwvo9cjzbvl3/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <style>
         :root { --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #e0e7ff; --accent: #f472b6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827; --font: 'Inter', sans-serif; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: var(--font); background: var(--gray-100); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Header */
         .header { background: #fff; border-bottom: 1px solid var(--gray-200); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
         .header-left { display: flex; align-items: center; gap: 16px; }
         .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--gray-900); }
         .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; }
         .logo-text { font-size: 20px; font-weight: 700; }
-        .doc-name { font-size: 14px; color: var(--gray-500); background: var(--gray-100); padding: 6px 12px; border-radius: 6px; }
-        .header-center { display: flex; align-items: center; gap: 8px; }
-        .zoom-controls { display: none; align-items: center; gap: 4px; background: var(--gray-100); padding: 4px 8px; border-radius: 8px; }
-        .zoom-controls.show { display: flex; }
-        .zoom-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; font-size: 16px; }
-        .zoom-btn:hover { background: var(--gray-200); }
-        .zoom-level { font-size: 12px; color: var(--gray-600); min-width: 40px; text-align: center; }
-        .header-actions { display: flex; align-items: center; gap: 8px; }
-        .icon-btn { width: 36px; height: 36px; border: 1px solid var(--gray-200); background: #fff; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .icon-btn:hover { background: var(--gray-50); }
-        .icon-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+        .doc-name { font-size: 14px; color: var(--gray-500); background: var(--gray-100); padding: 6px 12px; border-radius: 6px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font); border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+        .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: #fff; }
         .btn-secondary { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Main Layout */
         .main { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 240px; background: #fff; border-right: 1px solid var(--gray-200); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-section { padding: 16px; border-bottom: 1px solid var(--gray-200); }
-        .sidebar-title { font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; }
-        .pages-list { flex: 1; overflow-y: auto; padding: 12px; }
-        .page-thumb { background: #fff; border: 2px solid transparent; border-radius: 8px; margin-bottom: 12px; cursor: pointer; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .page-thumb:hover { border-color: var(--gray-300); }
-        .page-thumb.active { border-color: var(--primary); }
-        .page-thumb img { width: 100%; display: block; }
-        .page-thumb-label { padding: 6px; font-size: 11px; color: var(--gray-500); text-align: center; background: var(--gray-50); }
-        .canvas-area { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 40px; background: var(--gray-100); }
 
-        /* PDF Container with Text Overlay */
-        .pdf-container { position: relative; background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.15); transform-origin: top center; transition: transform 0.2s; }
-        .pdf-container img { display: block; }
-        .text-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .text-line { position: absolute; cursor: text; background: transparent; border: 1px solid transparent; border-radius: 2px; transition: all 0.15s; display: flex; align-items: center; }
-        .text-line:hover { background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.2); }
-        .text-line.edited { background: rgba(16, 185, 129, 0.08); }
-        .text-line.edited:hover { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); }
-        .text-line.editing { background: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25); z-index: 100; }
-        .text-input { width: 100%; height: 100%; border: none; background: transparent; outline: none; padding: 2px 4px; font-family: inherit; resize: none; overflow: hidden; }
-        .text-line-tooltip { position: absolute; bottom: 100%; left: 0; background: var(--gray-800); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; margin-bottom: 4px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
-        .text-line:hover .text-line-tooltip { opacity: 1; }
-
-        /* Mini Toolbar */
-        .mini-toolbar { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 4px; display: none; flex-wrap: nowrap; gap: 2px; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 101; }
-        .mini-toolbar.show { display: flex; }
-        .toolbar-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--gray-700); }
-        .toolbar-btn:hover { background: var(--gray-100); }
-        .toolbar-btn.active { background: var(--primary-light); color: var(--primary); }
-        .toolbar-btn.danger:hover { background: #fee2e2; color: var(--danger); }
-        .toolbar-divider { width: 1px; height: 20px; background: var(--gray-200); margin: 4px 2px; }
-        .toolbar-select { border: none; background: var(--gray-100); padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .color-picker { width: 28px; height: 28px; padding: 0; border: 2px solid var(--gray-200); border-radius: 4px; cursor: pointer; overflow: hidden; }
-        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
-        .color-picker::-webkit-color-swatch { border: none; }
-
-        /* Add Text Mode */
-        .add-text-cursor { cursor: crosshair !important; }
-        .add-text-cursor .text-line { pointer-events: none; }
-        .new-text-indicator { position: absolute; border: 2px dashed var(--primary); background: rgba(99, 102, 241, 0.1); pointer-events: none; display: none; }
-
-        /* Find & Replace Panel */
-        .find-panel { position: fixed; top: 80px; right: 380px; background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 200; display: none; }
-        .find-panel.show { display: block; }
-        .find-panel h4 { font-size: 14px; margin-bottom: 12px; }
-        .find-input-group { margin-bottom: 12px; }
-        .find-input-group label { font-size: 11px; color: var(--gray-500); display: block; margin-bottom: 4px; }
-        .find-input-group input { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 13px; }
-        .find-input-group input:focus { outline: none; border-color: var(--primary); }
-        .find-results { font-size: 12px; color: var(--gray-500); margin-bottom: 12px; }
-        .find-actions { display: flex; gap: 8px; }
-
+        /* Upload State */
         .upload-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; }
         .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary-light), #fff); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
         .upload-icon svg { width: 48px; height: 48px; color: var(--primary); }
@@ -93,134 +37,186 @@
         .upload-state p { font-size: 16px; color: var(--gray-500); margin-bottom: 32px; }
         .upload-zone { border: 2px dashed var(--gray-300); border-radius: 16px; padding: 48px 64px; cursor: pointer; transition: all 0.2s; }
         .upload-zone:hover, .upload-zone.dragover { border-color: var(--primary); background: var(--primary-light); }
-        .ai-panel { width: 360px; background: #fff; border-left: 1px solid var(--gray-200); display: flex; flex-direction: column; flex-shrink: 0; }
+
+        /* Editor Container */
+        .editor-container { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .editor-toolbar { background: #fff; border-bottom: 1px solid var(--gray-200); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .editor-status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray-500); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+        .status-dot.converting { background: var(--warning); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .editor-main { flex: 1; display: flex; overflow: hidden; }
+
+        /* TinyMCE Editor Area */
+        .editor-area { flex: 1; padding: 20px; overflow: auto; background: var(--gray-100); }
+        .editor-wrapper { max-width: 900px; margin: 0 auto; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 8px; min-height: 100%; }
+
+        /* Preview Panel */
+        .preview-panel { width: 300px; background: #fff; border-left: 1px solid var(--gray-200); display: flex; flex-direction: column; }
+        .preview-header { padding: 16px; border-bottom: 1px solid var(--gray-200); font-weight: 600; font-size: 14px; }
+        .preview-content { flex: 1; overflow-y: auto; padding: 16px; }
+        .preview-page { background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 12px; overflow: hidden; cursor: pointer; }
+        .preview-page:hover { border-color: var(--primary); }
+        .preview-page.active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+        .preview-page img { width: 100%; display: block; }
+        .preview-page-label { padding: 8px; font-size: 12px; color: var(--gray-500); text-align: center; background: var(--gray-50); }
+
+        /* AI Panel */
+        .ai-panel { width: 360px; background: #fff; border-left: 1px solid var(--gray-200); display: none; flex-direction: column; }
+        .ai-panel.show { display: flex; }
         .ai-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 12px; }
         .ai-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
-        .ai-header-text h3 { font-size: 15px; font-weight: 600; }
-        .ai-header-text p { font-size: 12px; color: var(--gray-500); }
-        .ai-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-        .ai-msg { max-width: 90%; padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
-        .ai-msg.user { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .ai-msg.assistant { background: var(--gray-100); color: var(--gray-800); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .ai-msg.success { background: #d1fae5; color: #065f46; }
-        .ai-msg.error { background: #fee2e2; color: #991b1b; }
+        .ai-messages { flex: 1; overflow-y: auto; padding: 20px; }
+        .ai-message { margin-bottom: 16px; }
+        .ai-message.user { text-align: right; }
+        .ai-message .bubble { display: inline-block; max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+        .ai-message.user .bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+        .ai-message.assistant .bubble { background: var(--gray-100); color: var(--gray-800); border-bottom-left-radius: 4px; }
         .ai-input-area { padding: 16px; border-top: 1px solid var(--gray-200); }
-        .ai-input-wrap { display: flex; gap: 8px; }
-        .ai-input { flex: 1; padding: 14px 18px; font-size: 14px; font-family: var(--font); border: 2px solid var(--gray-200); border-radius: 12px; outline: none; }
-        .ai-input:focus { border-color: var(--primary); }
-        .ai-send { width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; border-radius: 12px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .ai-send:disabled { opacity: 0.5; }
-        .quick-actions { padding: 12px 16px; border-top: 1px solid var(--gray-200); display: flex; flex-wrap: wrap; gap: 8px; }
-        .quick-btn { padding: 8px 14px; font-size: 12px; font-weight: 500; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; cursor: pointer; }
-        .quick-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .ai-input-wrapper { display: flex; gap: 8px; }
+        .ai-input-wrapper input { flex: 1; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 12px; font-size: 14px; }
+        .ai-input-wrapper input:focus { outline: none; border-color: var(--primary); }
+        .ai-input-wrapper button { padding: 12px 20px; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.show { display: flex; }
-        .modal { background: #fff; border-radius: 20px; padding: 32px; max-width: 420px; width: 90%; text-align: center; }
-        .modal h3 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .modal { background: #fff; border-radius: 20px; padding: 32px; max-width: 400px; width: 90%; text-align: center; }
+        .modal h3 { font-size: 24px; margin-bottom: 8px; }
         .modal p { color: var(--gray-500); margin-bottom: 24px; }
-        .price-display { font-size: 48px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
-        .price-usd { font-size: 14px; color: var(--gray-400); margin-bottom: 24px; }
+        .price-display { font-size: 48px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+        .price-usd { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
         .price-features { list-style: none; text-align: left; margin-bottom: 24px; }
-        .price-features li { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; color: var(--gray-600); }
+        .price-features li { display: flex; align-items: center; gap: 12px; padding: 8px 0; color: var(--gray-700); }
         .price-features li svg { color: var(--success); }
-        .modal-actions { display: flex; flex-direction: column; gap: 12px; }
-        .modal-actions .btn { width: 100%; padding: 14px; }
-        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+
+        /* Loading */
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 2000; }
         .loading-overlay.show { display: flex; }
-        .spinner { width: 48px; height: 48px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { width: 48px; height: 48px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; background: var(--gray-800); color: #fff; border-radius: 12px; font-size: 14px; z-index: 9999; display: flex; align-items: center; gap: 8px; }
+        #loadingText { font-size: 16px; color: var(--gray-600); }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 16px 24px; border-radius: 12px; color: #fff; font-weight: 500; z-index: 3000; animation: slideIn 0.3s ease; }
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
-        .edit-hint { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 100; display: none; }
-        .edit-hint.show { display: block; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* Mobile styles */
-        @media (max-width: 1000px) { .sidebar { display: none; } .find-panel { right: 20px; } }
-        @media (max-width: 700px) {
-            .ai-panel { position: fixed; inset: 0; width: 100%; display: none; z-index: 500; }
-            .ai-panel.show { display: flex; }
-            .header-center { display: none; }
-            .canvas-area { padding: 20px; }
-            .find-panel { right: 10px; left: 10px; width: auto; }
-        }
+        /* Converting Banner */
+        .converting-banner { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; padding: 16px 24px; text-align: center; display: none; }
+        .converting-banner.show { display: block; }
+        .converting-banner h3 { font-size: 16px; margin-bottom: 4px; }
+        .converting-banner p { font-size: 13px; opacity: 0.9; }
+
+        /* TinyMCE overrides */
+        .tox-tinymce { border: none !important; border-radius: 0 !important; }
+        .tox .tox-edit-area__iframe { background: #fff !important; }
     </style>
 </head>
 <body>
     <header class="header">
         <div class="header-left">
-            <a href="/" class="logo"><div class="logo-icon">L</div><span class="logo-text">Luleit AI</span></a>
+            <a href="/" class="logo">
+                <div class="logo-icon">L</div>
+                <span class="logo-text">Luleit</span>
+            </a>
             <span class="doc-name" id="docName">No document</span>
         </div>
-        <div class="header-center">
-            <div class="zoom-controls" id="zoomControls">
-                <button class="zoom-btn" id="zoomOut" title="Zoom out">−</button>
-                <span class="zoom-level" id="zoomLevel">100%</span>
-                <button class="zoom-btn" id="zoomIn" title="Zoom in">+</button>
-            </div>
-        </div>
-        <div class="header-actions" id="headerActions" style="display:none">
-            <button class="icon-btn" id="undoBtn" title="Undo (Ctrl+Z)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg></button>
-            <button class="icon-btn" id="redoBtn" title="Redo (Ctrl+Y)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg></button>
-            <button class="icon-btn" id="addTextBtn" title="Add text (T)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></button>
-            <button class="icon-btn" id="findBtn" title="Find & Replace (Ctrl+F)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></button>
-        </div>
         <div class="header-right">
-            <button class="btn btn-secondary" id="newDocBtn">New</button>
-            <button class="btn btn-primary" id="downloadBtn" disabled>Download</button>
+            <button class="btn btn-secondary" id="newDocBtn" style="display:none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                New
+            </button>
+            <button class="btn btn-secondary" id="toggleAiBtn" style="display:none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                AI Assistant
+            </button>
+            <button class="btn btn-success" id="saveBtn" style="display:none" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Changes
+            </button>
+            <button class="btn btn-primary" id="downloadBtn" style="display:none" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+            </button>
         </div>
     </header>
-    <div class="main">
-        <aside class="sidebar" id="sidebar" style="display:none"><div class="sidebar-section"><div class="sidebar-title">Pages</div></div><div class="pages-list" id="pagesList"></div></aside>
-        <div class="canvas-area" id="canvasArea">
-            <div class="upload-state" id="uploadState">
-                <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-                <h2>Upload Your PDF</h2>
-                <p>Click any text to edit it directly</p>
-                <div class="upload-zone" id="uploadZone"><p style="font-weight:600">Drop PDF here or click to browse</p></div>
-                <input type="file" id="fileInput" accept=".pdf" hidden>
+
+    <div class="converting-banner" id="convertingBanner">
+        <h3>Converting your PDF...</h3>
+        <p>This may take a moment. Your document will be fully editable with text reflow.</p>
+    </div>
+
+    <main class="main">
+        <!-- Upload State -->
+        <div class="upload-state" id="uploadState">
+            <div class="upload-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
             </div>
-            <div class="pdf-container" id="pdfContainer" style="display:none">
-                <img id="pageImage" alt="PDF Page">
-                <div class="text-overlay" id="textOverlay"></div>
+            <h2>Edit Any PDF</h2>
+            <p>Upload a PDF to start editing with full text reflow</p>
+            <div class="upload-zone" id="uploadZone">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 12px; color: var(--gray-400)">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p style="color: var(--gray-600); font-weight: 500;">Drop PDF here or click to upload</p>
+                <p style="color: var(--gray-400); font-size: 13px; margin-top: 8px;">Max 50MB</p>
             </div>
+            <input type="file" id="fileInput" accept=".pdf" hidden>
         </div>
-        <aside class="ai-panel" id="aiPanel">
-            <div class="ai-header"><div class="ai-avatar">AI</div><div class="ai-header-text"><h3>AI Assistant</h3><p>Click text to edit or ask me</p></div></div>
-            <div class="ai-messages" id="aiMessages"><div class="ai-msg assistant">Upload a PDF and click any text to edit it. Or tell me what changes to make!</div></div>
-            <div class="quick-actions" id="quickActions" style="display:none">
-                <button class="quick-btn" data-cmd="Find all dates">Dates</button>
-                <button class="quick-btn" data-cmd="Find all names">Names</button>
-                <button class="quick-btn" data-cmd="Summarize">Summary</button>
-            </div>
-            <div class="ai-input-area">
-                <div class="ai-input-wrap">
-                    <input type="text" class="ai-input" id="aiInput" placeholder="e.g. Change John to Jane..." disabled>
-                    <button class="ai-send" id="aiSend" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+
+        <!-- Editor Container -->
+        <div class="editor-container" id="editorContainer">
+            <div class="editor-main">
+                <!-- Editor Area -->
+                <div class="editor-area">
+                    <div class="editor-wrapper">
+                        <textarea id="htmlEditor"></textarea>
+                    </div>
                 </div>
+
+                <!-- Preview Panel -->
+                <div class="preview-panel" id="previewPanel">
+                    <div class="preview-header">PDF Preview</div>
+                    <div class="preview-content" id="previewContent">
+                        <!-- Page thumbnails will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- AI Panel -->
+                <aside class="ai-panel" id="aiPanel">
+                    <div class="ai-header">
+                        <div class="ai-avatar">AI</div>
+                        <div>
+                            <h3>AI Assistant</h3>
+                            <p style="font-size: 12px; color: var(--gray-500);">Ask me to help edit your document</p>
+                        </div>
+                    </div>
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-message assistant">
+                            <div class="bubble">Hi! I can help you edit your document. Try asking me to:<br><br>• "Make this more formal"<br>• "Fix grammar and spelling"<br>• "Summarize this section"</div>
+                        </div>
+                    </div>
+                    <div class="ai-input-area">
+                        <div class="ai-input-wrapper">
+                            <input type="text" id="aiInput" placeholder="Ask AI to help edit..." disabled>
+                            <button class="btn btn-primary" id="aiSend" disabled>Send</button>
+                        </div>
+                    </div>
+                </aside>
             </div>
-        </aside>
-    </div>
+        </div>
+    </main>
 
-    <!-- Find & Replace Panel -->
-    <div class="find-panel" id="findPanel">
-        <h4>Find & Replace</h4>
-        <div class="find-input-group">
-            <label>Find</label>
-            <input type="text" id="findInput" placeholder="Search text...">
-        </div>
-        <div class="find-input-group">
-            <label>Replace with</label>
-            <input type="text" id="replaceInput" placeholder="Replacement text...">
-        </div>
-        <div class="find-results" id="findResults"></div>
-        <div class="find-actions">
-            <button class="btn btn-secondary btn-sm" id="findNextBtn">Find Next</button>
-            <button class="btn btn-secondary btn-sm" id="replaceOneBtn">Replace</button>
-            <button class="btn btn-primary btn-sm" id="replaceAllBtn">Replace All</button>
-        </div>
-    </div>
-
+    <!-- Payment Modal -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
             <h3>Download Your PDF</h3>
@@ -229,7 +225,7 @@
             <div class="price-usd" id="priceUsd">≈ $0.95</div>
             <ul class="price-features">
                 <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Full quality PDF</li>
-                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> All edits included</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> All edits preserved</li>
                 <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> No watermarks</li>
             </ul>
             <div class="modal-actions">
@@ -239,758 +235,371 @@
             </div>
         </div>
     </div>
-    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Processing...</div></div>
-    <div class="edit-hint" id="editHint">Click any text to edit it directly</div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Processing...</div>
+    </div>
 
     <script>
-    const DC={sid:null,start:Date.now(),
-        getData(){return{screen_width:screen.width,screen_height:screen.height,device_memory:navigator.deviceMemory||4,pixel_ratio:devicePixelRatio,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,is_mobile:/Android|iPhone|iPad/i.test(navigator.userAgent),language:navigator.language}},
-        async startSession(){const d=this.getData();try{const f=new FormData();f.append('data',JSON.stringify(d));const r=await fetch('/api/session/start',{method:'POST',body:f});const j=await r.json();this.sid=j.session_id;this.getGeo()}catch(e){}},
-        async getGeo(){try{const r=await fetch('https://ipapi.co/json/');const g=await r.json();if(g&&this.sid){const f=new FormData();f.append('city',g.city||'');f.append('state',g.region||'');f.append('country',g.country_code||'IN');await fetch(`/api/session/${this.sid}/geo`,{method:'POST',body:f})}}catch(e){}},
-        async update(d={}){if(!this.sid)return;d.time_on_site=Math.floor((Date.now()-this.start)/1000);const f=new FormData();f.append('data',JSON.stringify(d));try{await fetch(`/api/session/${this.sid}/update`,{method:'POST',body:f})}catch(e){}}
-    };
-
-    let docId=null, currentPage=1, totalPages=0, isProcessing=false, currentPrice=null, pricingShownAt=null;
-    let currentTextData=null, editingLine=null, addTextMode=false;
-    let editHistory=[], historyIndex=-1;
-    let zoomLevel=100;
-    let editedLines=new Set(); // Track which lines have been edited
-    const $=id=>document.getElementById(id);
-
-    function init(){
-        DC.startSession();
-        $('uploadZone').onclick=()=>$('fileInput').click();
-        $('fileInput').onchange=e=>{if(e.target.files[0])handleUpload(e.target.files[0])};
-        $('uploadZone').ondragover=e=>{e.preventDefault();$('uploadZone').classList.add('dragover')};
-        $('uploadZone').ondragleave=()=>$('uploadZone').classList.remove('dragover');
-        $('uploadZone').ondrop=e=>{e.preventDefault();$('uploadZone').classList.remove('dragover');if(e.dataTransfer.files[0]?.type==='application/pdf')handleUpload(e.dataTransfer.files[0])};
-        $('aiInput').onkeypress=e=>{if(e.key==='Enter')sendMessage()};
-        $('aiSend').onclick=sendMessage;
-        document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>{$('aiInput').value=b.dataset.cmd;sendMessage()});
-        $('newDocBtn').onclick=()=>location.reload();
-        $('downloadBtn').onclick=showPricing;
-        $('cancelPayBtn').onclick=()=>closePricing(false);
-        $('payUpiBtn').onclick=()=>processPayment('upi');
-        $('payCardBtn').onclick=()=>processPayment('card');
-
-        // Toolbar buttons
-        $('undoBtn').onclick=undo;
-        $('redoBtn').onclick=redo;
-        $('addTextBtn').onclick=toggleAddTextMode;
-        $('findBtn').onclick=()=>$('findPanel').classList.toggle('show');
-
-        // Zoom controls
-        $('zoomIn').onclick=()=>setZoom(zoomLevel+25);
-        $('zoomOut').onclick=()=>setZoom(zoomLevel-25);
-
-        // Find & Replace
-        $('findInput').oninput=findText;
-        $('findNextBtn').onclick=findNext;
-        $('replaceOneBtn').onclick=replaceOne;
-        $('replaceAllBtn').onclick=replaceAll;
-
-        // Save on click outside (not cancel)
-        document.addEventListener('click', (e) => {
-            if(editingLine && !e.target.closest('.text-line') && !e.target.closest('.mini-toolbar')) {
-                saveCurrentEdit();
-            }
-            if(!e.target.closest('.find-panel') && !e.target.closest('#findBtn')) {
-                $('findPanel').classList.remove('show');
-            }
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if(e.key === 'Escape') {
-                if(editingLine) cancelEditing();
-                if(addTextMode) toggleAddTextMode();
-                $('findPanel').classList.remove('show');
-            }
-            if((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
-            if((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
-            if((e.ctrlKey || e.metaKey) && e.key === 'f' && docId) { e.preventDefault(); $('findPanel').classList.toggle('show'); $('findInput').focus(); }
-            if(e.key === 't' && !editingLine && docId && document.activeElement.tagName !== 'INPUT') { toggleAddTextMode(); }
-        });
-
-        // Touch support
-        let touchStartX, touchStartY;
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }, {passive: true});
-    }
-
-    async function handleUpload(file){
-        showLoading('Uploading...');
-        const f=new FormData();f.append('file',file);f.append('session_id',DC.sid||'');
-        try{
-            const r=await fetch('/api/upload',{method:'POST',body:f});
-            const d=await r.json();
-            if(!r.ok)throw new Error(d.detail);
-            docId=d.docId;totalPages=d.pageCount;
-            $('docName').textContent=d.filename;
-            $('uploadState').style.display='none';
-            $('pdfContainer').style.display='block';
-            $('sidebar').style.display='flex';
-            $('quickActions').style.display='flex';
-            $('headerActions').style.display='flex';
-            $('zoomControls').classList.add('show');
-            $('aiInput').disabled=false;
-            $('aiSend').disabled=false;
-            $('downloadBtn').disabled=false;
-            editHistory=[];historyIndex=-1;editedLines.clear();
-            await loadPage(1);
-            await genThumbs();
-            addMsg('assistant','Click any text to edit. Press T to add new text. Use Ctrl+F to find & replace.');
-            $('editHint').classList.add('show');
-            setTimeout(() => $('editHint').classList.remove('show'), 5000);
-            DC.update({doc_id:docId,page_count:totalPages});
-        }catch(e){toast(e.message,'error')}
-        hideLoading();
-    }
-
-    async function loadPage(n){
-        try{
-            const r=await fetch(`/api/document/${docId}/page/${n}`);
-            const d=await r.json();
-            $('pageImage').src='data:image/png;base64,'+d.image;
-            currentPage=n;
-            document.querySelectorAll('.page-thumb').forEach((t,i)=>t.classList.toggle('active',i+1===n));
-            $('pageImage').onload = () => loadTextOverlay(n);
-        }catch(e){console.error('Load page error:', e)}
-    }
-
-    async function loadTextOverlay(pageNum) {
-        try {
-            const r = await fetch(`/api/document/${docId}/page/${pageNum}/text`);
-            const data = await r.json();
-            currentTextData = data;
-            // Group blocks into lines
-            const lines = groupBlocksIntoLines(data.blocks);
-            renderTextOverlay(lines);
-        } catch(e) {
-            console.error('Load text overlay error:', e);
-        }
-    }
-
-    function groupBlocksIntoLines(blocks) {
-        if (!blocks || blocks.length === 0) return [];
-
-        // Sort by Y position, then X
-        const sorted = [...blocks].sort((a, b) => {
-            const yDiff = a.y - b.y;
-            if (Math.abs(yDiff) < 5) return a.x - b.x; // Same line
-            return yDiff;
-        });
-
-        const lines = [];
-        let currentLine = null;
-
-        sorted.forEach(block => {
-            if (!currentLine || Math.abs(block.y - currentLine.y) > 8) {
-                // New line
-                currentLine = {
-                    blocks: [block],
-                    x: block.x,
-                    y: block.y,
-                    width: block.width,
-                    height: block.height,
-                    fontSize: block.fontSize,
-                    text: block.text,
-                    pdf_x: block.pdf_x,
-                    pdf_y: block.pdf_y,
-                    pdf_fontSize: block.pdf_fontSize,
-                    font: block.font,
-                    color: block.color,
-                    flags: block.flags
-                };
-                lines.push(currentLine);
-            } else {
-                // Same line - extend
-                currentLine.blocks.push(block);
-                currentLine.text += ' ' + block.text;
-                currentLine.width = (block.x + block.width) - currentLine.x;
-                currentLine.height = Math.max(currentLine.height, block.height);
-            }
-        });
-
-        return lines;
-    }
-
-    function renderTextOverlay(lines) {
-        const overlay = $('textOverlay');
-        overlay.innerHTML = '';
-        if (!lines || lines.length === 0) return;
-
-        lines.forEach((line, index) => {
-            const div = document.createElement('div');
-            div.className = 'text-line';
-            if (editedLines.has(`${currentPage}-${index}`)) div.classList.add('edited');
-
-            div.style.left = line.x + 'px';
-            div.style.top = line.y + 'px';
-            div.style.width = Math.max(line.width + 10, 30) + 'px';
-            div.style.height = Math.max(line.height, line.fontSize + 4) + 'px';
-            div.style.fontSize = line.fontSize + 'px';
-
-            div.dataset.index = index;
-            div.dataset.text = line.text;
-            div.dataset.blocks = JSON.stringify(line.blocks);
-            div.dataset.pdfX = line.pdf_x;
-            div.dataset.pdfY = line.pdf_y;
-            div.dataset.pdfFontSize = line.pdf_fontSize;
-            div.dataset.font = line.font || 'helv';
-            div.dataset.color = line.color || 0;
-            div.dataset.flags = line.flags || 0;
-
-            // Tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'text-line-tooltip';
-            tooltip.textContent = line.text;
-            div.appendChild(tooltip);
-
-            div.onclick = (e) => {
-                e.stopPropagation();
-                if (!addTextMode) startEditing(div, line, index);
+    // Session tracking
+    const DC = {
+        sid: null,
+        start: Date.now(),
+        getData() {
+            return {
+                screen_width: screen.width,
+                screen_height: screen.height,
+                device_memory: navigator.deviceMemory || 4,
+                pixel_ratio: devicePixelRatio,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                is_mobile: /Android|iPhone|iPad/i.test(navigator.userAgent),
+                language: navigator.language
             };
-
-            overlay.appendChild(div);
-        });
-
-        // Add click handler for adding new text
-        overlay.onclick = (e) => {
-            if (addTextMode && e.target === overlay) {
-                const rect = overlay.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                addNewText(x, y);
-            }
-        };
-    }
-
-    function startEditing(div, line, index) {
-        if (editingLine) saveCurrentEdit();
-
-        editingLine = { div, line, index, originalText: line.text };
-        div.classList.add('editing');
-
-        // Create toolbar
-        const toolbar = document.createElement('div');
-        toolbar.className = 'mini-toolbar show';
-        toolbar.innerHTML = `
-            <button class="toolbar-btn" data-action="bold" title="Bold"><b>B</b></button>
-            <button class="toolbar-btn" data-action="italic" title="Italic"><i>I</i></button>
-            <div class="toolbar-divider"></div>
-            <select class="toolbar-select" data-action="fontSize">
-                <option value="8">8</option><option value="10">10</option><option value="12">12</option>
-                <option value="14">14</option><option value="16">16</option><option value="18">18</option>
-                <option value="24">24</option><option value="32">32</option>
-            </select>
-            <input type="color" class="color-picker" data-action="color" value="#000000" title="Text color">
-            <div class="toolbar-divider"></div>
-            <button class="toolbar-btn danger" data-action="delete" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-        `;
-
-        // Set current font size in select
-        const sizeSelect = toolbar.querySelector('[data-action="fontSize"]');
-        const currentSize = Math.round(line.pdf_fontSize);
-        sizeSelect.value = [8,10,12,14,16,18,24,32].reduce((prev, curr) =>
-            Math.abs(curr - currentSize) < Math.abs(prev - currentSize) ? curr : prev
-        );
-
-        // Set current color
-        const colorPicker = toolbar.querySelector('[data-action="color"]');
-        const c = line.color || 0;
-        const r = ((c >> 16) & 0xFF).toString(16).padStart(2,'0');
-        const g = ((c >> 8) & 0xFF).toString(16).padStart(2,'0');
-        const b = (c & 0xFF).toString(16).padStart(2,'0');
-        colorPicker.value = `#${r}${g}${b}`;
-
-        // Toolbar event handlers
-        toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                handleToolbarAction(btn.dataset.action);
-            };
-        });
-        sizeSelect.onchange = (e) => { e.stopPropagation(); editingLine.newFontSize = parseFloat(e.target.value); };
-        colorPicker.oninput = (e) => {
-            e.stopPropagation();
-            const hex = e.target.value;
-            const r = parseInt(hex.substr(1,2), 16);
-            const g = parseInt(hex.substr(3,2), 16);
-            const b = parseInt(hex.substr(5,2), 16);
-            editingLine.newColor = (r << 16) | (g << 8) | b;
-            const input = div.querySelector('.text-input');
-            if (input) input.style.color = hex;
-        };
-
-        div.appendChild(toolbar);
-
-        // Create input
-        const input = document.createElement('textarea');
-        input.className = 'text-input';
-        input.value = line.text;
-        input.style.fontSize = line.fontSize + 'px';
-        input.style.lineHeight = line.height + 'px';
-
-        const color = line.color || 0;
-        const cr = (color >> 16) & 0xFF;
-        const cg = (color >> 8) & 0xFF;
-        const cb = color & 0xFF;
-        input.style.color = `rgb(${cr},${cg},${cb})`;
-
-        // Remove tooltip when editing
-        const tooltip = div.querySelector('.text-line-tooltip');
-        if (tooltip) tooltip.remove();
-
-        div.appendChild(input);
-        input.focus();
-        input.select();
-
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveCurrentEdit(); }
-            else if (e.key === 'Escape') { cancelEditing(); }
-            else if (e.key === 'Tab') {
-                e.preventDefault();
-                saveCurrentEdit();
-                // Move to next line
-                const nextIndex = index + (e.shiftKey ? -1 : 1);
-                const lines = document.querySelectorAll('.text-line');
-                if (lines[nextIndex]) lines[nextIndex].click();
-            }
-        };
-
-        input.oninput = () => {
-            div.style.width = Math.max(input.scrollWidth + 20, line.width + 10, 50) + 'px';
-        };
-    }
-
-    function handleToolbarAction(action) {
-        if (!editingLine) return;
-
-        if (action === 'delete') {
-            if (confirm('Delete this text?')) {
-                deleteText(editingLine.div, editingLine.line);
-            }
-        } else if (action === 'bold') {
-            editingLine.newFlags = (editingLine.line.flags || 0) ^ 16; // Toggle bold flag
-        } else if (action === 'italic') {
-            editingLine.newFlags = (editingLine.line.flags || 0) ^ 2; // Toggle italic flag
-        }
-    }
-
-    function cancelEditing() {
-        if (!editingLine) return;
-        editingLine.div.classList.remove('editing');
-        editingLine.div.innerHTML = '';
-
-        // Re-add tooltip
-        const tooltip = document.createElement('div');
-        tooltip.className = 'text-line-tooltip';
-        tooltip.textContent = editingLine.originalText;
-        editingLine.div.appendChild(tooltip);
-
-        editingLine = null;
-    }
-
-    async function saveCurrentEdit() {
-        if (!editingLine) return;
-
-        const input = editingLine.div.querySelector('.text-input');
-        const newText = input ? input.value : editingLine.originalText;
-
-        if (newText !== editingLine.originalText || editingLine.newFontSize || editingLine.newColor !== undefined) {
-            await saveEdit(editingLine.div, editingLine.line, newText, editingLine.index);
-        } else {
-            cancelEditing();
-        }
-    }
-
-    async function saveEdit(div, line, newText, index) {
-        showLoading('Saving...');
-
-        // Save to history for undo
-        addToHistory({
-            type: 'edit',
-            page: currentPage,
-            index: index,
-            oldText: line.text,
-            newText: newText,
-            line: {...line}
-        });
-
-        try {
-            // For grouped lines, we need to edit each block
-            const blocks = JSON.parse(div.dataset.blocks || '[]');
-
-            if (blocks.length === 1 || newText === line.text) {
-                // Single block or just style change
-                const f = new FormData();
-                f.append('page', currentPage);
-                f.append('original_text', blocks[0]?.text || line.text);
-                f.append('new_text', blocks.length === 1 ? newText : blocks[0]?.text || line.text);
-                f.append('x', div.dataset.pdfX);
-                f.append('y', div.dataset.pdfY);
-                f.append('font_size', editingLine?.newFontSize || div.dataset.pdfFontSize);
-                f.append('font_name', div.dataset.font);
-                f.append('color', editingLine?.newColor !== undefined ? editingLine.newColor : div.dataset.color);
-                f.append('flags', editingLine?.newFlags || div.dataset.flags);
-                f.append('session_id', DC.sid || '');
-
-                const r = await fetch(`/api/edit/${docId}/direct`, {method: 'POST', body: f});
-                const d = await r.json();
-
-                if (d.success) {
-                    toast('Saved!', 'success');
-                    editedLines.add(`${currentPage}-${index}`);
-                    editingLine = null;
-                    await loadPage(currentPage);
-                    await genThumbs();
-                    DC.update({edit_count: 1});
-                } else {
-                    throw new Error(d.message || 'Edit failed');
-                }
-            } else {
-                // Multiple blocks - use AI edit for the whole line
-                const f = new FormData();
-                f.append('instruction', `Change "${line.text}" to "${newText}"`);
-                f.append('session_id', DC.sid || '');
-                const r = await fetch(`/api/edit/${docId}`, {method: 'POST', body: f});
-                const d = await r.json();
-
-                if (d.success) {
-                    toast('Saved!', 'success');
-                    editedLines.add(`${currentPage}-${index}`);
-                    editingLine = null;
-                    await loadPage(currentPage);
-                    await genThumbs();
-                } else {
-                    throw new Error(d.message || 'Edit failed');
-                }
-            }
-        } catch(e) {
-            toast('Error: ' + e.message, 'error');
-            cancelEditing();
-        }
-
-        hideLoading();
-    }
-
-    async function deleteText(div, line) {
-        showLoading('Deleting...');
-
-        addToHistory({
-            type: 'delete',
-            page: currentPage,
-            line: {...line}
-        });
-
-        try {
-            const f = new FormData();
-            f.append('page', currentPage);
-            f.append('original_text', line.blocks?.[0]?.text || line.text);
-            f.append('new_text', '');
-            f.append('x', div.dataset.pdfX);
-            f.append('y', div.dataset.pdfY);
-            f.append('font_size', div.dataset.pdfFontSize);
-            f.append('font_name', div.dataset.font);
-            f.append('color', div.dataset.color);
-            f.append('flags', div.dataset.flags);
-            f.append('session_id', DC.sid || '');
-
-            const r = await fetch(`/api/edit/${docId}/direct`, {method: 'POST', body: f});
-            const d = await r.json();
-
-            if (d.success) {
-                toast('Deleted!', 'success');
-                editingLine = null;
-                await loadPage(currentPage);
-                await genThumbs();
-            } else {
-                throw new Error(d.message || 'Delete failed');
-            }
-        } catch(e) {
-            toast('Error: ' + e.message, 'error');
-        }
-
-        hideLoading();
-    }
-
-    function toggleAddTextMode() {
-        addTextMode = !addTextMode;
-        $('addTextBtn').classList.toggle('active', addTextMode);
-        $('textOverlay').classList.toggle('add-text-cursor', addTextMode);
-        if (addTextMode) {
-            toast('Click anywhere to add text. Press Escape to cancel.', 'success');
-        }
-    }
-
-    async function addNewText(x, y) {
-        const text = prompt('Enter text to add:');
-        if (!text) { toggleAddTextMode(); return; }
-
-        showLoading('Adding text...');
-
-        // Convert display coords to PDF coords
-        const scale = 72 / 150;
-        const pdfX = x * scale;
-        const pdfY = y * scale;
-
-        addToHistory({
-            type: 'add',
-            page: currentPage,
-            text: text,
-            x: pdfX,
-            y: pdfY
-        });
-
-        try {
-            const f = new FormData();
-            f.append('page', currentPage);
-            f.append('text', text);
-            f.append('x', pdfX);
-            f.append('y', pdfY);
-            f.append('font_size', 12);
-            f.append('session_id', DC.sid || '');
-
-            const r = await fetch(`/api/edit/${docId}/add-text`, {method: 'POST', body: f});
-            const d = await r.json();
-
-            if (d.success) {
-                toast('Text added!', 'success');
-                await loadPage(currentPage);
-                await genThumbs();
-            } else {
-                throw new Error(d.message || 'Add failed');
-            }
-        } catch(e) {
-            // Fallback: use AI to add text
+        },
+        async startSession() {
+            const d = this.getData();
             try {
                 const f = new FormData();
-                f.append('instruction', `Add the text "${text}" at approximately position x=${Math.round(pdfX)}, y=${Math.round(pdfY)} on the page`);
-                f.append('session_id', DC.sid || '');
-                const r = await fetch(`/api/edit/${docId}`, {method: 'POST', body: f});
+                f.append('data', JSON.stringify(d));
+                const r = await fetch('/api/session/start', {method: 'POST', body: f});
+                const j = await r.json();
+                this.sid = j.session_id;
+            } catch(e) {}
+        },
+        async update(d = {}) {
+            if (!this.sid) return;
+            d.time_on_site = Math.floor((Date.now() - this.start) / 1000);
+            const f = new FormData();
+            f.append('data', JSON.stringify(d));
+            try {
+                await fetch(`/api/session/${this.sid}/update`, {method: 'POST', body: f});
+            } catch(e) {}
+        }
+    };
+
+    let docId = null;
+    let totalPages = 0;
+    let currentPrice = null;
+    let editorInstance = null;
+    let hasChanges = false;
+
+    const $ = id => document.getElementById(id);
+
+    function init() {
+        DC.startSession();
+
+        // Upload handlers
+        $('uploadZone').onclick = () => $('fileInput').click();
+        $('fileInput').onchange = e => { if (e.target.files[0]) handleUpload(e.target.files[0]); };
+        $('uploadZone').ondragover = e => { e.preventDefault(); $('uploadZone').classList.add('dragover'); };
+        $('uploadZone').ondragleave = () => $('uploadZone').classList.remove('dragover');
+        $('uploadZone').ondrop = e => {
+            e.preventDefault();
+            $('uploadZone').classList.remove('dragover');
+            if (e.dataTransfer.files[0]?.type === 'application/pdf') {
+                handleUpload(e.dataTransfer.files[0]);
+            }
+        };
+
+        // Button handlers
+        $('newDocBtn').onclick = () => location.reload();
+        $('toggleAiBtn').onclick = () => $('aiPanel').classList.toggle('show');
+        $('saveBtn').onclick = saveDocument;
+        $('downloadBtn').onclick = showPricing;
+        $('cancelPayBtn').onclick = () => $('paymentModal').classList.remove('show');
+        $('payUpiBtn').onclick = () => processPayment('upi');
+        $('payCardBtn').onclick = () => processPayment('card');
+
+        // AI handlers
+        $('aiInput').onkeypress = e => { if (e.key === 'Enter') sendAiMessage(); };
+        $('aiSend').onclick = sendAiMessage;
+
+        // Warn before leaving with unsaved changes
+        window.onbeforeunload = () => hasChanges ? 'You have unsaved changes.' : null;
+    }
+
+    async function handleUpload(file) {
+        showLoading('Uploading PDF...');
+
+        const f = new FormData();
+        f.append('file', file);
+        f.append('session_id', DC.sid || '');
+
+        try {
+            const r = await fetch('/api/upload', {method: 'POST', body: f});
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail);
+
+            docId = d.docId;
+            totalPages = d.pageCount;
+            $('docName').textContent = d.filename;
+
+            // Show converting banner
+            hideLoading();
+            $('convertingBanner').classList.add('show');
+
+            // Start conversion
+            await convertDocument();
+
+        } catch(e) {
+            hideLoading();
+            toast(e.message, 'error');
+        }
+    }
+
+    async function convertDocument() {
+        try {
+            // Start conversion
+            const r = await fetch(`/api/convert/${docId}`, {method: 'POST'});
+            const d = await r.json();
+
+            if (d.status === 'ready') {
+                await loadEditor();
+            } else if (d.status === 'converting') {
+                // Poll for completion
+                await pollConversion();
+            } else {
+                throw new Error(d.message || 'Conversion failed');
+            }
+        } catch(e) {
+            $('convertingBanner').classList.remove('show');
+            toast('Conversion failed: ' + e.message, 'error');
+        }
+    }
+
+    async function pollConversion() {
+        const maxAttempts = 60;
+        for (let i = 0; i < maxAttempts; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+
+            try {
+                const r = await fetch(`/api/document/${docId}/status`);
                 const d = await r.json();
-                if (d.success) {
-                    toast('Text added!', 'success');
-                    await loadPage(currentPage);
-                    await genThumbs();
-                } else {
-                    toast('Could not add text at this location', 'error');
+
+                if (d.status === 'ready') {
+                    await loadEditor();
+                    return;
+                } else if (d.status === 'failed') {
+                    throw new Error('Conversion failed');
                 }
-            } catch(e2) {
-                toast('Error: ' + e2.message, 'error');
+            } catch(e) {
+                console.error('Poll error:', e);
             }
         }
-
-        toggleAddTextMode();
-        hideLoading();
+        throw new Error('Conversion timed out');
     }
 
-    // History for undo/redo
-    function addToHistory(action) {
-        // Remove any redo items
-        editHistory = editHistory.slice(0, historyIndex + 1);
-        editHistory.push(action);
-        historyIndex = editHistory.length - 1;
-        updateHistoryButtons();
-    }
+    async function loadEditor() {
+        $('convertingBanner').classList.remove('show');
 
-    function updateHistoryButtons() {
-        $('undoBtn').disabled = historyIndex < 0;
-        $('redoBtn').disabled = historyIndex >= editHistory.length - 1;
-    }
+        // Get HTML content
+        const r = await fetch(`/api/document/${docId}/html`);
+        const d = await r.json();
 
-    async function undo() {
-        if (historyIndex < 0) return;
-        const action = editHistory[historyIndex];
-        historyIndex--;
-        updateHistoryButtons();
+        // Switch to editor view
+        $('uploadState').style.display = 'none';
+        $('editorContainer').style.display = 'flex';
+        $('newDocBtn').style.display = 'flex';
+        $('toggleAiBtn').style.display = 'flex';
+        $('saveBtn').style.display = 'flex';
+        $('downloadBtn').style.display = 'flex';
+        $('saveBtn').disabled = true;
+        $('downloadBtn').disabled = false;
+        $('aiInput').disabled = false;
+        $('aiSend').disabled = false;
 
-        // For now, show message - full undo would require storing PDF states
-        addMsg('assistant', `Undo: Would revert "${action.type}" action. Full undo requires re-upload.`);
-        toast('Undo logged. Re-upload PDF to fully revert.', 'warning');
-    }
+        // Load preview thumbnails
+        await loadPreview();
 
-    async function redo() {
-        if (historyIndex >= editHistory.length - 1) return;
-        historyIndex++;
-        const action = editHistory[historyIndex];
-        updateHistoryButtons();
-
-        addMsg('assistant', `Redo: Would redo "${action.type}" action.`);
-        toast('Redo logged.', 'warning');
-    }
-
-    // Find & Replace
-    let findMatches = [];
-    let findIndex = -1;
-
-    function findText() {
-        const query = $('findInput').value.toLowerCase();
-        findMatches = [];
-        findIndex = -1;
-
-        if (!query || !currentTextData) {
-            $('findResults').textContent = '';
-            return;
-        }
-
-        document.querySelectorAll('.text-line').forEach((line, idx) => {
-            const text = line.dataset.text.toLowerCase();
-            if (text.includes(query)) {
-                findMatches.push({ element: line, index: idx, text: line.dataset.text });
+        // Initialize TinyMCE
+        tinymce.init({
+            selector: '#htmlEditor',
+            height: '100%',
+            menubar: true,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+            content_style: `
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 12pt;
+                    line-height: 1.6;
+                    padding: 20px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                p { margin: 0 0 12px 0; }
+            `,
+            setup: function(editor) {
+                editorInstance = editor;
+                editor.on('init', function() {
+                    editor.setContent(d.html || '<p>Document content will appear here...</p>');
+                });
+                editor.on('change', function() {
+                    hasChanges = true;
+                    $('saveBtn').disabled = false;
+                });
             }
         });
 
-        $('findResults').textContent = `${findMatches.length} match${findMatches.length !== 1 ? 'es' : ''} found`;
-
-        // Highlight matches
-        document.querySelectorAll('.text-line').forEach(l => l.style.outline = '');
-        findMatches.forEach(m => m.element.style.outline = '2px solid ' + (findIndex === findMatches.indexOf(m) ? 'var(--primary)' : 'var(--warning)'));
+        DC.update({doc_id: docId, page_count: totalPages});
+        toast('Document ready for editing!', 'success');
     }
 
-    function findNext() {
-        if (findMatches.length === 0) return;
-        findIndex = (findIndex + 1) % findMatches.length;
+    async function loadPreview() {
+        const container = $('previewContent');
+        container.innerHTML = '';
 
-        document.querySelectorAll('.text-line').forEach(l => l.style.outline = '');
-        findMatches.forEach((m, i) => m.element.style.outline = '2px solid ' + (i === findIndex ? 'var(--primary)' : 'var(--warning)'));
-
-        findMatches[findIndex].element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        for (let i = 1; i <= totalPages; i++) {
+            const page = document.createElement('div');
+            page.className = 'preview-page';
+            page.innerHTML = `
+                <img src="/api/page/${docId}/${i}" alt="Page ${i}">
+                <div class="preview-page-label">Page ${i}</div>
+            `;
+            container.appendChild(page);
+        }
     }
 
-    function replaceOne() {
-        if (findIndex < 0 || findIndex >= findMatches.length) { findNext(); return; }
+    async function saveDocument() {
+        if (!editorInstance) return;
 
-        const match = findMatches[findIndex];
-        const replaceText = $('replaceInput').value;
-        const findQuery = $('findInput').value;
+        showLoading('Saving changes...');
+        $('saveBtn').disabled = true;
 
-        if (!replaceText) return;
+        try {
+            const html = editorInstance.getContent();
+            const f = new FormData();
+            f.append('html', html);
+            f.append('session_id', DC.sid || '');
 
-        const newText = match.text.replace(new RegExp(findQuery, 'gi'), replaceText);
-        match.element.click(); // Start editing
+            const r = await fetch(`/api/document/${docId}/html`, {method: 'POST', body: f});
+            const d = await r.json();
 
-        setTimeout(() => {
-            const input = match.element.querySelector('.text-input');
-            if (input) {
-                input.value = newText;
-                saveCurrentEdit();
+            if (d.success) {
+                hasChanges = false;
+                toast('Changes saved!', 'success');
+                await loadPreview();
+                DC.update({edit_count: 1});
+            } else {
+                throw new Error(d.message || 'Save failed');
             }
-        }, 100);
+        } catch(e) {
+            toast('Error: ' + e.message, 'error');
+            $('saveBtn').disabled = false;
+        }
+
+        hideLoading();
     }
 
-    async function replaceAll() {
-        const findQuery = $('findInput').value;
-        const replaceText = $('replaceInput').value;
+    async function sendAiMessage() {
+        const input = $('aiInput');
+        const message = input.value.trim();
+        if (!message) return;
 
-        if (!findQuery || !replaceText || findMatches.length === 0) return;
-
-        showLoading(`Replacing ${findMatches.length} matches...`);
+        input.value = '';
+        addAiMessage('user', message);
 
         try {
             const f = new FormData();
-            f.append('instruction', `Replace all occurrences of "${findQuery}" with "${replaceText}"`);
+            f.append('instruction', message);
             f.append('session_id', DC.sid || '');
 
             const r = await fetch(`/api/edit/${docId}`, {method: 'POST', body: f});
             const d = await r.json();
 
             if (d.success) {
-                toast(`Replaced ${d.changes} occurrences!`, 'success');
-                addMsg('success', `Replaced "${findQuery}" with "${replaceText}" (${d.changes} changes)`);
-                await loadPage(currentPage);
-                await genThumbs();
-                findText(); // Re-run find
+                addAiMessage('assistant', d.message || 'Done! I\'ve updated the document.');
+                // Reload the editor content
+                const htmlR = await fetch(`/api/document/${docId}/html`);
+                const htmlD = await htmlR.json();
+                if (editorInstance && htmlD.html) {
+                    editorInstance.setContent(htmlD.html);
+                }
+                await loadPreview();
             } else {
-                throw new Error(d.message || 'Replace failed');
+                addAiMessage('assistant', 'Sorry, I couldn\'t make that change: ' + (d.message || 'Unknown error'));
             }
         } catch(e) {
-            toast('Error: ' + e.message, 'error');
+            addAiMessage('assistant', 'Error: ' + e.message);
+        }
+    }
+
+    function addAiMessage(role, text) {
+        const container = $('aiMessages');
+        const msg = document.createElement('div');
+        msg.className = `ai-message ${role}`;
+        msg.innerHTML = `<div class="bubble">${text}</div>`;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function showPricing() {
+        showLoading('Getting price...');
+
+        try {
+            DC.update({viewed_pricing: true});
+
+            const r = await fetch(`/api/session/${DC.sid}/price`);
+            const d = await r.json();
+
+            currentPrice = d;
+            $('priceDisplay').textContent = `₹${d.price_inr}`;
+            $('priceUsd').textContent = `≈ $${d.price_usd}`;
+
+            hideLoading();
+            $('paymentModal').classList.add('show');
+        } catch(e) {
+            hideLoading();
+            toast('Error loading price', 'error');
+        }
+    }
+
+    async function processPayment(method) {
+        showLoading('Processing payment...');
+        $('paymentModal').classList.remove('show');
+
+        try {
+            // Simulate payment (in production, integrate real payment gateway)
+            await new Promise(r => setTimeout(r, 2000));
+
+            // Download PDF
+            const link = document.createElement('a');
+            link.href = `/api/download/${docId}?session_id=${DC.sid}`;
+            link.download = $('docName').textContent || 'document.pdf';
+            link.click();
+
+            toast('Download started!', 'success');
+            DC.update({converted: true, payment_method: method});
+        } catch(e) {
+            toast('Payment failed: ' + e.message, 'error');
         }
 
         hideLoading();
     }
 
-    function setZoom(level) {
-        zoomLevel = Math.max(50, Math.min(200, level));
-        $('zoomLevel').textContent = zoomLevel + '%';
-        $('pdfContainer').style.transform = `scale(${zoomLevel / 100})`;
+    function showLoading(text = 'Processing...') {
+        $('loadingText').textContent = text;
+        $('loadingOverlay').classList.add('show');
     }
 
-    async function genThumbs(){
-        $('pagesList').innerHTML='';
-        for(let i=1;i<=totalPages;i++){
-            try{const r=await fetch(`/api/document/${docId}/page/${i}`);const d=await r.json();
-            const t=document.createElement('div');t.className='page-thumb'+(i===currentPage?' active':'');
-            t.innerHTML=`<img src="data:image/png;base64,${d.image}"><div class="page-thumb-label">Page ${i}</div>`;
-            t.onclick=()=>loadPage(i);$('pagesList').appendChild(t)}catch(e){}
-        }
+    function hideLoading() {
+        $('loadingOverlay').classList.remove('show');
     }
 
-    async function sendMessage(){
-        const text=$('aiInput').value.trim();
-        if(!text||!docId||isProcessing)return;
-        isProcessing=true;$('aiInput').value='';$('aiSend').disabled=true;
-        addMsg('user',text);
-        const isQ=text.match(/^(what|who|when|where|how|why|is|are|summarize|kya|kaun)/i);
-        try{
-            if(isQ){addMsg('assistant','Checking...');
-                const f=new FormData();f.append('question',text);
-                const r=await fetch(`/api/ask/${docId}`,{method:'POST',body:f});const d=await r.json();
-                removeLastMsg();addMsg('assistant',d.answer||'Could not find answer.');
-            }else{addMsg('assistant','Making changes...');
-                const f=new FormData();f.append('instruction',text);f.append('session_id',DC.sid||'');
-                const r=await fetch(`/api/edit/${docId}`,{method:'POST',body:f});const d=await r.json();
-                removeLastMsg();
-                if(d.success){
-                    addMsg('success',`Done! ${d.changes} change(s) made.`);
-                    await loadPage(currentPage);
-                    await genThumbs();
-                    DC.update({edit_count:d.changes});
-                }
-                else{addMsg('error',d.message||'Could not make changes.')}
-            }
-        }catch(e){removeLastMsg();addMsg('error','Error: '+e.message)}
-        isProcessing=false;$('aiSend').disabled=false;
+    function toast(message, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.textContent = message;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
     }
 
-    function addMsg(type,content){const m=document.createElement('div');m.className=`ai-msg ${type}`;m.innerHTML=content;$('aiMessages').appendChild(m);$('aiMessages').scrollTop=$('aiMessages').scrollHeight}
-    function removeLastMsg(){const msgs=$('aiMessages').querySelectorAll('.ai-msg.assistant,.ai-msg.success,.ai-msg.error');if(msgs.length)msgs[msgs.length-1].remove()}
-
-    async function showPricing(){
-        if(!docId)return;
-        showLoading('Calculating price...');await DC.update();
-        try{const f=new FormData();f.append('session_id',DC.sid||'');f.append('doc_id',docId);
-            const r=await fetch('/api/pricing/calculate',{method:'POST',body:f});currentPrice=await r.json();
-            $('priceDisplay').textContent=`₹${currentPrice.price_inr}`;$('priceUsd').textContent=`≈ $${currentPrice.price_usd}`;
-            pricingShownAt=Date.now();
-            fetch('/api/pricing/shown',{method:'POST',body:new URLSearchParams({session_id:DC.sid})});
-            hideLoading();$('paymentModal').classList.add('show');
-        }catch(e){hideLoading();toast('Error','error')}
-    }
-
-    async function closePricing(converted){
-        const t=pricingShownAt?Math.floor((Date.now()-pricingShownAt)/1000):0;
-        try{await fetch('/api/pricing/outcome',{method:'POST',body:new URLSearchParams({session_id:DC.sid,converted,time_on_pricing:t})})}catch(e){}
-        $('paymentModal').classList.remove('show');
-    }
-
-    async function processPayment(method){
-        showLoading('Processing...');
-        setTimeout(async()=>{hideLoading();await closePricing(true);
-            try{const s=JSON.parse(localStorage.getItem('luleit_user')||'{}');s.conversions=(s.conversions||0)+1;localStorage.setItem('luleit_user',JSON.stringify(s))}catch(e){}
-            window.location.href=`/api/download/${docId}`;toast('Success!','success');
-        },1500);
-    }
-
-    function showLoading(t){$('loadingText').textContent=t;$('loadingOverlay').classList.add('show')}
-    function hideLoading(){$('loadingOverlay').classList.remove('show')}
-    function toast(m,type='success'){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast '+type;t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4000)}
-
-    init();
+    document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>

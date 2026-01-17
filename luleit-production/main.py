@@ -47,7 +47,9 @@ import httpx
 import fitz
 import zipfile
 import re
-import pytesseract
+import subprocess
+import tempfile
+import shutil
 from PIL import Image
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -278,6 +280,191 @@ class AdobePDFServices:
                     continue
 
             raise HTTPException(500, "Adobe PDF creation timed out")
+
+
+# ============================================================================
+# LIBREOFFICE CONVERSION
+# ============================================================================
+
+class LibreOfficeConverter:
+    """Convert PDFs using LibreOffice headless mode"""
+
+    @staticmethod
+    def find_libreoffice() -> str:
+        """Find the LibreOffice executable"""
+        # Common paths
+        paths = [
+            "libreoffice",  # System path (Nix/Railway)
+            "soffice",
+            "/usr/bin/libreoffice",
+            "/usr/bin/soffice",
+            "/opt/libreoffice/program/soffice",
+            "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+        ]
+
+        for path in paths:
+            if shutil.which(path):
+                return path
+
+        # Try to find it
+        result = shutil.which("libreoffice") or shutil.which("soffice")
+        if result:
+            return result
+
+        raise RuntimeError("LibreOffice not found. Please install LibreOffice.")
+
+    @classmethod
+    def pdf_to_docx(cls, pdf_bytes: bytes) -> bytes:
+        """Convert PDF to DOCX using LibreOffice"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Write PDF to temp file
+            pdf_path = os.path.join(tmpdir, "input.pdf")
+            with open(pdf_path, "wb") as f:
+                f.write(pdf_bytes)
+
+            # Run LibreOffice conversion
+            libreoffice = cls.find_libreoffice()
+
+            try:
+                result = subprocess.run(
+                    [
+                        libreoffice,
+                        "--headless",
+                        "--infilter=writer_pdf_import",
+                        "--convert-to", "docx",
+                        "--outdir", tmpdir,
+                        pdf_path
+                    ],
+                    capture_output=True,
+                    timeout=120,  # 2 minute timeout
+                    text=True
+                )
+
+                if result.returncode != 0:
+                    print(f"LibreOffice PDF->DOCX error: {result.stderr}")
+                    raise RuntimeError(f"LibreOffice conversion failed: {result.stderr}")
+
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("LibreOffice conversion timed out")
+
+            # Read the output DOCX
+            docx_path = os.path.join(tmpdir, "input.docx")
+            if not os.path.exists(docx_path):
+                # Try alternative names
+                for f in os.listdir(tmpdir):
+                    if f.endswith(".docx"):
+                        docx_path = os.path.join(tmpdir, f)
+                        break
+                else:
+                    raise RuntimeError("DOCX output not found after conversion")
+
+            with open(docx_path, "rb") as f:
+                return f.read()
+
+    @classmethod
+    def docx_to_pdf(cls, docx_bytes: bytes) -> bytes:
+        """Convert DOCX to PDF using LibreOffice"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Write DOCX to temp file
+            docx_path = os.path.join(tmpdir, "input.docx")
+            with open(docx_path, "wb") as f:
+                f.write(docx_bytes)
+
+            # Run LibreOffice conversion
+            libreoffice = cls.find_libreoffice()
+
+            try:
+                result = subprocess.run(
+                    [
+                        libreoffice,
+                        "--headless",
+                        "--convert-to", "pdf",
+                        "--outdir", tmpdir,
+                        docx_path
+                    ],
+                    capture_output=True,
+                    timeout=120,
+                    text=True
+                )
+
+                if result.returncode != 0:
+                    print(f"LibreOffice DOCX->PDF error: {result.stderr}")
+                    raise RuntimeError(f"LibreOffice conversion failed: {result.stderr}")
+
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("LibreOffice conversion timed out")
+
+            # Read the output PDF
+            pdf_path = os.path.join(tmpdir, "input.pdf")
+            if not os.path.exists(pdf_path):
+                for f in os.listdir(tmpdir):
+                    if f.endswith(".pdf"):
+                        pdf_path = os.path.join(tmpdir, f)
+                        break
+                else:
+                    raise RuntimeError("PDF output not found after conversion")
+
+            with open(pdf_path, "rb") as f:
+                return f.read()
+
+    @classmethod
+    def html_to_docx(cls, html_content: str) -> bytes:
+        """Convert HTML to DOCX using LibreOffice"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Write HTML to temp file with proper structure
+            html_path = os.path.join(tmpdir, "input.html")
+            full_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5; }}
+        p {{ margin: 0 0 10pt 0; }}
+    </style>
+</head>
+<body>
+{html_content}
+</body>
+</html>"""
+            with open(html_path, "w", encoding="utf-8") as f:
+                f.write(full_html)
+
+            # Run LibreOffice conversion
+            libreoffice = cls.find_libreoffice()
+
+            try:
+                result = subprocess.run(
+                    [
+                        libreoffice,
+                        "--headless",
+                        "--convert-to", "docx",
+                        "--outdir", tmpdir,
+                        html_path
+                    ],
+                    capture_output=True,
+                    timeout=60,
+                    text=True
+                )
+
+                if result.returncode != 0:
+                    print(f"LibreOffice HTML->DOCX error: {result.stderr}")
+                    raise RuntimeError(f"LibreOffice conversion failed: {result.stderr}")
+
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("LibreOffice conversion timed out")
+
+            # Read the output DOCX
+            docx_path = os.path.join(tmpdir, "input.docx")
+            if not os.path.exists(docx_path):
+                for f in os.listdir(tmpdir):
+                    if f.endswith(".docx"):
+                        docx_path = os.path.join(tmpdir, f)
+                        break
+                else:
+                    raise RuntimeError("DOCX output not found after conversion")
+
+            with open(docx_path, "rb") as f:
+                return f.read()
 
 
 def docx_to_html(docx_bytes: bytes) -> str:
@@ -1569,7 +1756,7 @@ async def upload_pdf(request: Request, file: UploadFile = File(...), session_id:
 
 @app.post("/api/convert/{doc_id}")
 async def convert_to_word(doc_id: str):
-    """Convert PDF to Word using Adobe API (called after upload)"""
+    """Convert PDF to Word using LibreOffice (called after upload)"""
     if doc_id not in documents:
         raise HTTPException(404, "Document not found")
 
@@ -1584,8 +1771,11 @@ async def convert_to_word(doc_id: str):
     try:
         documents[doc_id]["conversion_status"] = "converting"
 
-        # Convert PDF to Word via Adobe
-        docx_bytes = await AdobePDFServices.export_pdf_to_word(doc["pdf_bytes"])
+        # Convert PDF to Word via LibreOffice (runs in thread pool to not block)
+        loop = asyncio.get_event_loop()
+        docx_bytes = await loop.run_in_executor(
+            None, LibreOfficeConverter.pdf_to_docx, doc["pdf_bytes"]
+        )
 
         # Convert Word to HTML for editing
         html_content = docx_to_html(docx_bytes)
@@ -1634,25 +1824,27 @@ async def get_html_content(doc_id: str):
 
 @app.post("/api/document/{doc_id}/html")
 async def save_html_content(doc_id: str, html: str = Form(...), session_id: str = Form(None)):
-    """Save edited HTML content and regenerate PDF"""
+    """Save edited HTML content and regenerate PDF using LibreOffice"""
     if doc_id not in documents:
         raise HTTPException(404, "Document not found")
 
     doc = documents[doc_id]
 
-    if not doc.get("docx_bytes"):
-        raise HTTPException(400, "No Word document available")
-
     try:
         # Update HTML content
         documents[doc_id]["html_content"] = html
 
-        # Convert HTML back to DOCX
-        new_docx = html_to_docx(html, doc["docx_bytes"])
+        # Convert HTML to DOCX via LibreOffice (in thread pool)
+        loop = asyncio.get_event_loop()
+        new_docx = await loop.run_in_executor(
+            None, LibreOfficeConverter.html_to_docx, html
+        )
         documents[doc_id]["docx_bytes"] = new_docx
 
-        # Convert DOCX back to PDF via Adobe
-        new_pdf = await AdobePDFServices.create_pdf_from_word(new_docx)
+        # Convert DOCX to PDF via LibreOffice
+        new_pdf = await loop.run_in_executor(
+            None, LibreOfficeConverter.docx_to_pdf, new_docx
+        )
         documents[doc_id]["pdf_bytes"] = new_pdf
 
         # Regenerate images

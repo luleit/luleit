@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["python311", "mupdf", "tesseract", "tesseract-data-eng"]
+nixPkgs = ["python311", "mupdf", "libreoffice"]
 
 [phases.install]
 cmds = ["pip install --upgrade pip", "pip install -r requirements.txt"]
